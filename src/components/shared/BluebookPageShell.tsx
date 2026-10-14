@@ -9,6 +9,8 @@ interface BluebookPageShellProps {
   showBanner?: boolean;
   /** Optional strip rendered between header and layout (e.g. question nav dots) */
   navStrip?: React.ReactNode;
+  /** Optional strip rendered between layout and footer (e.g. bottom question nav) */
+  bottomStrip?: React.ReactNode;
   /** Rendered in test-passage-panel. null → single-panel mode */
   passage?: React.ReactNode;
   children: React.ReactNode;
@@ -26,6 +28,7 @@ export function BluebookPageShell({
   headerRight,
   showBanner,
   navStrip,
+  bottomStrip,
   passage,
   children,
   onPrev,
@@ -76,6 +79,8 @@ export function BluebookPageShell({
           </div>
         </div>
       </div>
+
+      {bottomStrip}
 
       <div className="bluebook-footer">
         <button

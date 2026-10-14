@@ -38,6 +38,15 @@ const TEST_ID = 'november-qb22';
 const TEST_LABEL = '11월 SAT 예상 56문항';
 const TEST_DESC = 'CB 문제은행 8월 18일 추가분 56문항';
 
+const CONFIDENCE_LEVELS = [
+  { value: 0,   label: '0%',   desc: "No idea — completely guessing" },
+  { value: 25,  label: '25%',  desc: "2 other choices also seem correct" },
+  { value: 50,  label: '50%',  desc: "Torn between this and one other choice" },
+  { value: 75,  label: '75%',  desc: "One confusing alternative, but I'd want an explanation if this is wrong" },
+  { value: 100, label: '100%', desc: "Completely sure this is the answer" },
+];
+const CONF_COLOR: Record<number, string> = { 0: '#ef4444', 25: '#f97316', 50: '#f59e0b', 75: '#3b82f6', 100: '#22c55e' };
+
 const DIFF_COLOR: Record<string, string> = { Hard: '#ef4444', Medium: '#f59e0b', Easy: '#22c55e' };
 const DOMAIN_COLOR: Record<string, string> = {
   RW: '#8b5cf6', Math: '#3b82f6',
@@ -141,6 +150,7 @@ export default function NovemberQB22Page() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [toast, setToast] = useState('');
+  const [confidence, setConfidence] = useState<Record<string, number>>({});
   const [correctCount, setCorrectCount] = useState(0);
 
   useEffect(() => {
@@ -227,7 +237,7 @@ export default function NovemberQB22Page() {
       await fetch('/api/practice/november-qb22/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instagramId, answers, correctCount: correct, totalCount: answeredCount, questionResults }),
+        body: JSON.stringify({ instagramId, answers, correctCount: correct, totalCount: answeredCount, questionResults, confidence }),
       });
       setSubmitted(true);
       const updatedStats = await fetch(`/api/practice/stats?testId=${TEST_ID}`).then(r => r.json()).catch(() => null);
@@ -374,19 +384,21 @@ export default function NovemberQB22Page() {
   const answeredCount = Object.keys(answers).filter(id => answers[id]).length;
   const totalCorrect = questions.filter(q => checkAnswer(q, answers[q.id] ?? '')).length;
 
-  const navStrip = (
-    <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
+  const bottomStrip = (
+    <div style={{ borderTop: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
       <div style={{ display: 'flex', gap: 6, minWidth: 'max-content' }}>
         {questions.map((q, idx) => {
           const isAnswered = !!answers[q.id];
           const isCurrent = idx === currentIndex;
+          const conf = confidence[q.id];
           const color = DOMAIN_COLOR[q.domain] ?? '#1e293b';
+          const bg = isCurrent ? color : isAnswered ? (conf !== undefined ? CONF_COLOR[conf] : '#3b82f6') : '#fff';
           return (
             <button key={q.id} onClick={() => setCurrentIndex(idx)}
               style={{
                 width: 30, height: 30, borderRadius: 6,
                 border: isCurrent ? `2px solid ${color}` : '1px solid #e5e7eb',
-                background: isCurrent ? color : isAnswered ? '#3b82f6' : '#fff',
+                background: bg,
                 color: isCurrent || isAnswered ? '#fff' : '#94a3b8',
                 fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -425,8 +437,8 @@ export default function NovemberQB22Page() {
       <BluebookPageShell
         sectionTitle={TEST_LABEL}
         headerRight={headerRight}
-        navStrip={navStrip}
         passage={passageNode}
+        bottomStrip={bottomStrip}
         onPrev={() => setCurrentIndex(i => i - 1)}
         prevHidden={isFirst}
         onNext={() => setCurrentIndex(i => i + 1)}
@@ -436,37 +448,75 @@ export default function NovemberQB22Page() {
         }
       >
         {currentQ && (
-          <BluebookQuestionUnit
-            questionNumber={currentIndex + 1}
-            question={<MathHTMLContent html={currentQ.question} />}
-            skill={currentQ.skill}
-            difficulty={currentQ.difficulty}
-            difficultyColor={DIFF_COLOR[currentQ.difficulty]}
-            {...(currentQ.type === 'spr' ? {
-              shortAnswer: userAnswer,
-              onShortAnswer: (val) => handleAnswer(currentQ.id, val),
-              shortAnswerPlaceholder: 'Enter answer',
-              shortAnswerFeedback: isRevealed ? { isCorrect, correctAnswer: isWrong ? (currentQ.answers?.[0] ?? '') : undefined } : null,
-            } : {
-              options: currentQ.options?.map(opt => ({
-                label: opt.label,
-                text: <ContentRenderer content={opt.text} />,
-              })),
-              selectedAnswer: userAnswer,
-              onSelect: (val: string) => {
-                handleAnswer(currentQ.id, val);
-                handleReveal(currentQ.id);
-              },
-              feedback: isRevealed && userAnswer ? { selectedLabel: userAnswer, correctLabel: currentQ.correctOption ?? '' } : null,
-            })}
-          >
-            {currentQ.type === 'spr' && !isRevealed && userAnswer && (
-              <button onClick={() => handleReveal(currentQ.id)}
-                style={{ marginTop: 8, padding: '10px 16px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                Check
-              </button>
-            )}
-          </BluebookQuestionUnit>
+          <>
+            <BluebookQuestionUnit
+              questionNumber={currentIndex + 1}
+              question={<MathHTMLContent html={currentQ.question} />}
+              skill={currentQ.skill}
+              difficulty={currentQ.difficulty}
+              difficultyColor={DIFF_COLOR[currentQ.difficulty]}
+              {...(currentQ.type === 'spr' ? {
+                shortAnswer: userAnswer,
+                onShortAnswer: (val) => handleAnswer(currentQ.id, val),
+                shortAnswerPlaceholder: 'Enter answer',
+                shortAnswerFeedback: isRevealed ? { isCorrect, correctAnswer: isWrong ? (currentQ.answers?.[0] ?? '') : undefined } : null,
+              } : {
+                options: currentQ.options?.map(opt => ({
+                  label: opt.label,
+                  text: <ContentRenderer content={opt.text} />,
+                })),
+                selectedAnswer: userAnswer,
+                onSelect: (val: string) => {
+                  handleAnswer(currentQ.id, val);
+                  handleReveal(currentQ.id);
+                },
+                feedback: isRevealed && userAnswer ? { selectedLabel: userAnswer, correctLabel: currentQ.correctOption ?? '' } : null,
+              })}
+            >
+              {currentQ.type === 'spr' && !isRevealed && userAnswer && (
+                <button onClick={() => handleReveal(currentQ.id)}
+                  style={{ marginTop: 8, padding: '10px 16px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  Check
+                </button>
+              )}
+            </BluebookQuestionUnit>
+
+            {/* Confidence Level Selector */}
+            <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid #f1f5f9' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
+                Confidence Level
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                {CONFIDENCE_LEVELS.map(lvl => {
+                  const selected = confidence[currentQ.id] === lvl.value;
+                  return (
+                    <button
+                      key={lvl.value}
+                      onClick={() => setConfidence(prev => ({ ...prev, [currentQ.id]: lvl.value }))}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: 20,
+                        border: selected ? `2px solid ${CONF_COLOR[lvl.value]}` : '1px solid #e5e7eb',
+                        background: selected ? CONF_COLOR[lvl.value] : '#fff',
+                        color: selected ? '#fff' : '#64748b',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {lvl.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {confidence[currentQ.id] !== undefined && (
+                <p style={{ fontSize: 12, color: CONF_COLOR[confidence[currentQ.id]], margin: 0, fontStyle: 'italic' }}>
+                  {CONFIDENCE_LEVELS.find(l => l.value === confidence[currentQ.id])?.desc}
+                </p>
+              )}
+            </div>
+          </>
         )}
       </BluebookPageShell>
     </>
