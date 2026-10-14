@@ -1,9 +1,26 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
 import { BluebookPageShell } from '@/components/shared/BluebookPageShell';
 import { BluebookQuestionUnit } from '@/components/shared/BluebookQuestionUnit';
+
+// HTML + 내부 LaTeX를 통째로 렌더링 — 테이블 셀 안의 \(...\)가 ContentRenderer에서 쪼개지는 문제 방지
+function MathHTMLContent({ html, className }: { html: string; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!ref.current || !html) return;
+    const el = ref.current;
+    el.innerHTML = html;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tryTypeset = () => { const mj = (window as any).MathJax; if (mj?.typesetPromise) { mj.typesetPromise([el]).catch(() => {}); return true; } return false; };
+    if (!tryTypeset()) {
+      const t = setInterval(() => { if (tryTypeset()) clearInterval(t); }, 100);
+      return () => clearInterval(t);
+    }
+  }, [html]);
+  return <div ref={ref} className={className} style={{ overflowWrap: 'break-word', wordWrap: 'break-word' }} />;
+}
 
 const TEST_ID = 'november-qb22';
 const TEST_LABEL = '11월 SAT 예상 56문항';
@@ -115,6 +132,16 @@ export default function NovemberQB22Page() {
   const [correctCount, setCorrectCount] = useState(0);
 
   useEffect(() => {
+    // MathJax 선제 로드 — 테이블 내 LaTeX 렌더링에 필요
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!(window as any).MathJax) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).MathJax = { tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] }, svg: { fontCache: 'global' }, options: { skipHtmlTags: ['script','noscript','style','textarea','pre'], enableMenu: false } };
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js';
+      s.async = true;
+      document.head.appendChild(s);
+    }
     fetch('/api/practice/november-qb56/questions')
       .then(r => r.json())
       .then(data => {
@@ -372,7 +399,7 @@ export default function NovemberQB22Page() {
 
   const passageNode = currentQ?.passage && currentQ.passage.trim() ? (
     <div className="test-passage-content">
-      <ContentRenderer content={currentQ.passage} />
+      <MathHTMLContent html={currentQ.passage} />
     </div>
   ) : undefined;
 
@@ -399,7 +426,7 @@ export default function NovemberQB22Page() {
         {currentQ && (
           <BluebookQuestionUnit
             questionNumber={currentIndex + 1}
-            question={<ContentRenderer content={currentQ.question} />}
+            question={<MathHTMLContent html={currentQ.question} />}
             skill={currentQ.skill}
             difficulty={currentQ.difficulty}
             difficultyColor={DIFF_COLOR[currentQ.difficulty]}
