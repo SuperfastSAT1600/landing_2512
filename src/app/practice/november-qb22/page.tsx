@@ -1,16 +1,21 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
 import { BluebookPageShell } from '@/components/shared/BluebookPageShell';
 import { BluebookQuestionUnit } from '@/components/shared/BluebookQuestionUnit';
 
 const TEST_ID = 'november-qb22';
-const TEST_LABEL = '11월 SAT 예상 22문항';
-const TEST_DESC = 'CB 문제은행 8월 18일 추가분 · 쌍둥이 없는 22문항';
+const TEST_LABEL = '11월 SAT 예상 56문항';
+const TEST_DESC = 'CB 문제은행 8월 18일 추가분 56문항';
+
+const DIFF_COLOR: Record<string, string> = { Hard: '#ef4444', Medium: '#f59e0b', Easy: '#22c55e' };
+const DOMAIN_COLOR: Record<string, string> = {
+  RW: '#8b5cf6', Math: '#3b82f6',
+  Algebra: '#3b82f6', 'Advanced Math': '#0ea5e9', PSDA: '#f59e0b', Geometry: '#10b981',
+};
 
 type QuestionType = 'spr' | 'mcq';
-
 interface MCQOption { label: string; text: string; }
 interface Question {
   id: string;
@@ -25,384 +30,46 @@ interface Question {
   correctOption?: string;
 }
 
-type Phase = 'gate' | 'leaderboard' | 'test' | 'result' | 'review';
+interface DBRow {
+  id: number;
+  question: string;
+  options: MCQOption[] | null;
+  correct_answer: string;
+  domain: string | null;
+  question_type: string;
+  figure: string | null;
+  skill?: string;
+  difficulty?: string;
+}
 
-interface LeaderboardEntry { rank: number; maskedId: string; correctCount: number; totalCount: number; score: number; }
-interface Stats { leaderboard: LeaderboardEntry[]; questionStats: Record<string, { correct: number; total: number }>; }
-
-const DIFF_COLOR: Record<string, string> = { Hard: '#ef4444', Medium: '#f59e0b', Easy: '#22c55e' };
-
-const SCATTERPLOT_TABLE = `<p style="font-size:13px;color:#475569;margin-bottom:6px;">Cutting board sale prices by width (10 boards total)</p>
-<table style="border-collapse:collapse;width:100%;font-size:13px;margin-bottom:12px;">
-  <thead><tr style="background:#f1f5f9;">
-    <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Width (cm)</th>
-    <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Sale price ($)</th>
-  </tr></thead>
-  <tbody>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">24</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">10</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">24</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">15</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">30</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">20</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">36</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">30</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">42</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">40</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">54</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">45</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">62</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">55</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">68</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">70</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">72</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">85</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">76</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">60</td></tr>
-  </tbody>
-</table>`;
-
-const CARDS_TABLE = `<table style="border-collapse:collapse;width:100%;font-size:14px;margin-bottom:12px;">
-  <thead><tr style="background:#f1f5f9;">
-    <th style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Shape</th>
-    <th style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Number of cards</th>
-  </tr></thead>
-  <tbody>
-    <tr><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Square</td><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">5</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Circle</td><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">9</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Triangle</td><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">14</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">Star</td><td style="border:1px solid #cbd5e1;padding:8px 12px;text-align:center;">12</td></tr>
-  </tbody>
-</table>`;
-
-const DATA_Q_TABLE = `<p style="font-weight:600;margin-bottom:6px;">Data Set Q</p>
-<table style="border-collapse:collapse;width:100%;font-size:14px;margin-bottom:12px;">
-  <thead><tr style="background:#f1f5f9;">
-    <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Value</th>
-    <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Frequency</th>
-  </tr></thead>
-  <tbody>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-style:italic;">a</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">110</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-style:italic;">b</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">30</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-style:italic;">c</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">0</td></tr>
-  </tbody>
-</table>
-<p style="font-weight:600;margin-bottom:6px;">Data Set R</p>
-<table style="border-collapse:collapse;width:100%;font-size:14px;margin-bottom:12px;">
-  <thead><tr style="background:#f1f5f9;">
-    <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Value</th>
-    <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">Frequency</th>
-  </tr></thead>
-  <tbody>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-style:italic;">a</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">0</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-style:italic;">b</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">3</td></tr>
-    <tr><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;font-style:italic;">c</td><td style="border:1px solid #cbd5e1;padding:6px 10px;text-align:center;">11</td></tr>
-  </tbody>
-</table>`;
-
-const TRIANGLE_XYZ = `<svg viewBox="0 0 240 160" width="240" height="160" style="display:block;margin:0 auto 12px;">
-  <polygon points="30,130 30,30 210,130" fill="none" stroke="#1e293b" strokeWidth="2"/>
-  <rect x="30" y="110" width="20" height="20" fill="none" stroke="#1e293b" strokeWidth="1.5"/>
-  <text x="16" y="26" fontSize="14" fontWeight="700" fill="#1e293b">X</text>
-  <text x="16" y="148" fontSize="14" fontWeight="700" fill="#1e293b">Y</text>
-  <text x="214" y="148" fontSize="14" fontWeight="700" fill="#1e293b">Z</text>
-  <text x="34" y="82" fontSize="13" fill="#475569">75</text>
-  <text x="112" y="148" fontSize="13" fill="#475569">560</text>
-  <text x="120" y="76" fontSize="13" fill="#475569">c</text>
-</svg>`;
-
-const TRIANGLE_QRS = `<svg viewBox="0 0 240 160" width="240" height="160" style="display:block;margin:0 auto 12px;">
-  <polygon points="30,130 30,30 210,130" fill="none" stroke="#1e293b" strokeWidth="2"/>
-  <rect x="30" y="110" width="20" height="20" fill="none" stroke="#1e293b" strokeWidth="1.5"/>
-  <text x="16" y="26" fontSize="14" fontWeight="700" fill="#1e293b">Q</text>
-  <text x="16" y="148" fontSize="14" fontWeight="700" fill="#1e293b">R</text>
-  <text x="214" y="148" fontSize="14" fontWeight="700" fill="#1e293b">S</text>
-  <text x="112" y="148" fontSize="13" fill="#475569">25</text>
-</svg>`;
-
-const TRIANGLE_ABC_CDE = `<p style="font-size:13px;color:#475569;margin-bottom:8px;">Figure: segment AE intersects DB at C; AB ∥ DE, forming triangles ABC and CDE.</p>
-<svg viewBox="0 0 280 180" width="280" height="180" style="display:block;margin:0 auto 8px;">
-  <line x1="20" y1="160" x2="140" y2="80" stroke="#1e293b" strokeWidth="2"/>
-  <line x1="140" y1="80" x2="260" y2="160" stroke="#1e293b" strokeWidth="2"/>
-  <line x1="20" y1="160" x2="260" y2="160" stroke="#1e293b" strokeWidth="1.5" strokeDasharray="4 3"/>
-  <line x1="60" y1="20" x2="220" y2="20" stroke="#1e293b" strokeWidth="1.5" strokeDasharray="4 3"/>
-  <line x1="20" y1="160" x2="60" y2="20" stroke="#1e293b" strokeWidth="2"/>
-  <line x1="260" y1="160" x2="220" y2="20" stroke="#1e293b" strokeWidth="2"/>
-  <text x="7" y="168" fontSize="13" fontWeight="700" fill="#1e293b">B</text>
-  <text x="262" y="168" fontSize="13" fontWeight="700" fill="#1e293b">E</text>
-  <text x="47" y="16" fontSize="13" fontWeight="700" fill="#1e293b">A</text>
-  <text x="222" y="16" fontSize="13" fontWeight="700" fill="#1e293b">D</text>
-  <text x="134" y="74" fontSize="13" fontWeight="700" fill="#1e293b">C</text>
-  <text x="90" y="108" fontSize="12" fill="#3b82f6">x°</text>
-  <text x="58" y="38" fontSize="12" fill="#3b82f6">y°</text>
-  <text x="196" y="38" fontSize="12" fill="#3b82f6">z°</text>
-</svg>`;
-
-const GRAPH_F = `<p style="font-size:13px;color:#475569;margin-bottom:6px;">Graph of \\(y = f(x)\\) — the curve passes through \\((0,\\ 3)\\) on the \\(y\\)-axis.</p>
-<svg viewBox="0 0 220 180" width="220" height="180" style="display:block;margin:0 auto 8px;">
-  <line x1="20" y1="90" x2="200" y2="90" stroke="#94a3b8" strokeWidth="1"/>
-  <line x1="110" y1="10" x2="110" y2="170" stroke="#94a3b8" strokeWidth="1"/>
-  <path d="M 40,150 Q 80,60 110,123 Q 140,170 180,50" fill="none" stroke="#3b82f6" strokeWidth="2.5"/>
-  <circle cx="110" cy="123" r="4" fill="#1e293b"/>
-  <text x="116" y="127" fontSize="12" fill="#1e293b">\\((0,3)\\)</text>
-  <text x="196" y="94" fontSize="12" fill="#64748b">x</text>
-  <text x="112" y="8" fontSize="12" fill="#64748b">y</text>
-</svg>`;
-
-const QUESTIONS: Question[] = [
-  {
-    id: 'qb22-01', skill: 'Form, Structure, and Sense', difficulty: 'Easy', domain: 'RW',
-    passage: '',
-    question: `<p>During World War II, codebreakers played an essential role in deciphering coded messages. In the US military, more than 10,000 women ______ as codebreakers, making up nearly half of all US codebreakers.</p><p>Which choice completes the text so that it conforms to the conventions of Standard English?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: 'having served' },
-      { label: 'B', text: 'to serve' },
-      { label: 'C', text: 'served' },
-      { label: 'D', text: 'serving' },
-    ],
-    correctOption: 'C',
-  },
-  {
-    id: 'qb22-02', skill: 'Words in Context', difficulty: 'Medium', domain: 'RW',
-    passage: '',
-    question: `<p>Yanzhe Fu et al. suggest that the extinct aquatic insect <em>Karataviella popovi</em> utilized a brood care strategy that mitigated the risk of oxygen deficiency. This determination rests on the researchers' analysis of fossils uncovered at a particularly ______ site: China's Haifanggou Formation, which has yielded a vast diversity of fossils, including those of long-proboscid scorpionflies.</p><p>Which choice completes the text with the most logical and precise word or phrase?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: 'fruitful' },
-      { label: 'B', text: 'unassailable' },
-      { label: 'C', text: 'obscure' },
-      { label: 'D', text: 'quantified' },
-    ],
-    correctOption: 'A',
-  },
-  {
-    id: 'qb22-03', skill: 'Words in Context', difficulty: 'Hard', domain: 'RW',
-    passage: '',
-    question: `<p>The Polynesian languages, a group of related languages originating on islands in the Pacific, typically have ______ array of consonant sounds. For example, the Mangareva language of the South Pacific has nine consonants, and 'Ōlelo Hawai'i, the language of the Native Hawaiian people, has eight. Globally, however, the median number of consonants per language is over twenty-two.</p><p>Which choice completes the text with the most logical and precise word or phrase?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: 'an unvarying' },
-      { label: 'B', text: 'a musical' },
-      { label: 'C', text: 'an exclusive' },
-      { label: 'D', text: 'a modest' },
-    ],
-    correctOption: 'D',
-  },
-  {
-    id: 'qb22-04', skill: 'Boundaries', difficulty: 'Hard', domain: 'RW',
-    passage: '',
-    question: `<p>For the past 20 million years, Earth's magnetic poles in the far north and far south have remained roughly where they are today. This has not always been the ______ throughout geologic history, Earth's magnetic poles have swapped places several times through a process called polar wandering.</p><p>Which choice completes the text so that it conforms to the conventions of Standard English?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: 'case, though' },
-      { label: 'B', text: 'case, though,' },
-      { label: 'C', text: 'case; though,' },
-      { label: 'D', text: 'case, though;' },
-    ],
-    correctOption: 'D',
-  },
-  {
-    id: 'qb22-05', skill: 'Linear functions', difficulty: 'Easy', domain: 'Algebra',
-    passage: '',
-    question: `<p>A computer company pays customers for trading in old computers. The payment \\(p\\), in dollars, is the original retail price of a computer minus \\(\\$150\\) for each year since the computer was released. Which equation represents this situation for a computer with an original retail price of \\(\\$690\\) when it was released \\(t\\) years ago, where \\(t\\) is a whole number and \\(1 \\leq t \\leq 4\\)?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: '\\(p = 150 - 690t\\)' },
-      { label: 'B', text: '\\(p = 690 - 150t\\)' },
-      { label: 'C', text: '\\(t = 150 - 690p\\)' },
-      { label: 'D', text: '\\(t = 690 - 150p\\)' },
-    ],
-    correctOption: 'B',
-  },
-  {
-    id: 'qb22-06', skill: 'Systems of two linear equations', difficulty: 'Medium', domain: 'Algebra',
-    passage: '',
-    question: `<p>\\(y - 6 = \\dfrac{4}{5}(x + 5)\\)</p><p>\\(y - v = \\dfrac{4}{5}(x + 10)\\)</p><p>In the given system of equations, \\(v\\) is a constant. The system has infinitely many solutions. What is the value of \\(v\\)?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: '\\(0\\)' },
-      { label: 'B', text: '\\(2\\)' },
-      { label: 'C', text: '\\(4\\)' },
-      { label: 'D', text: '\\(12\\)' },
-    ],
-    correctOption: 'B',
-  },
-  {
-    id: 'qb22-07', skill: 'Linear functions', difficulty: 'Hard', domain: 'Algebra',
-    passage: '',
-    question: `<p>A train traveled \\(173\\) miles in the first \\(3\\) hours of a trip and traveled at an average speed of \\(53\\) miles per hour for the remainder of the trip. Which equation gives the total number of miles, \\(y\\), the train traveled if the trip was \\(x\\) hours long and \\(x > 3\\)?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: '\\(y = 53x + 173\\)' },
-      { label: 'B', text: '\\(y = 53x + 14\\)' },
-      { label: 'C', text: '\\(y = 14x + 226\\)' },
-      { label: 'D', text: '\\(y = 14x + 53\\)' },
-    ],
-    correctOption: 'B',
-  },
-  {
-    id: 'qb22-08', skill: 'Systems of two linear equations', difficulty: 'Hard', domain: 'Algebra',
-    passage: '',
-    question: `<p>\\(x + y = 20\\)</p><p>One of the two equations in a system of linear equations is given. The system has exactly one solution. Which equation could be the second equation in the system?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: '\\(3x + 3y = 60\\)' },
-      { label: 'B', text: '\\(-x - y = 40\\)' },
-      { label: 'C', text: '\\(3x + 3y = 14\\)' },
-      { label: 'D', text: '\\(x - y = 20\\)' },
-    ],
-    correctOption: 'D',
-  },
-  {
-    id: 'qb22-09', skill: 'Equivalent expressions', difficulty: 'Easy', domain: 'Advanced Math',
-    passage: '',
-    question: `<p>Which expression is equivalent to \\(100x^2 + 2{,}600\\)?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: '\\(100(26x^2)\\)' },
-      { label: 'B', text: '\\(100(x^2 + 26)\\)' },
-      { label: 'C', text: '\\(2{,}600(100x^2)\\)' },
-      { label: 'D', text: '\\(2{,}600(100x^2 + 1)\\)' },
-    ],
-    correctOption: 'B',
-  },
-  {
-    id: 'qb22-10', skill: 'Nonlinear equations', difficulty: 'Easy', domain: 'Advanced Math',
-    passage: '',
-    question: `<p style="text-align:center;">\\(\\dfrac{1}{x} + 8 = \\dfrac{1}{6} + 8\\)</p><p>What is the solution to the given equation?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: '\\(1\\)' },
-      { label: 'B', text: '\\(6\\)' },
-      { label: 'C', text: '\\(8\\)' },
-      { label: 'D', text: '\\(14\\)' },
-    ],
-    correctOption: 'B',
-  },
-  {
-    id: 'qb22-11', skill: 'Nonlinear functions', difficulty: 'Medium', domain: 'Advanced Math',
-    passage: GRAPH_F,
-    question: `<p>The graph of \\(y = f(x)\\) is shown. What is the \\(y\\)-intercept of \\(y = f(x) + 5\\)?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: '\\((0,\\ 8)\\)' },
-      { label: 'B', text: '\\((0,\\ 5)\\)' },
-      { label: 'C', text: '\\((0,\\ 3)\\)' },
-      { label: 'D', text: '\\((0,\\ 0)\\)' },
-    ],
-    correctOption: 'A',
-  },
-  {
-    id: 'qb22-12', skill: 'Equivalent expressions', difficulty: 'Medium', domain: 'Advanced Math',
-    passage: '',
-    question: `<p>Which expression is equivalent to \\(\\dfrac{4x + 1}{x - 9}\\), where \\(x > 9\\)?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: '\\(4 + \\dfrac{37}{x - 9}\\)' },
-      { label: 'B', text: '\\(4 + \\dfrac{35}{x - 9}\\)' },
-      { label: 'C', text: '\\(4 + \\dfrac{1}{x - 9}\\)' },
-      { label: 'D', text: '\\(4 - \\dfrac{1}{x - 9}\\)' },
-    ],
-    correctOption: 'A',
-  },
-  {
-    id: 'qb22-13', skill: 'Nonlinear functions', difficulty: 'Hard', domain: 'Advanced Math',
-    passage: '',
-    question: `<p>A certain bowl was sold online for prices varying between \\(\\$7\\) and \\(\\$13\\). The number of bowls sold can be modeled by a quadratic function based on the price, where \\(5\\) bowls were sold for \\(\\$12\\) each and the maximum of \\(9\\) bowls were sold for \\(\\$10\\) each. According to the model, what is the number of bowls that were sold for \\(\\$8\\) each?</p>`,
-    type: 'spr',
-    answers: ['5'],
-  },
-  {
-    id: 'qb22-14', skill: 'One-variable data', difficulty: 'Easy', domain: 'PSDA',
-    passage: CARDS_TABLE,
-    question: `<p>The table summarizes the distribution of shape printed on one side for cards in a deck of cards. How many cards in the deck have a triangle printed on one side?</p>`,
-    type: 'spr',
-    answers: ['14'],
-  },
-  {
-    id: 'qb22-15', skill: 'Ratios, rates, proportional relationships', difficulty: 'Medium', domain: 'PSDA',
-    passage: '',
-    question: `<p>There is a proportional relationship between \\(p\\) and \\(t\\). If \\(p = 5{,}130\\) when \\(t = 6{,}840\\), then what is the value of \\(p\\) when \\(t = 5{,}472\\)?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: '\\(7{,}296\\)' },
-      { label: 'B', text: '\\(7{,}182\\)' },
-      { label: 'C', text: '\\(4{,}104\\)' },
-      { label: 'D', text: '\\(3{,}762\\)' },
-    ],
-    correctOption: 'C',
-  },
-  {
-    id: 'qb22-16', skill: 'Two-variable data', difficulty: 'Medium', domain: 'PSDA',
-    passage: SCATTERPLOT_TABLE,
-    question: `<p>The owner of a restaurant supply store selects \\(10\\) cutting boards to put on sale. The table shows the width \\(x\\), in centimeters, of each cutting board and its corresponding sale price \\(y\\), in dollars. According to the data, which statement is true?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: 'Cutting boards with width greater than \\(48\\) cm have an average sale price of \\(\\$59.00\\).' },
-      { label: 'B', text: 'Cutting boards with width greater than \\(48\\) cm have an average sale price of \\(\\$40.00\\).' },
-      { label: 'C', text: 'Cutting boards with width between \\(18\\) and \\(48\\) cm have an average sale price of \\(\\$31.20\\).' },
-      { label: 'D', text: 'Cutting boards with width between \\(18\\) and \\(48\\) cm have an average sale price of \\(\\$23.00\\).' },
-    ],
-    correctOption: 'D',
-  },
-  {
-    id: 'qb22-17', skill: 'One-variable data', difficulty: 'Hard', domain: 'PSDA',
-    passage: DATA_Q_TABLE,
-    question: `<p>Data sets Q and R are summarized in the tables shown, where \\(a\\), \\(b\\), and \\(c\\) are positive, consecutive integers and \\(a < b < c\\). Which statement comparing the means of the data sets is true?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: 'The mean of data set R is \\(\\dfrac{2(11)}{14}\\) less than the mean of data set Q.' },
-      { label: 'B', text: 'The mean of data set R is \\(\\dfrac{2(11)}{14}\\) greater than the mean of data set Q.' },
-      { label: 'C', text: 'The mean of data set Q is \\(10\\) times the mean of data set R.' },
-      { label: 'D', text: 'The means of the two data sets are equal.' },
-    ],
-    correctOption: 'B',
-  },
-  {
-    id: 'qb22-18', skill: 'Area and volume', difficulty: 'Easy', domain: 'Geometry',
-    passage: '',
-    question: `<p>The length of one side of an equilateral triangle is \\(28\\) inches. What is the perimeter, in inches, of this triangle?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: '\\(28\\)' },
-      { label: 'B', text: '\\(31\\)' },
-      { label: 'C', text: '\\(84\\)' },
-      { label: 'D', text: '\\(112\\)' },
-    ],
-    correctOption: 'C',
-  },
-  {
-    id: 'qb22-19', skill: 'Lines, angles, and triangles', difficulty: 'Medium', domain: 'Geometry',
-    passage: TRIANGLE_ABC_CDE,
-    question: `<p>In the figure, \\(\\overline{AE}\\) intersects \\(\\overline{DB}\\) at point \\(C\\) and \\(\\overline{AB}\\) is parallel to \\(\\overline{DE}\\), creating triangles \\(ABC\\) and \\(CDE\\). If \\(x = 63\\) and \\(y = 2x - 47\\), what is the value of \\(z\\)?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: '\\(38\\)' },
-      { label: 'B', text: '\\(47\\)' },
-      { label: 'C', text: '\\(63\\)' },
-      { label: 'D', text: '\\(79\\)' },
-    ],
-    correctOption: 'A',
-  },
-  {
-    id: 'qb22-20', skill: 'Right triangles and trigonometry', difficulty: 'Medium', domain: 'Geometry',
-    passage: TRIANGLE_XYZ,
-    question: `<p>In right triangle \\(XYZ\\) shown, angle \\(Y\\) is a right angle, \\(XY = 75\\), and \\(YZ = 560\\). If \\(\\cos Z = \\dfrac{560}{c}\\), what is the value of \\(c\\)?</p>`,
-    type: 'spr',
-    answers: ['565'],
-  },
-  {
-    id: 'qb22-21', skill: 'Right triangles and trigonometry', difficulty: 'Hard', domain: 'Geometry',
-    passage: TRIANGLE_QRS,
-    question: `<p>In right triangle \\(QRS\\) shown, angle \\(R\\) is a right angle, \\(RS = 25\\), and \\(QR < RS\\). Which expression represents the length of \\(\\overline{QS}\\)?</p>`,
-    type: 'mcq',
-    options: [
-      { label: 'A', text: '\\(25 \\cos Q\\)' },
-      { label: 'B', text: '\\(25 \\sin Q\\)' },
-      { label: 'C', text: '\\(\\dfrac{25}{\\cos Q}\\)' },
-      { label: 'D', text: '\\(\\dfrac{25}{\\sin Q}\\)' },
-    ],
-    correctOption: 'D',
-  },
-  {
-    id: 'qb22-22', skill: 'Circles', difficulty: 'Hard', domain: 'Geometry',
-    passage: '',
-    question: `<p>A circle has center \\(O\\), and points \\(A\\) and \\(U\\) lie on the circle. Line segments \\(AE\\) and \\(UE\\) are tangent to the circle at points \\(A\\) and \\(U\\), respectively. The distance between point \\(O\\) and point \\(E\\) is \\(510\\) centimeters and the distance between point \\(O\\) and point \\(U\\) is \\(78\\) centimeters. What is the area, in square centimeters, of quadrilateral \\(OAEU\\)?</p>`,
-    type: 'spr',
-    answers: ['39312'],
-  },
-];
+function mapRow(row: DBRow): Question {
+  const type: QuestionType = row.question_type === 'Grid-in' ? 'spr' : 'mcq';
+  const domain = row.domain === 'Reading and Writing' ? 'RW' : (row.domain ?? 'Math');
+  let answers: string[] | undefined;
+  let correctOption: string | undefined;
+  if (type === 'spr') {
+    try {
+      const parsed = JSON.parse(row.correct_answer);
+      answers = Array.isArray(parsed) ? parsed.map(String) : [String(parsed)];
+    } catch {
+      answers = [row.correct_answer];
+    }
+  } else {
+    correctOption = row.correct_answer;
+  }
+  return {
+    id: `qb56-${row.id}`,
+    skill: row.skill ?? '',
+    difficulty: row.difficulty ?? 'Medium',
+    domain,
+    passage: row.figure ?? '',
+    question: row.question ?? '',
+    type,
+    options: row.options ?? undefined,
+    correctOption,
+    answers,
+  };
+}
 
 function normalizeAnswer(s: string): string {
   return s.trim().replace(/\s+/g, '').toLowerCase();
@@ -424,7 +91,15 @@ function checkAnswer(q: Question, userAnswer: string): boolean {
   return checkSPR(userAnswer, q.answers ?? []);
 }
 
+type Phase = 'gate' | 'leaderboard' | 'test' | 'result';
+interface LeaderboardEntry { rank: number; maskedId: string; correctCount: number; totalCount: number; score: number; }
+interface Stats { leaderboard: LeaderboardEntry[]; questionStats: Record<string, { correct: number; total: number }>; }
+
 export default function NovemberQB22Page() {
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loadingQ, setLoadingQ] = useState(true);
+  const [fetchError, setFetchError] = useState('');
+
   const [phase, setPhase] = useState<Phase>('gate');
   const [accessCode, setAccessCode] = useState('');
   const [instagramId, setInstagramId] = useState('');
@@ -439,6 +114,17 @@ export default function NovemberQB22Page() {
   const [toast, setToast] = useState('');
   const [correctCount, setCorrectCount] = useState(0);
 
+  useEffect(() => {
+    fetch('/api/practice/november-qb56/questions')
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) { setFetchError(data.error); return; }
+        setQuestions((data.questions as DBRow[]).map(mapRow));
+      })
+      .catch(() => setFetchError('Failed to load questions. Please refresh.'))
+      .finally(() => setLoadingQ(false));
+  }, []);
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(''), 3500);
@@ -446,6 +132,7 @@ export default function NovemberQB22Page() {
 
   const handleGateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loadingQ) return;
     const cleanCode = accessCode.trim().toUpperCase();
     const cleanIg = instagramId.trim();
     if (!cleanCode || !cleanIg) return;
@@ -492,10 +179,10 @@ export default function NovemberQB22Page() {
     const answeredCount = Object.keys(answers).length;
     if (answeredCount < 1) { showToast('Solve at least 1 question before submitting.'); return; }
     setSubmitting(true);
-    const correct = QUESTIONS.filter(q => checkAnswer(q, answers[q.id] ?? '')).length;
+    const correct = questions.filter(q => checkAnswer(q, answers[q.id] ?? '')).length;
     setCorrectCount(correct);
     const questionResults = Object.fromEntries(
-      QUESTIONS.map(q => [q.id, checkAnswer(q, answers[q.id] ?? '')])
+      questions.map(q => [q.id, checkAnswer(q, answers[q.id] ?? '')])
     );
     try {
       await fetch('/api/practice/november-qb22/submit', {
@@ -522,16 +209,22 @@ export default function NovemberQB22Page() {
           <div style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>SuperfastSAT</div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1e293b', marginBottom: 8 }}>{TEST_LABEL}</h1>
           <p style={{ fontSize: 13, color: '#64748b', marginBottom: 8, lineHeight: 1.6 }}>{TEST_DESC}</p>
-          <p style={{ fontSize: 14, color: '#64748b', marginBottom: 36 }}>Enter your access code and Instagram ID to begin</p>
+          {fetchError ? (
+            <p style={{ color: '#ef4444', fontSize: 13, marginBottom: 16 }}>{fetchError}</p>
+          ) : loadingQ ? (
+            <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>Loading questions…</p>
+          ) : (
+            <p style={{ fontSize: 13, color: '#10b981', marginBottom: 16, fontWeight: 600 }}>{questions.length} questions loaded</p>
+          )}
           <form onSubmit={handleGateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <input type="text" placeholder="Access code" value={accessCode} onChange={e => setAccessCode(e.target.value)} required
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none', textTransform: 'uppercase', letterSpacing: '0.05em' }} />
             <input type="text" placeholder="@instagram_id" value={instagramId} onChange={e => setInstagramId(e.target.value)} required
               style={{ width: '100%', padding: '13px 16px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#f8fafc', color: '#1e293b', fontSize: 15, boxSizing: 'border-box', outline: 'none' }} />
             {gateError && <p style={{ color: '#ef4444', fontSize: 13, margin: 0 }}>{gateError}</p>}
-            <button type="submit" disabled={!accessCode.trim() || !instagramId.trim() || validating}
-              style={{ width: '100%', padding: '13px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: !accessCode.trim() || !instagramId.trim() || validating ? 'not-allowed' : 'pointer', opacity: !accessCode.trim() || !instagramId.trim() || validating ? 0.4 : 1, marginTop: 4 }}>
-              {validating ? 'Checking...' : 'Start Practice'}
+            <button type="submit" disabled={!accessCode.trim() || !instagramId.trim() || validating || loadingQ || !!fetchError}
+              style={{ width: '100%', padding: '13px 0', background: '#1e293b', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: !accessCode.trim() || !instagramId.trim() || validating || loadingQ ? 'not-allowed' : 'pointer', opacity: !accessCode.trim() || !instagramId.trim() || validating || loadingQ ? 0.4 : 1, marginTop: 4 }}>
+              {validating ? 'Checking...' : loadingQ ? 'Loading...' : 'Start Practice'}
             </button>
           </form>
         </div>
@@ -598,8 +291,8 @@ export default function NovemberQB22Page() {
             </div>
           ) : (
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '10px 20px', marginTop: 8 }}>
-              <span style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{correctCount} / {QUESTIONS.length}</span>
-              <span style={{ fontSize: 14, color: '#64748b' }}>{Math.round((correctCount / QUESTIONS.length) * 100)}%</span>
+              <span style={{ fontSize: 22, fontWeight: 800, color: '#1e293b' }}>{correctCount} / {questions.length}</span>
+              <span style={{ fontSize: 14, color: '#64748b' }}>{questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0}%</span>
             </div>
           )}
         </div>
@@ -632,29 +325,29 @@ export default function NovemberQB22Page() {
   }
 
   /* ── Test ── */
-  const currentQ = QUESTIONS[currentIndex] ?? null;
+  const currentQ = questions[currentIndex] ?? null;
   const isRevealed = currentQ ? !!revealed[currentQ.id] : false;
   const userAnswer = currentQ ? (answers[currentQ.id] ?? '') : '';
   const isCorrect = isRevealed && currentQ ? checkAnswer(currentQ, userAnswer) : false;
   const isWrong = isRevealed && !!userAnswer && !isCorrect;
   const isFirst = currentIndex === 0;
-  const isLast = currentIndex === QUESTIONS.length - 1;
+  const isLast = currentIndex === questions.length - 1;
   const answeredCount = Object.keys(answers).filter(id => answers[id]).length;
-  const totalCorrect = QUESTIONS.filter(q => checkAnswer(q, answers[q.id] ?? '')).length;
+  const totalCorrect = questions.filter(q => checkAnswer(q, answers[q.id] ?? '')).length;
 
   const navStrip = (
     <div style={{ borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
       <div style={{ display: 'flex', gap: 6, minWidth: 'max-content' }}>
-        {QUESTIONS.map((q, idx) => {
+        {questions.map((q, idx) => {
           const isAnswered = !!answers[q.id];
           const isCurrent = idx === currentIndex;
-          const domainColors: Record<string, string> = { RW: '#8b5cf6', Algebra: '#3b82f6', 'Advanced Math': '#0ea5e9', PSDA: '#f59e0b', Geometry: '#10b981' };
+          const color = DOMAIN_COLOR[q.domain] ?? '#1e293b';
           return (
             <button key={q.id} onClick={() => setCurrentIndex(idx)}
               style={{
                 width: 30, height: 30, borderRadius: 6,
-                border: isCurrent ? `2px solid ${domainColors[q.domain] ?? '#1e293b'}` : '1px solid #e5e7eb',
-                background: isCurrent ? (domainColors[q.domain] ?? '#1e293b') : isAnswered ? '#3b82f6' : '#fff',
+                border: isCurrent ? `2px solid ${color}` : '1px solid #e5e7eb',
+                background: isCurrent ? color : isAnswered ? '#3b82f6' : '#fff',
                 color: isCurrent || isAnswered ? '#fff' : '#94a3b8',
                 fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -669,7 +362,7 @@ export default function NovemberQB22Page() {
 
   const headerRight = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-      <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / 22 &nbsp;({totalCorrect} correct)</span>
+      <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / {questions.length} &nbsp;({totalCorrect} correct)</span>
       <button onClick={handleSubmit} disabled={submitting || submitted || answeredCount < 1}
         style={{ padding: '6px 14px', background: submitted ? '#22c55e' : '#3b82f6', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: submitted || submitting || answeredCount < 1 ? 'default' : 'pointer', opacity: answeredCount < 1 ? 0.4 : 1 }}>
         {submitted ? 'Submitted ✓' : submitting ? 'Submitting...' : 'Submit Results'}
@@ -700,7 +393,7 @@ export default function NovemberQB22Page() {
         onNext={() => setCurrentIndex(i => i + 1)}
         nextDisabled={isLast}
         footerCenter={
-          <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {QUESTIONS.length}</span>
+          <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {questions.length}</span>
         }
       >
         {currentQ && (
