@@ -28,6 +28,8 @@ const EXPECTED_CRONS: Record<string, string> = {
   '/api/cron/ig-content-spend-sync': '30 17 * * *',
   // 주간 방문자 리포트 (화요일 04:00 KST = 월요일 19:00 UTC)
   '/api/cron/weekly-visitor-report': '0 19 * * 2',
+  // 스케줄 미입력 이메일 넛지 (3시간마다) — 3cb1581f에서 추가
+  '/api/cron/schedule-nudge': '0 */3 * * *',
 };
 
 function readCrons(): { path: string; schedule: string }[] {
