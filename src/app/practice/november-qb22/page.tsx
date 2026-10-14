@@ -468,40 +468,46 @@ export default function NovemberQB22Page() {
                 selectedAnswer: userAnswer,
                 onSelect: (val: string) => {
                   handleAnswer(currentQ.id, val);
-                  handleReveal(currentQ.id);
                 },
                 feedback: isRevealed && userAnswer ? { selectedLabel: userAnswer, correctLabel: currentQ.correctOption ?? '' } : null,
               })}
             >
-              {currentQ.type === 'spr' && !isRevealed && userAnswer && (
-                <button onClick={() => handleReveal(currentQ.id)}
-                  style={{ marginTop: 8, padding: '10px 16px', borderRadius: 8, border: 'none', background: '#1e293b', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                  Check
-                </button>
-              )}
             </BluebookQuestionUnit>
 
             {/* Confidence Level Selector */}
             <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid #f1f5f9' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
-                Confidence Level
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                  Confidence Level
+                </div>
+                {userAnswer && !isRevealed && (
+                  <span style={{ fontSize: 11, color: '#3b82f6', fontWeight: 600 }}>
+                    ← select to reveal answer
+                  </span>
+                )}
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
                 {CONFIDENCE_LEVELS.map(lvl => {
                   const selected = confidence[currentQ.id] === lvl.value;
+                  const disabled = !userAnswer;
                   return (
                     <button
                       key={lvl.value}
-                      onClick={() => setConfidence(prev => ({ ...prev, [currentQ.id]: lvl.value }))}
+                      disabled={disabled}
+                      onClick={() => {
+                        setConfidence(prev => ({ ...prev, [currentQ.id]: lvl.value }));
+                        if (userAnswer) handleReveal(currentQ.id);
+                      }}
                       style={{
                         padding: '6px 14px',
                         borderRadius: 20,
                         border: selected ? `2px solid ${CONF_COLOR[lvl.value]}` : '1px solid #e5e7eb',
                         background: selected ? CONF_COLOR[lvl.value] : '#fff',
-                        color: selected ? '#fff' : '#64748b',
+                        color: selected ? '#fff' : disabled ? '#cbd5e1' : '#64748b',
                         fontSize: 12,
                         fontWeight: 600,
-                        cursor: 'pointer',
+                        cursor: disabled ? 'not-allowed' : 'pointer',
+                        opacity: disabled ? 0.5 : 1,
                         transition: 'all 0.15s',
                       }}
                     >
