@@ -152,6 +152,7 @@ export default function NovemberQB22Page() {
   const [toast, setToast] = useState('');
   const [confidence, setConfidence] = useState<Record<string, number>>({});
   const [correctCount, setCorrectCount] = useState(0);
+  const [showQuestionNav, setShowQuestionNav] = useState(false);
 
   useEffect(() => {
     // MathJax 선제 로드 — 테이블 내 LaTeX 렌더링에 필요
@@ -384,33 +385,6 @@ export default function NovemberQB22Page() {
   const answeredCount = Object.keys(answers).filter(id => answers[id]).length;
   const totalCorrect = questions.filter(q => checkAnswer(q, answers[q.id] ?? '')).length;
 
-  const bottomStrip = (
-    <div style={{ borderTop: '1px solid #e5e7eb', borderBottom: '1px solid #e5e7eb', overflowX: 'auto', background: '#f8fafc', flexShrink: 0, padding: '8px 16px' }}>
-      <div style={{ display: 'flex', gap: 6, minWidth: 'max-content' }}>
-        {questions.map((q, idx) => {
-          const isAnswered = !!answers[q.id];
-          const isCurrent = idx === currentIndex;
-          const conf = confidence[q.id];
-          const color = DOMAIN_COLOR[q.domain] ?? '#1e293b';
-          const bg = isCurrent ? color : isAnswered ? (conf !== undefined ? CONF_COLOR[conf] : '#3b82f6') : '#fff';
-          return (
-            <button key={q.id} onClick={() => setCurrentIndex(idx)}
-              style={{
-                width: 30, height: 30, borderRadius: 6,
-                border: isCurrent ? `2px solid ${color}` : '1px solid #e5e7eb',
-                background: bg,
-                color: isCurrent || isAnswered ? '#fff' : '#94a3b8',
-                fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-              {idx + 1}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-
   const headerRight = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
       <span style={{ color: '#94a3b8', fontSize: 12 }}>{answeredCount} / {questions.length} &nbsp;({totalCorrect} correct)</span>
@@ -434,17 +408,71 @@ export default function NovemberQB22Page() {
           {toast}
         </div>
       )}
+      {showQuestionNav && (
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.45)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}
+          onClick={() => setShowQuestionNav(false)}
+        >
+          <div
+            style={{ background: '#fff', borderRadius: '16px 16px 0 0', padding: '20px 20px 36px', maxHeight: '70vh', overflowY: 'auto', boxShadow: '0 -4px 32px rgba(0,0,0,0.18)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>{TEST_LABEL}</div>
+                <div style={{ display: 'flex', gap: 18, fontSize: 12, color: '#64748b' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ width: 18, height: 18, borderRadius: 4, background: '#1e293b', display: 'inline-block' }} /> Current
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ width: 18, height: 18, borderRadius: 4, border: '2px dashed #cbd5e1', display: 'inline-block' }} /> Unanswered
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ width: 18, height: 18, borderRadius: 4, background: '#3b82f6', display: 'inline-block' }} /> Answered
+                  </span>
+                </div>
+              </div>
+              <button onClick={() => setShowQuestionNav(false)}
+                style={{ background: 'none', border: 'none', fontSize: 20, color: '#94a3b8', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}>
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 8 }}>
+              {questions.map((q, idx) => {
+                const isCurrent = idx === currentIndex;
+                const isAnswered = !!answers[q.id];
+                const conf = confidence[q.id];
+                const bg = isCurrent ? '#1e293b' : isAnswered ? (conf !== undefined ? CONF_COLOR[conf] : '#3b82f6') : '#fff';
+                const border = !isAnswered && !isCurrent ? '2px dashed #cbd5e1' : '2px solid transparent';
+                return (
+                  <button key={q.id} onClick={() => { setCurrentIndex(idx); setShowQuestionNav(false); }}
+                    style={{
+                      padding: '10px 0', borderRadius: 8, border, background: bg,
+                      color: isAnswered || isCurrent ? '#fff' : '#94a3b8',
+                      fontSize: 13, fontWeight: 700, cursor: 'pointer', textAlign: 'center',
+                    }}>
+                    {idx + 1}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       <BluebookPageShell
         sectionTitle={TEST_LABEL}
         headerRight={headerRight}
         passage={passageNode}
-        bottomStrip={bottomStrip}
         onPrev={() => setCurrentIndex(i => i - 1)}
         prevHidden={isFirst}
         onNext={() => setCurrentIndex(i => i + 1)}
         nextDisabled={isLast}
         footerCenter={
-          <span style={{ fontSize: 12, color: '#94a3b8' }}>{currentIndex + 1} / {questions.length}</span>
+          <button className="bluebook-footer-center" onClick={() => setShowQuestionNav(v => !v)}>
+            Question {currentIndex + 1} of {questions.length} {showQuestionNav ? '∧' : '∨'}
+          </button>
         }
       >
         {currentQ && (
