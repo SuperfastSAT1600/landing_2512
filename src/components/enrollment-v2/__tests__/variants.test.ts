@@ -11,12 +11,12 @@ describe('수업권 판매 구성(variant)', () => {
     expect(ENROLLMENT_V2.selfDirected).toBe(true);
   });
 
-  it('V3는 관리형 10시간 165만원을 앞에, 20·40시간권은 접어 두고, 자기주도(비관리형·콘텐츠) 없음', () => {
-    expect(ENROLLMENT_V3.managedPkgs.map((p) => [p.hours, p.totalPrice])).toEqual([[10, 1650000]]);
-    expect(ENROLLMENT_V3.managedMorePkgs.map((p) => [p.hours, p.totalPrice])).toEqual([
-      [20, 2990000], [40, 5390000],
+  it('V3는 관리형 10·20·40시간(펼침)·대표코치 접힘, 자기주도(비관리형·콘텐츠) 없음', () => {
+    expect(ENROLLMENT_V3.managedPkgs.map((p) => [p.hours, p.totalPrice])).toEqual([
+      [10, 1650000], [20, 2990000], [40, 5390000],
     ]);
-    expect(ENROLLMENT_V2.managedMorePkgs).toEqual([]);
+    expect(ENROLLMENT_V3.directorCollapsible).toBe(true);
+    expect(ENROLLMENT_V2.directorCollapsible).toBe(false);
     expect(ENROLLMENT_V3.selfDirected).toBe(false);
   });
 
