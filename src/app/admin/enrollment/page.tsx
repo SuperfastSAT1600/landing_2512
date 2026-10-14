@@ -31,6 +31,20 @@ const PAGES: EnrollmentPage[] = [
         retired: true,
     },
     {
+        slug: 'enrollment2026-en',
+        label: 'enrollment2026/en (v2 영문)',
+        url: '/enrollment2026/en',
+        description: 'v2 영문판',
+        retired: true,
+    },
+    {
+        slug: 'enrollment-v2',
+        label: 'enrollment-v2 (v2 사본)',
+        url: '/enrollment-v2',
+        description: 'v2와 같은 화면의 다른 주소',
+        retired: true,
+    },
+    {
         slug: 'enrollment-v3',
         label: 'enrollment-v3 (v3)',
         url: '/enrollment-v3',
@@ -139,7 +153,7 @@ export default function AdminEnrollmentPage() {
             </div>
 
             <p className="mt-6 text-xs text-gray-600">
-                배포 중지 시 해당 페이지 접근 시 메인으로 리디렉션됩니다. 종료된 v1·v2는 고객이 들어오면 V3로 이동합니다(관리자는 열어볼 수 있음).
+                배포 중지 시 해당 페이지 접근 시 메인으로 리디렉션됩니다. 종료된 v1·v2는 고객이 들어오면 V3로 이동합니다. 내부에서는 이 화면의 열기 링크로 볼 수 있습니다(관리자 로그인 후 24시간).
             </p>
         </div>
     );
