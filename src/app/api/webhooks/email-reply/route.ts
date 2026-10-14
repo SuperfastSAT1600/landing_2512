@@ -114,7 +114,7 @@ async function analyzeReply(text: string): Promise<{ hours: number; reason: stri
     });
 
     const raw = message.content[0].type === 'text' ? message.content[0].text : '';
-    const parsed = JSON.parse(raw.match(/\{.*\}/s)?.[0] ?? '{}');
+    const parsed = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] ?? '{}');
     const hours = Number(parsed.hours) || DEFAULT_SNOOZE_H;
     const reason = String(parsed.reason || '사유 분석 완료');
     return { hours, reason };

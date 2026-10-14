@@ -113,7 +113,7 @@ export async function sendNudgeEmail(target: NudgeTarget): Promise<void> {
     to: email,
     subject,
     html,
-    reply_to: replyTo(sfv2ProfileId),
+    replyTo: replyTo(sfv2ProfileId),
   });
 }
 
@@ -128,6 +128,6 @@ export async function sendSnoozeConfirmEmail(
     to: target.email,
     subject: '[SuperfastSAT] 알림 일시정지 확인',
     html: snoozeConfirmHtml(target.name, snoozeUntil, reason),
-    reply_to: replyTo(target.sfv2ProfileId),
+    replyTo: replyTo(target.sfv2ProfileId),
   });
 }
