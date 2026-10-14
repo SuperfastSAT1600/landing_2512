@@ -12,6 +12,18 @@ function MathHTMLContent({ html, className }: { html: string; className?: string
     if (!ref.current || !html) return;
     const el = ref.current;
     el.innerHTML = html;
+    // Tailwind preflight이 border 어트리뷰트를 reset하므로 테이블에 직접 스타일 주입
+    el.querySelectorAll<HTMLTableElement>('table').forEach(t => {
+      t.style.borderCollapse = 'collapse';
+      t.style.width = '100%';
+      t.style.fontSize = '14px';
+      t.style.marginBottom = '12px';
+    });
+    el.querySelectorAll<HTMLElement>('td, th').forEach(cell => {
+      cell.style.border = '1px solid #cbd5e1';
+      cell.style.padding = '7px 12px';
+      cell.style.textAlign = cell.tagName === 'TH' ? 'center' : cell.style.textAlign || 'center';
+    });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tryTypeset = () => { const mj = (window as any).MathJax; if (mj?.typesetPromise) { mj.typesetPromise([el]).catch(() => {}); return true; } return false; };
     if (!tryTypeset()) {
