@@ -29,46 +29,45 @@ describe('수업권 V3 화면', () => {
     expect(screen.queryByText('콘텐츠 학습')).toBeNull();
   });
 
-  it('1:1을 고르면 묶음 제목 2개와 시간권 카드 4개(관리형 1 + 대표코치 3)', () => {
+  function openDirector() {
+    fireEvent.click(screen.getByRole('button', { name: /대표코치 1:1/ }));
+  }
+
+  // REQ-005 (enrollment-v3)
+  it('1:1을 고르면 관리형 10·20·40시간 카드는 펼쳐져 있고, 대표코치 카드는 접혀 있다', () => {
     render(<EnrollmentV2Page variant={ENROLLMENT_V3} />);
     pickOneOnOne();
     expect(screen.getByText('관리형 1:1 수업')).toBeTruthy();
-    expect(screen.getByText('프리미엄 · SuperfastSAT 대표코치 1:1')).toBeTruthy();
-    for (const price of ['165만원', '210만원', '380만원', '686만원']) {
+    for (const price of ['165만원', '299만원', '539만원']) {
       expect(screen.getByText(price).closest('button')).toBeTruthy();
     }
-    expect(screen.queryByText('299만원')).toBeNull();
-  });
-
-  // REQ-004 (enrollment-v3)
-  it('관리형 20·40시간권은 접혀 있다가 묶음 제목을 누르면 펼쳐지고, 다시 누르면 접힌다', () => {
-    render(<EnrollmentV2Page variant={ENROLLMENT_V3} />);
-    pickOneOnOne();
-    const toggle = screen.getByRole('button', { name: /관리형 1:1 수업/ });
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.queryByText('299만원')).toBeNull();
-    fireEvent.click(toggle);
-    expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    const card20 = screen.getByText('299만원').closest('button')!;
-    expect(within(card20).getByText(/9% 할인/)).toBeTruthy();
+    expect(within(screen.getByText('299만원').closest('button')!).getByText(/9% 할인/)).toBeTruthy();
     expect(within(screen.getByText('539만원').closest('button')!).getByText(/18% 할인/)).toBeTruthy();
-    fireEvent.click(card20);
-    expect(card20.getAttribute('aria-pressed')).toBe('true');
-    fireEvent.click(toggle);
+    const toggle = screen.getByRole('button', { name: /대표코치 1:1/ });
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    for (const price of ['210만원', '380만원', '686만원']) {
+      expect(screen.queryByText(price)).toBeNull();
+    }
   });
 
-  it('관리형 10시간 카드를 고르면 20·40시간권도 펼쳐진다', () => {
+  // REQ-005 (enrollment-v3)
+  it('대표코치 묶음을 누르면 10·20·40시간 카드가 펼쳐지고, 다시 누르면 접힌다', () => {
     render(<EnrollmentV2Page variant={ENROLLMENT_V3} />);
     pickOneOnOne();
-    fireEvent.click(screen.getByText('165만원').closest('button')!);
-    expect(screen.getByText('299만원')).toBeTruthy();
-    expect(screen.getByText('539만원')).toBeTruthy();
+    openDirector();
+    const toggle = screen.getByRole('button', { name: /대표코치 1:1/ });
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    for (const price of ['210만원', '380만원', '686만원']) {
+      expect(screen.getByText(price).closest('button')).toBeTruthy();
+    }
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
   });
 
   it('대표코치 20·40시간 카드에 할인율·할인액, 40시간에 최대 할인 배지', () => {
     render(<EnrollmentV2Page variant={ENROLLMENT_V3} />);
     pickOneOnOne();
+    openDirector();
     const card20 = screen.getByText('380만원').closest('button')!;
     expect(within(card20).getByText(/9% 할인/)).toBeTruthy();
     expect(within(card20).getByText(/40만원 더 저렴합니다/)).toBeTruthy();
@@ -84,6 +83,7 @@ describe('수업권 V3 화면', () => {
   it('대표코치 20시간 카드를 고르면 그 카드만 선택되고 대표코치 라인업이 열린다', () => {
     render(<EnrollmentV2Page variant={ENROLLMENT_V3} />);
     pickOneOnOne();
+    openDirector();
     expect(screen.queryByText('대표코치 라인업')).toBeNull();
     const card20 = screen.getByText('380만원').closest('button')!;
     fireEvent.click(card20);

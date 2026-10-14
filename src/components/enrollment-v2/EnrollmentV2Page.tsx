@@ -371,22 +371,26 @@ function GroupHeading({ tone, children }: { tone: 'standard' | 'premium'; childr
   );
 }
 
-/* 관리형 묶음 제목 겸 펼침 버튼 — 접어 둔 시간권(V3의 20·40시간)이 있을 때. */
-function ManagedGroupToggle({ open, onToggle, hours, lang }: { open: boolean; onToggle: () => void; hours: number[]; lang: Lang }) {
+/* 대표코치 묶음 제목 겸 펼침 버튼 — 금색 테두리 상자. 접혀 있어도 눈에 띄도록 카드처럼 그린다(V3). */
+function DirectorGroupToggle({ open, onToggle, hours, lang }: { open: boolean; onToggle: () => void; hours: number[]; lang: Lang }) {
   const label = hours.join('·');
   return (
     <button
       type="button"
       aria-expanded={open}
       onClick={onToggle}
-      className="w-full text-sm font-semibold text-white/70 flex items-center gap-2 touch-manipulation"
+      className="mt-4 w-full rounded-2xl border border-amber-500/30 bg-amber-500/[0.04] hover:border-amber-400/50 px-5 py-4 flex items-center gap-3 text-left transition-colors touch-manipulation"
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-[#6085ff]" />
-      {lang === 'en' ? 'Managed 1-on-1' : '관리형 1:1 수업'}
-      <span className="ml-auto flex items-center gap-1 text-xs font-medium text-white/45">
-        {lang === 'en' ? `${open ? 'Hide' : 'See'} ${label} hrs` : `${label}시간 ${open ? '접기' : '보기'}`}
-        <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+      <span className="flex-1 min-w-0">
+        <span className="block text-sm font-semibold text-amber-200">
+          {lang === 'en' ? 'Premium · 1-on-1 with a SuperfastSAT Lead Coach' : '프리미엄 · SuperfastSAT 대표코치 1:1'}
+        </span>
+        <span className="block mt-0.5 text-xs font-medium text-amber-200/60">
+          {lang === 'en' ? `${open ? 'Hide' : 'See'} ${label} hrs` : `${label}시간 ${open ? '접기' : '보기'}`}
+        </span>
       </span>
+      <ChevronDown className={`w-5 h-5 flex-shrink-0 text-amber-200/70 transition-transform ${open ? 'rotate-180' : ''}`} />
     </button>
   );
 }
@@ -404,8 +408,7 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
   // v2는 대표코치 카드 하나('1on1-director'), V3는 시간권별 카드('1on1-director-20h' 등).
   const isDirector = selectedId?.startsWith('1on1-director') ?? false;
   const grouped = variant.groupedCards;
-  const hasMore = variant.managedMorePkgs.length > 0;
-  const [managedOpen, setManagedOpen] = useState(false);
+  const [directorOpen, setDirectorOpen] = useState(false);
   const hourUnit = lang === 'en' ? 'hrs' : '시간';
 
   function handlePkgClick(pkgId: string) {
@@ -440,15 +443,13 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
         </div>
 
         <div className="flex flex-col gap-3">
-          {grouped && (hasMore ? (
-            <ManagedGroupToggle open={managedOpen} onToggle={() => setManagedOpen(o => !o)} hours={variant.managedMorePkgs.map(p => p.hours)} lang={lang} />
-          ) : (
+          {grouped && (
             <GroupHeading tone="standard">
               {lang === 'en' ? 'Managed 1-on-1' : '관리형 1:1 수업'}
             </GroupHeading>
-          ))}
+          )}
 
-          {/* 관리형 시간권 — 앞세운 카드를 고르면 접어 둔 시간권도 펼친다 */}
+          {/* 관리형 시간권 */}
           {variant.managedPkgs.map(pkg => (
             <PackageCard
               key={pkg.id}
@@ -459,63 +460,57 @@ function ManagedPackagePicker({ selectedOption, onSelect, lang, variant }: {
               tone="standard"
               twoLine={grouped}
               selected={selectedId === pkg.id}
-              onClick={() => { handlePkgClick(pkg.id); if (hasMore) setManagedOpen(true); }}
+              onClick={() => handlePkgClick(pkg.id)}
               lang={lang}
             />
           ))}
 
-          <AnimatePresence initial={false}>
-            {hasMore && managedOpen && (
-              <motion.div
-                key="managed-more"
-                className="flex flex-col gap-3 overflow-hidden"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-              >
-                {variant.managedMorePkgs.map(pkg => (
-                  <PackageCard
-                    key={pkg.id}
-                    hours={pkg.hours}
-                    totalPrice={pkg.totalPrice}
-                    savings={pkg.discountRate ? variant.basePricePerHour * pkg.hours - pkg.totalPrice : 0}
-                    discountRate={pkg.discountRate}
-                    tone="standard"
-                    twoLine={grouped}
-                    selected={selectedId === pkg.id}
-                    onClick={() => handlePkgClick(pkg.id)}
-                    lang={lang}
-                  />
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           {grouped ? (
             <>
-              <GroupHeading tone="premium">
-                {lang === 'en' ? 'Premium · 1-on-1 with a SuperfastSAT Lead Coach' : '프리미엄 · SuperfastSAT 대표코치 1:1'}
-              </GroupHeading>
-              {variant.directorPkgs.map((pkg, i) => {
-                const rate = directorDiscountRate(pkg);
-                const isLast = i === variant.directorPkgs.length - 1;
-                return (
-                  <PackageCard
-                    key={pkg.id}
-                    hours={pkg.hours}
-                    totalPrice={pkg.totalPrice}
-                    savings={directorSavings(pkg)}
-                    discountRate={rate}
-                    badge={isLast && rate ? (lang === 'en' ? 'Best value' : SALES_LABELS_V2.bestValue.text) : undefined}
-                    tone="premium"
-                    twoLine
-                    selected={selectedId === pkg.id}
-                    onClick={() => handlePkgClick(pkg.id)}
-                    lang={lang}
-                  />
-                );
-              })}
+              {variant.directorCollapsible ? (
+                <DirectorGroupToggle
+                  open={directorOpen}
+                  onToggle={() => setDirectorOpen(o => !o)}
+                  hours={variant.directorPkgs.map(p => p.hours)}
+                  lang={lang}
+                />
+              ) : (
+                <GroupHeading tone="premium">
+                  {lang === 'en' ? 'Premium · 1-on-1 with a SuperfastSAT Lead Coach' : '프리미엄 · SuperfastSAT 대표코치 1:1'}
+                </GroupHeading>
+              )}
+              <AnimatePresence initial={false}>
+                {(!variant.directorCollapsible || directorOpen) && (
+                  <motion.div
+                    key="director-cards"
+                    className="flex flex-col gap-3 overflow-hidden"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  >
+                    {variant.directorPkgs.map((pkg, i) => {
+                      const rate = directorDiscountRate(pkg);
+                      const isLast = i === variant.directorPkgs.length - 1;
+                      return (
+                        <PackageCard
+                          key={pkg.id}
+                          hours={pkg.hours}
+                          totalPrice={pkg.totalPrice}
+                          savings={directorSavings(pkg)}
+                          discountRate={rate}
+                          badge={isLast && rate ? (lang === 'en' ? 'Best value' : SALES_LABELS_V2.bestValue.text) : undefined}
+                          tone="premium"
+                          twoLine
+                          selected={selectedId === pkg.id}
+                          onClick={() => handlePkgClick(pkg.id)}
+                          lang={lang}
+                        />
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </>
           ) : (
             <>
