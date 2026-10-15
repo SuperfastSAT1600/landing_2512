@@ -13,9 +13,9 @@ interface Props {
   sentinelId: string;
 }
 
-const COUNTDOWN_SEC = 5;
-// Delay before observing sentinel — prevents popup from firing immediately
-// when arriving via auto-nav (scroll position may not have reset yet)
+// Must be on page for at least this long before popup can fire
+const MIN_READ_TIME_MS = 60_000;
+// Delay before observing sentinel — prevents false-fire on navigation scroll reset
 const OBSERVE_DELAY_MS = 2000;
 
 export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props) {
@@ -25,10 +25,9 @@ export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props
       : null)
   );
   const [visible, setVisible] = useState(false);
-  const [remaining, setRemaining] = useState(COUNTDOWN_SEC);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const dismissedRef = useRef(false);
+  const readStartRef = useRef(Date.now());
   const router = useRouter();
 
   const goToPost = useCallback(() => {
@@ -38,8 +37,6 @@ export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props
   const dismiss = useCallback(() => {
     dismissedRef.current = true;
     setVisible(false);
-    if (timerRef.current) clearInterval(timerRef.current);
-    // Disconnect observer so sentinel can never re-trigger the popup
     if (observerRef.current) {
       observerRef.current.disconnect();
       observerRef.current = null;
@@ -53,7 +50,14 @@ export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props
 
       const observer = new IntersectionObserver(
         ([entry]) => {
-          if (entry.isIntersecting && !dismissedRef.current) setVisible(true);
+          if (dismissedRef.current) return;
+          const elapsed = Date.now() - readStartRef.current;
+          if (entry.isIntersecting && elapsed >= MIN_READ_TIME_MS) {
+            setVisible(true);
+          } else if (!entry.isIntersecting) {
+            // Reader scrolled back up — hide until they return
+            setVisible(false);
+          }
         },
         { threshold: 0.5 }
       );
@@ -71,102 +75,61 @@ export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props
     };
   }, [sentinelId]);
 
-  useEffect(() => {
-    if (!visible) return;
-
-    setRemaining(COUNTDOWN_SEC);
-    timerRef.current = setInterval(() => {
-      setRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current!);
-          goToPost();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [visible, goToPost]);
-
-  if (!visible || !relatedPost) return null;
-
-  const progress = ((COUNTDOWN_SEC - remaining) / COUNTDOWN_SEC) * 100;
+  if (!relatedPost) return null;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/40 z-40"
-        onClick={dismiss}
-        aria-hidden="true"
-      />
-
-      {/* Positioning wrapper — transform only, no animation */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-2rem)] max-w-sm">
-        {/* Animated card */}
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="관련 글 추천"
-          className="bg-white rounded-2xl shadow-2xl overflow-hidden animate-fade-in"
-        >
+    <div
+      role="complementary"
+      aria-label="관련 글 추천"
+      style={{ zIndex: 110 }}
+      className={[
+        'fixed bottom-0 left-0 right-0',
+        'transition-transform duration-300 ease-out',
+        visible ? 'translate-y-0' : 'translate-y-full',
+      ].join(' ')}
+    >
+      <div className="border-t border-gray-200 bg-white shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
+        <div className="max-w-[680px] mx-auto px-4 py-3 flex items-center gap-3">
           {/* Thumbnail */}
-          {relatedPost.featuredImage ? (
-            <div className="relative w-full aspect-video">
+          {relatedPost.featuredImage && (
+            <div className="relative w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden border border-gray-100">
               <Image
                 src={relatedPost.featuredImage}
                 alt={relatedPost.title}
                 fill
                 unoptimized
                 className="object-cover"
-                sizes="384px"
+                sizes="56px"
               />
             </div>
-          ) : (
-            <div className="w-full aspect-video bg-gradient-to-br from-blue-50 to-indigo-100" />
           )}
 
-          <div className="px-6 pt-5 pb-6">
-            {/* Progress bar */}
-            <div className="h-1 bg-gray-100 rounded-full mb-5 overflow-hidden">
-              <div
-                className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-linear"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-
-            {/* Content */}
-            <p className="text-sm text-gray-500 mb-1">이 글도 도움이 되실 거예요</p>
-            <p className="text-base font-bold text-gray-900 leading-snug mb-4 line-clamp-2">
+          {/* Title */}
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-gray-400 mb-0.5">다음으로 읽어보세요</p>
+            <p className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">
               {relatedPost.title}
             </p>
+          </div>
 
-            {/* Countdown hint */}
-            <p className="text-xs text-gray-400 mb-4 text-center">
-              잠시 후 다음 글로 넘어가요 ({remaining}초)
-            </p>
-
-            {/* Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={dismiss}
-                className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-medium text-sm hover:bg-gray-50 transition-colors"
-              >
-                닫기
-              </button>
-              <button
-                onClick={goToPost}
-                className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition-colors"
-              >
-                지금 읽기
-              </button>
-            </div>
+          {/* Actions */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={dismiss}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors px-2 py-1"
+              aria-label="닫기"
+            >
+              닫기
+            </button>
+            <button
+              onClick={goToPost}
+              className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors px-3 py-2 rounded-lg"
+            >
+              읽기
+            </button>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
