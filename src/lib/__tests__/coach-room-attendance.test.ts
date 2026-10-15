@@ -44,6 +44,9 @@ describe('attendanceHeld', () => {
     expect(attendanceHeld(20, 60)).toBe(true);
     expect(attendanceHeld(19, 60)).toBe(false);
   });
+  it('길이 0 수업도 함께 접속이 없으면 진행 아님', () => {
+    expect(attendanceHeld(0, 0)).toBe(false);
+  });
   it('30분 수업은 절반(15분)이면 진행', () => {
     expect(attendanceHeld(15, 30)).toBe(true);
     expect(attendanceHeld(14, 30)).toBe(false);

@@ -104,4 +104,21 @@ describe('buildCoachRoomLedger', () => {
     expect(byId.l3.togetherMinutes).toBeNull();
     expect(sat.totals).toMatchObject({ completed: 3.5, held: 1, unverified: 1, upcoming: 2, actualCompleted: 4.5, remaining: 16.5, actualRemaining: 15.5 });
   });
+
+  it('끝난 지 30분 안 된 수업은 아직 판정하지 않고, 닫히지 않은 접속은 지금까지로 본다', () => {
+    const just = { ...base.lessons[2], id: 'just', starts_at: '2026-10-15T05:00:00Z', ends_at: '2026-10-15T05:50:00Z' };
+    const earlier = { ...base.lessons[2], id: 'open', starts_at: '2026-10-15T04:00:00Z', ends_at: '2026-10-15T05:00:00Z' };
+    const [sat] = buildCoachRoomLedger({
+      ...base,
+      lessons: [just, earlier],
+      sessions: [
+        { matching_id: 'm1', role: 'teacher', started_at: '2026-10-15T04:00:00Z', ended_at: null },
+        { matching_id: 'm1', role: 'student', started_at: '2026-10-15T04:00:00Z', ended_at: null },
+      ],
+    });
+    const byId = Object.fromEntries(sat.lessons.map((l) => [l.id, l]));
+    expect(byId.just.status).toBe('scheduled');
+    expect(byId.open.status).toBe('held');
+    expect(byId.open.togetherMinutes).toBe(90);
+  });
 });

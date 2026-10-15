@@ -2,7 +2,7 @@
 // getSubjectAccountDetail)와 같은 계산. 과목별로 구매·환불·완료·예약을 모으고 잔여를 낸다.
 // 순수 함수(I/O 없음). 조회는 /api/crm/students/[id]/coach-room이 한다.
 // SRM 기준 값(completed·remaining)에 더해, 지난 '예정' 수업을 접속 기록으로 나눠 실제 진행·실제 잔여를 낸다.
-import { attendanceHeld, togetherMinutes, type RoomSession } from '@/lib/coach-room-attendance';
+import { attendanceHeld, togetherMinutes, WINDOW_PAD_MS, type RoomSession } from '@/lib/coach-room-attendance';
 
 /**
  * completed: SRM 완료 처리됨 · held: 지난 수업, 접속 확인(완료 처리 대기) · unverified: 지난 수업, 접속 기록 부족(확인 필요)
@@ -63,7 +63,8 @@ function lessonsOf(rows: LedgerInput['lessons'], sessions: RoomSession[], now: n
     .filter((r) => r.status in STATUS)
     .map((r): CoachLesson => {
       const minutes = (time(r.ends_at) - time(r.starts_at)) / 60_000;
-      const past = time(r.ends_at) <= now;
+      // 늦게 끝나는 수업·아직 열린 접속을 기다리느라, 끝나고 30분이 지나야 지난 수업으로 판정한다
+      const past = time(r.ends_at) + WINDOW_PAD_MS <= now;
       const together = past ? togetherMinutes({ matchingId: r.matching_id, startsAt: r.starts_at, endsAt: r.ends_at }, sessions) : null;
       let status = STATUS[r.status];
       if (status !== 'completed' && past) status = attendanceHeld(together ?? 0, minutes) ? 'held' : 'unverified';
@@ -78,6 +79,9 @@ function lessonsOf(rows: LedgerInput['lessons'], sessions: RoomSession[], now: n
   for (const l of lessons) if (ACTUAL.has(l.status)) { done += l.hours; l.cumulative = round1(done); }
   return lessons.reverse();
 }
+
+/** 아직 닫히지 않은 접속은 지금까지 있던 것으로 본다(수업 창으로 잘리므로 오래 열린 접속도 과대 집계되지 않는다) */
+const openSessionsClosedAt = (sessions: RoomSession[], now: string) => sessions.map((s) => (s.ended_at ? s : { ...s, ended_at: now }));
 
 const sumHours = (lessons: CoachLesson[], pick: (l: CoachLesson) => boolean) => round1(lessons.filter(pick).reduce((s, l) => s + l.hours, 0));
 
@@ -96,7 +100,7 @@ export function buildCoachRoomLedger(input: LedgerInput): CoachSubjectLedger[] {
       .filter((r) => paymentSubject.get(r.payment_id) === subject)
       .map((r) => ({ refundedAt: r.refunded_at, hours: Number(r.hours_refunded), reason: r.reason }))
       .sort((a, b) => desc(a.refundedAt, b.refundedAt));
-    const lessons = lessonsOf(lessonRows.filter((l) => l.subject === subject), input.sessions, time(input.now));
+    const lessons = lessonsOf(lessonRows.filter((l) => l.subject === subject), openSessionsClosedAt(input.sessions, input.now), time(input.now));
 
     const purchased = round1(transactions.reduce((s, t) => s + t.hours, 0));
     const refunded = round1(refunds.reduce((s, r) => s + r.hours, 0));

@@ -11,6 +11,16 @@ function rows<T>(res: { data: unknown; error: { message: string } | null }): T[]
   return (res.data ?? []) as T[];
 }
 
+async function fetchSessions(mids: string[]): Promise<LedgerInput['sessions']> {
+  const out: LedgerInput['sessions'] = [];
+  for (let from = 0; ; from += 1000) {
+    const page = rows<LedgerInput['sessions'][number]>(await supabaseSFv2.from('coach_room_session')
+      .select('matching_id, role, started_at, ended_at').in('matching_id', mids).order('id').range(from, from + 999));
+    out.push(...page);
+    if (page.length < 1000) return out;
+  }
+}
+
 async function fetchLessons(profileId: string): Promise<Pick<LedgerInput, 'lessons' | 'sessions'>> {
   const ms = rows<{ matching_id: string }>(await supabaseSFv2.from('matching_students').select('matching_id').eq('student_id', profileId));
   const mids = [...new Set(ms.map((r) => r.matching_id))];
@@ -24,10 +34,8 @@ async function fetchLessons(profileId: string): Promise<Pick<LedgerInput, 'lesso
       .select('id, matching_id, assigned_teacher_id, starts_at, ends_at, status')
       .eq('category', 'coach_room').in('status', LESSON_STATUSES).in('matching_id', mids)
       .order('id').range(from, to)).then((data) => ({ data, error: null })),
-    // 실제 진행 판단용 입퇴장 기록(매칭 단위). 닫히지 않은 접속은 판단에서 뺀다
-    fetchAllRows<LedgerInput['sessions'][number]>((from, to) => supabaseSFv2.from('coach_room_session')
-      .select('matching_id, role, started_at, ended_at').in('matching_id', mids).not('ended_at', 'is', null)
-      .order('id').range(from, to)),
+    // 실제 진행 판단용 입퇴장 기록(매칭 단위). 조회가 실패하면 조용히 비지 않게 던진다(빈 기록 = 전부 '확인 필요'가 되므로)
+    fetchSessions(mids),
   ]);
   const subjectByMatching = new Map(rows<{ id: string; subject: string | null }>(matchings).map((m) => [m.id, m.subject]));
   const teacherRows = rows<{ matching_id: string; teacher_id: string; response: string | null }>(teachers);

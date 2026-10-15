@@ -5,8 +5,8 @@
 
 export interface RoomSession { matching_id: string | null; role: string; started_at: string; ended_at: string | null }
 
-/** 수업 시각 앞뒤 여유 — 일찍 들어오거나 늦게 끝나는 수업 */
-const WINDOW_PAD_MS = 30 * 60_000;
+/** 수업 시각 앞뒤 여유 — 일찍 들어오거나 늦게 끝나는 수업. 판정도 끝난 뒤 이만큼 지나서 한다 */
+export const WINDOW_PAD_MS = 30 * 60_000;
 
 type Span = [number, number];
 
@@ -42,5 +42,5 @@ export function togetherMinutes(
 
 /** 함께 있던 시간이 20분 이상(짧은 수업은 길이의 절반 이상)이면 수업이 열린 것으로 본다 */
 export function attendanceHeld(together: number, lessonMinutes: number): boolean {
-  return together >= Math.min(20, lessonMinutes / 2);
+  return together > 0 && together >= Math.min(20, lessonMinutes / 2);
 }
