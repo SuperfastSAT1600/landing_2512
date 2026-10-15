@@ -96,38 +96,13 @@ export default function RootLayout({
         `}</Script>
           <LiveStatusProvider>
           <SiteShell>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "EducationalOrganization",
-                "name": "SuperfastSAT",
-                "legalName": "Argonaut AI Inc.",
-                "url": "https://superfastsat.com",
-                "description": "SuperfastSAT은 Digital SAT 전문 온라인 학원으로, 목표 점수 달성까지 최단 경로로 안내합니다.",
-                "address": {
-                  "@type": "PostalAddress",
-                  "streetAddress": "302, 21 Samgae-ro",
-                  "addressLocality": "Mapo-gu, Seoul",
-                  "addressCountry": "KR"
-                },
-                "telephone": "02-6956-0061",
-                "email": "cs@argonautai.co.kr",
-                "sameAs": [
-                  "https://superfastsat.com",
-                  "https://tutoring.superfastsat.com"
-                ],
-                "aggregateRating": {
-                  "@type": "AggregateRating",
-                  "ratingValue": "4.9",
-                  "reviewCount": "47",
-                  "bestRating": "5",
-                  "worstRating": "1"
-                }
-              })
-            }}
-          />
+          {/*
+            조직 구조화 데이터는 여기(모든 페이지의 공통 틀)에 두지 않는다.
+            여기 있으면 이차방정식 연습문제 페이지나 코치 소개 페이지에도 학원 평점이
+            복사돼, 페이지 주제와 무관한 평점 마크업이 된다.
+            이제 lib/organization-schema.ts 에서 만들고 홈과 /reviews 에서만 렌더링한다.
+            블로그 글은 BlogPosting.publisher 로 이미 조직을 참조한다.
+          */}
           {children}
           </SiteShell>
           </LiveStatusProvider>

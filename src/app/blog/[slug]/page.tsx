@@ -120,7 +120,8 @@ export default async function Post({ params }: Props) {
                             url: BASE_URL,
                             logo: {
                                 '@type': 'ImageObject',
-                                url: `${BASE_URL}/logo.png`,
+                                // /logo.png 는 존재하지 않아 404였다. public/ 에 실제로 있는 파일로 바꾼다.
+                                url: `${BASE_URL}/logo_header.png`,
                             },
                         },
                         mainEntityOfPage: {

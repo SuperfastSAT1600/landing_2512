@@ -7,6 +7,7 @@ import Footer from './components/Footer';
 
 import { getHomeConfig } from '@/lib/config';
 import { getPublishedReviews } from '@/lib/reviews-data';
+import { buildOrganizationSchema } from '@/lib/organization-schema';
 
 export const revalidate = 3600;
 
@@ -81,6 +82,14 @@ export default async function Home() {
 
   return (
     <main>
+      {/* 학원 자체를 설명하는 페이지라 평점을 함께 붙인다. 수치는 /reviews 가 보여주는
+          후기에서 집계하므로 화면과 구조화 데이터가 어긋나지 않는다. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(buildOrganizationSchema({ includeRating: true })),
+        }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
