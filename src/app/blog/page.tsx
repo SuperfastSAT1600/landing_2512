@@ -44,10 +44,16 @@ export async function generateMetadata({
         ? `${BASE_URL}/blog?tag=${encodeURIComponent(tag)}`
         : `${BASE_URL}/blog`;
 
+    // 태그·카테고리 필터는 /blog 를 잘라 보여주는 얇은 목록이라 색인 대상이 아니다.
+    // 실제로 색인된 100개 중 41개가 이 필터 URL이었고, 그만큼 글이 밀려났다.
+    // follow 는 유지한다 — 이 페이지들이 개별 글로 가는 크롤 경로이기 때문이다.
+    const isFilteredView = Boolean(category || tag);
+
     return {
         title: meta.title,
         description: meta.description,
         alternates: { canonical: canonicalUrl },
+        ...(isFilteredView && { robots: { index: false, follow: true } }),
         openGraph: {
             type: 'website',
             url: canonicalUrl,

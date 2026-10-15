@@ -31,6 +31,9 @@ export async function generateMetadata({ params }: Props) {
     return {
         title: `${coach.name} 코치 | SuperfastSAT`,
         description: plainBio,
+        // 선언하지 않으면 루트 레이아웃의 canonical(https://superfastsat.com)을 물려받아
+        // 모든 코치 페이지가 남의 도메인 홈을 정본으로 가리킨다.
+        alternates: { canonical: `${BASE_URL}/coaches/${slug}` },
         openGraph: {
             title: `${coach.name} 코치 | SuperfastSAT`,
             description: plainBio,

@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { permanentRedirect } from 'next/navigation';
 import { getPostData, getAllPostIds, getRelatedPosts } from '../../../lib/posts';
+import { HIDDEN_BLOG_CATEGORIES } from '../../../lib/posts-filter';
+import { getCoachByPostSlug } from '../../../lib/coaches-data';
 import { getPopupTargetPost } from '../../../lib/popup-rules';
 import Footer from '../../components/Footer';
 import { PostContent } from './PostContent';
@@ -81,6 +84,14 @@ export default async function Post({ params }: Props) {
     const { slug } = await params;
     const decodedSlug = decodeURIComponent(slug);
     const postData = await getPostData(decodedSlug);
+
+    // 코치 소개/커리큘럼 글은 /coaches/[slug] 가 정본이다. 양쪽 다 살려두면
+    // 같은 내용이 두 URL로 경쟁하고, 실제로 블로그 쪽 9개는 하나도 색인되지 않았다.
+    if (HIDDEN_BLOG_CATEGORIES.includes(postData.category?.trim() as typeof HIDDEN_BLOG_CATEGORIES[number])) {
+        const coach = await getCoachByPostSlug(decodedSlug);
+        if (coach) permanentRedirect(`/coaches/${coach.slug}`);
+    }
+
     const [relatedPosts, popupTargetPost] = await Promise.all([
         getRelatedPosts(decodedSlug, postData.category, 3),
         getPopupTargetPost(decodedSlug),
