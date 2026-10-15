@@ -84,9 +84,9 @@ const LANGUAGE_LABELS: Record<string, string> = {
 };
 
 const LANGUAGE_COLORS: Record<string, string> = {
-  korean: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-  english: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-  any: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+  korean: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  english: 'bg-blue-50 text-blue-700 border-blue-200',
+  any: 'bg-purple-50 text-purple-700 border-purple-200',
 };
 
 function formatDate(iso: string | null): string {
@@ -114,10 +114,10 @@ function ScoreBar({ label, score, max = 800 }: { label: string; score: number | 
   return (
     <div>
       <div className="flex justify-between text-xs mb-1">
-        <span className="text-gray-400">{label}</span>
-        <span className="font-mono font-semibold text-white">{score ?? '-'}</span>
+        <span className="text-gray-500">{label}</span>
+        <span className="font-mono font-semibold text-gray-900">{score ?? '-'}</span>
       </div>
-      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
         <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
@@ -126,8 +126,8 @@ function ScoreBar({ label, score, max = 800 }: { label: string; score: number | 
 
 function SectionCard({ title, children, accent }: { title: string; children: React.ReactNode; accent?: string }) {
   return (
-    <div className={`bg-gray-800 rounded-xl border p-5 ${accent ?? 'border-gray-700'}`}>
-      <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">{title}</h2>
+    <div className={`bg-white rounded-xl border shadow-sm p-5 ${accent ?? 'border-gray-200'}`}>
+      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">{title}</h2>
       {children}
     </div>
   );
@@ -144,16 +144,16 @@ function ConfirmItem({ checked, onChange, label, value }: ConfirmItemProps) {
   return (
     <div
       className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
-        checked ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+        checked ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200 hover:border-gray-300'
       }`}
       onClick={() => onChange(!checked)}
     >
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</p>
-        <div className="text-sm font-medium text-white">{value}</div>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{label}</p>
+        <div className="text-sm font-medium text-gray-900">{value}</div>
       </div>
       <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
-        checked ? 'bg-emerald-500 border-emerald-500' : 'bg-transparent border-gray-600'
+        checked ? 'bg-emerald-500 border-emerald-500' : 'bg-white border-gray-300'
       }`}>
         {checked && (
           <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -167,7 +167,7 @@ function ConfirmItem({ checked, onChange, label, value }: ConfirmItemProps) {
 
 // ── 테스트센터 점수 추이 ──────────────────────
 function ExamScoresSection({ scores }: { scores: ExamScore[] }) {
-  if (scores.length === 0) return <p className="text-sm text-gray-500">실제 응시 이력 없음</p>;
+  if (scores.length === 0) return <p className="text-sm text-gray-400">실제 응시 이력 없음</p>;
 
   const maxTotal = scores.reduce((m, s) => {
     const t = (s.rw_score ?? 0) + (s.math_score ?? 0);
@@ -185,19 +185,19 @@ function ExamScoresSection({ scores }: { scores: ExamScore[] }) {
         return (
           <div key={s.exam_month} className="space-y-1">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-400 font-mono">{s.exam_month}</span>
+              <span className="text-gray-500 font-mono">{s.exam_month}</span>
               <div className="flex items-center gap-3">
-                {s.rw_score != null && <span className="text-gray-400">RW <span className="text-white font-semibold">{s.rw_score}</span></span>}
-                {s.math_score != null && <span className="text-gray-400">M <span className="text-white font-semibold">{s.math_score}</span></span>}
-                {total != null && <span className="text-white font-bold font-mono">{total}</span>}
+                {s.rw_score != null && <span className="text-gray-500">RW <span className="text-gray-800 font-semibold">{s.rw_score}</span></span>}
+                {s.math_score != null && <span className="text-gray-500">M <span className="text-gray-800 font-semibold">{s.math_score}</span></span>}
+                {total != null && <span className="text-gray-900 font-bold font-mono">{total}</span>}
                 {delta != null && (
-                  <span className={`font-semibold ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                  <span className={`font-semibold ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-red-500' : 'text-gray-400'}`}>
                     {delta > 0 ? `+${delta}` : delta}
                   </span>
                 )}
               </div>
             </div>
-            <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
               <div className="h-full bg-violet-500 rounded-full" style={{ width: `${pct}%` }} />
             </div>
           </div>
@@ -207,38 +207,38 @@ function ExamScoresSection({ scores }: { scores: ExamScore[] }) {
   );
 }
 
-// ── AI 현황 브리핑 (서버에서 캐시 조회 결과를 prop으로 받음) ──
+// ── AI 현황 브리핑 ──────────────────────────────
 function SrmBriefCard({ brief, hasProfile }: { brief: SrmBriefData | null; hasProfile: boolean }) {
   if (!hasProfile) return null;
   if (!brief) {
     return (
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-gray-400">
         CRM에서 AI 브리핑을 먼저 생성하면 여기에 표시됩니다.
       </p>
     );
   }
   return (
     <div className="space-y-4">
-      <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
-        <p className="text-sm font-semibold text-violet-200">{brief.headline}</p>
+      <div className="p-3 rounded-lg bg-violet-50 border border-violet-200">
+        <p className="text-sm font-semibold text-violet-800">{brief.headline}</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-2">강점</p>
+          <p className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider mb-2">강점</p>
           <ul className="space-y-1">
             {brief.strengths.map((s, i) => (
-              <li key={i} className="text-xs text-gray-300 flex gap-1.5">
+              <li key={i} className="text-xs text-gray-600 flex gap-1.5">
                 <span className="text-emerald-500 shrink-0">+</span>{s}
               </li>
             ))}
           </ul>
         </div>
         <div>
-          <p className="text-[11px] font-semibold text-red-400 uppercase tracking-wider mb-2">취약</p>
+          <p className="text-[11px] font-semibold text-red-500 uppercase tracking-wider mb-2">취약</p>
           <ul className="space-y-1">
             {brief.weaknesses.map((s, i) => (
-              <li key={i} className="text-xs text-gray-300 flex gap-1.5">
-                <span className="text-red-500 shrink-0">–</span>{s}
+              <li key={i} className="text-xs text-gray-600 flex gap-1.5">
+                <span className="text-red-400 shrink-0">–</span>{s}
               </li>
             ))}
           </ul>
@@ -246,19 +246,19 @@ function SrmBriefCard({ brief, hasProfile }: { brief: SrmBriefData | null; hasPr
       </div>
       {brief.risks.length > 0 && (
         <div>
-          <p className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider mb-2">리스크</p>
+          <p className="text-[11px] font-semibold text-amber-600 uppercase tracking-wider mb-2">리스크</p>
           <ul className="space-y-1">
             {brief.risks.map((s, i) => (
-              <li key={i} className="text-xs text-gray-300 flex gap-1.5">
+              <li key={i} className="text-xs text-gray-600 flex gap-1.5">
                 <span className="text-amber-500 shrink-0">!</span>{s}
               </li>
             ))}
           </ul>
         </div>
       )}
-      <div className="pt-2 border-t border-gray-700">
-        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">권장 액션</p>
-        <p className="text-sm text-white">{brief.recommendation}</p>
+      <div className="pt-2 border-t border-gray-200">
+        <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">권장 액션</p>
+        <p className="text-sm text-gray-800">{brief.recommendation}</p>
       </div>
     </div>
   );
@@ -266,7 +266,7 @@ function SrmBriefCard({ brief, hasProfile }: { brief: SrmBriefData | null; hasPr
 
 // ── 강점 / 취약 스킬 ──────────────────────────
 function SkillsSection({ skills }: { skills: SrmSkill[] }) {
-  if (skills.length === 0) return <p className="text-sm text-gray-500">학습 기록 없음 (SRM 데이터 로딩 후 표시됩니다)</p>;
+  if (skills.length === 0) return <p className="text-sm text-gray-400">학습 기록 없음 (SRM 데이터 로딩 후 표시됩니다)</p>;
 
   const ranked = [...skills].sort((a, b) => {
     const aAcc = a.sh_accuracy ?? a.tc_accuracy ?? 100;
@@ -279,13 +279,13 @@ function SkillsSection({ skills }: { skills: SrmSkill[] }) {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-[11px] font-semibold text-red-400 uppercase tracking-wider mb-3">취약 스킬</p>
+        <p className="text-[11px] font-semibold text-red-500 uppercase tracking-wider mb-3">취약 스킬</p>
         <div className="space-y-3">
           {weak.map((sk) => <SkillBarRow key={sk.skill} sk={sk} highlight="weak" />)}
         </div>
       </div>
-      <div className="border-t border-gray-700 pt-4">
-        <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-3">강점 스킬</p>
+      <div className="border-t border-gray-200 pt-4">
+        <p className="text-[11px] font-semibold text-emerald-600 uppercase tracking-wider mb-3">강점 스킬</p>
         <div className="space-y-3">
           {strong.map((sk) => <SkillBarRow key={sk.skill} sk={sk} highlight="strong" />)}
         </div>
@@ -296,17 +296,17 @@ function SkillsSection({ skills }: { skills: SrmSkill[] }) {
 
 function SkillBarRow({ sk, highlight }: { sk: SrmSkill; highlight: 'weak' | 'strong' }) {
   const primary = sk.sh_accuracy ?? sk.tc_accuracy ?? 0;
-  const barColor = highlight === 'weak' ? 'bg-red-500' : 'bg-emerald-500';
+  const barColor = highlight === 'weak' ? 'bg-red-400' : 'bg-emerald-500';
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
-        <span className="text-gray-300 truncate max-w-[60%]">{sk.skill}</span>
+        <span className="text-gray-700 truncate max-w-[60%]">{sk.skill}</span>
         <div className="flex items-center gap-2">
-          {sk.sh_accuracy != null && <span className="text-gray-500">연습 <span className="text-gray-300">{sk.sh_accuracy}%</span></span>}
-          {sk.tc_accuracy != null && <span className="text-gray-500">실전 <span className="text-gray-300">{sk.tc_accuracy}%</span></span>}
+          {sk.sh_accuracy != null && <span className="text-gray-400">연습 <span className="text-gray-700">{sk.sh_accuracy}%</span></span>}
+          {sk.tc_accuracy != null && <span className="text-gray-400">실전 <span className="text-gray-700">{sk.tc_accuracy}%</span></span>}
         </div>
       </div>
-      <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+      <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
         <div className={`h-full ${barColor} rounded-full`} style={{ width: `${primary}%` }} />
       </div>
     </div>
@@ -320,44 +320,44 @@ function DiagnosticSection({ diagnostic, resultId }: { diagnostic: DiagnosticDat
     <div className="space-y-4">
       <div className="space-y-3">
         <div className="flex justify-between text-sm">
-          <span className="text-gray-400">제출일</span>
-          <span>{formatDate(diagnostic.submitted_at)}</span>
+          <span className="text-gray-500">제출일</span>
+          <span className="text-gray-900">{formatDate(diagnostic.submitted_at)}</span>
         </div>
         {diagnostic.total_time_seconds != null && (
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">소요 시간</span>
-            <span className="font-mono">{formatDuration(diagnostic.total_time_seconds)}</span>
+            <span className="text-gray-500">소요 시간</span>
+            <span className="font-mono text-gray-900">{formatDuration(diagnostic.total_time_seconds)}</span>
           </div>
         )}
         {diagnostic.previous_rw_score != null && (
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">RW (자기 보고)</span>
-            <span className="font-mono">{diagnostic.previous_rw_score}</span>
+            <span className="text-gray-500">RW (자기 보고)</span>
+            <span className="font-mono text-gray-900">{diagnostic.previous_rw_score}</span>
           </div>
         )}
         {diagnostic.previous_math_score != null && (
           <div className="flex justify-between text-sm">
-            <span className="text-gray-400">Math (자기 보고)</span>
-            <span className="font-mono">{diagnostic.previous_math_score}</span>
+            <span className="text-gray-500">Math (자기 보고)</span>
+            <span className="font-mono text-gray-900">{diagnostic.previous_math_score}</span>
           </div>
         )}
       </div>
 
       {insights?.executiveSummary && (
-        <div className="border-t border-gray-700 pt-4">
-          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">진단 요약</p>
-          <p className="text-sm text-gray-300 leading-relaxed">{insights.executiveSummary}</p>
+        <div className="border-t border-gray-200 pt-4">
+          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">진단 요약</p>
+          <p className="text-sm text-gray-700 leading-relaxed">{insights.executiveSummary}</p>
         </div>
       )}
 
       {insights?.topWeakDomains && insights.topWeakDomains.length > 0 && (
-        <div className="border-t border-gray-700 pt-4">
-          <p className="text-[11px] font-semibold text-red-400 uppercase tracking-wider mb-3">취약 영역</p>
+        <div className="border-t border-gray-200 pt-4">
+          <p className="text-[11px] font-semibold text-red-500 uppercase tracking-wider mb-3">취약 영역</p>
           <div className="space-y-2">
             {insights.topWeakDomains.slice(0, 4).map((d) => (
               <div key={d.domain} className="flex items-center justify-between text-xs">
-                <span className="text-gray-300 truncate max-w-[60%]">{d.domain}</span>
-                <span className="text-red-400 font-mono">{d.delta > 0 ? `+${d.delta}` : d.delta}%p</span>
+                <span className="text-gray-700 truncate max-w-[60%]">{d.domain}</span>
+                <span className="text-red-500 font-mono">{d.delta > 0 ? `+${d.delta}` : d.delta}%p</span>
               </div>
             ))}
           </div>
@@ -365,11 +365,11 @@ function DiagnosticSection({ diagnostic, resultId }: { diagnostic: DiagnosticDat
       )}
 
       {insights?.keyRecommendations && insights.keyRecommendations.length > 0 && (
-        <div className="border-t border-gray-700 pt-4">
-          <p className="text-[11px] font-semibold text-blue-400 uppercase tracking-wider mb-2">핵심 권장사항</p>
+        <div className="border-t border-gray-200 pt-4">
+          <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider mb-2">핵심 권장사항</p>
           <ul className="space-y-1.5">
             {insights.keyRecommendations.map((r, i) => (
-              <li key={i} className="text-xs text-gray-300 flex gap-2">
+              <li key={i} className="text-xs text-gray-700 flex gap-2">
                 <span className="text-blue-500 shrink-0 font-bold">{i + 1}.</span>{r}
               </li>
             ))}
@@ -378,12 +378,12 @@ function DiagnosticSection({ diagnostic, resultId }: { diagnostic: DiagnosticDat
       )}
 
       {resultId && (
-        <div className="border-t border-gray-700 pt-4">
+        <div className="border-t border-gray-200 pt-4">
           <a
             href={`/reports/${resultId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 hover:border-blue-500/50 text-blue-300 text-sm font-medium transition-all"
+            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 hover:border-blue-300 text-blue-700 text-sm font-medium transition-all"
           >
             전체 진단 리포트 보기
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -439,23 +439,23 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
 
   const languageColor = data.preferred_language
     ? LANGUAGE_COLORS[data.preferred_language]
-    : 'bg-gray-700 text-gray-300 border-gray-600';
+    : 'bg-gray-100 text-gray-600 border-gray-300';
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
 
         {/* Header */}
-        <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">코치 준비 자료</p>
           <div className="flex items-start justify-between gap-3 flex-wrap">
             <div>
-              <h1 className="text-2xl font-bold text-white">{data.name}</h1>
-              <p className="text-sm text-gray-400 mt-0.5">{data.grade} · {data.school_type ?? 'AP'}</p>
+              <h1 className="text-2xl font-bold text-gray-900">{data.name}</h1>
+              <p className="text-sm text-gray-500 mt-0.5">{data.grade} · {data.school_type ?? 'AP'}</p>
             </div>
             <div className="flex gap-2 flex-wrap">
               {data.desired_subjects && (
-                <span className="px-3 py-1 bg-blue-500/20 text-blue-300 text-sm font-medium rounded-full border border-blue-500/30">
+                <span className="px-3 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded-full border border-blue-200">
                   {SUBJECT_LABELS[data.desired_subjects] ?? data.desired_subjects}
                 </span>
               )}
@@ -469,16 +469,16 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
         </div>
 
         {/* 수업 전 필수 확인 */}
-        <div className="bg-gray-800 rounded-xl border border-amber-500/30 p-5">
+        <div className="bg-amber-50 rounded-xl border border-amber-200 p-5">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-amber-400">
+            <span className="text-amber-500">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               </svg>
             </span>
-            <h2 className="text-sm font-bold text-amber-400">수업 전 필수 확인</h2>
+            <h2 className="text-sm font-bold text-amber-700">수업 전 필수 확인</h2>
             {allConfirmed && (
-              <span className="ml-auto text-xs font-semibold text-emerald-400 flex items-center gap-1">
+              <span className="ml-auto text-xs font-semibold text-emerald-600 flex items-center gap-1">
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
@@ -509,13 +509,13 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
         {allConfirmed && (
           <>
             {/* 테스트센터 점수 추이 */}
-            <SectionCard title="테스트센터 점수 추이" accent="border-violet-500/20">
+            <SectionCard title="테스트센터 점수 추이" accent="border-violet-200">
               <ExamScoresSection scores={data.exam_scores} />
             </SectionCard>
 
             {/* AI 현황 브리핑 */}
             {data.sfv2_profile_id && (
-              <SectionCard title="AI 현황 브리핑" accent="border-violet-500/20">
+              <SectionCard title="AI 현황 브리핑" accent="border-violet-200">
                 <SrmBriefCard brief={data.srm_brief} hasProfile={!!data.sfv2_profile_id} />
               </SectionCard>
             )}
@@ -538,36 +538,36 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
             <SectionCard title="점수 현황">
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs text-gray-500 mb-3">초기 / 진단 점수</p>
+                  <p className="text-xs text-gray-400 mb-3">초기 / 진단 점수</p>
                   <div className="space-y-3">
                     <ScoreBar label="Reading & Writing" score={data.previous_rw_score} />
                     <ScoreBar label="Math" score={data.previous_math_score} />
                   </div>
                   {totalPrevious != null && (
-                    <p className="text-right text-sm text-gray-400 mt-2">합계 <span className="font-mono font-bold text-white">{totalPrevious}</span></p>
+                    <p className="text-right text-sm text-gray-500 mt-2">합계 <span className="font-mono font-bold text-gray-900">{totalPrevious}</span></p>
                   )}
                 </div>
                 {(data.target_score != null || data.target_score_2 != null) && (
-                  <div className="border-t border-gray-700 pt-4 space-y-3">
-                    <p className="text-xs text-gray-500">목표</p>
+                  <div className="border-t border-gray-200 pt-4 space-y-3">
+                    <p className="text-xs text-gray-400">목표</p>
                     {data.target_score != null && (
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-[11px] text-gray-500 mr-1.5">1차</span>
-                          <span className="text-lg font-bold text-emerald-400">{data.target_score}</span>
-                          {totalPrevious != null && <span className="text-xs text-gray-500 ml-2">+{data.target_score - totalPrevious}점</span>}
+                          <span className="text-[11px] text-gray-400 mr-1.5">1차</span>
+                          <span className="text-lg font-bold text-emerald-600">{data.target_score}</span>
+                          {totalPrevious != null && <span className="text-xs text-gray-400 ml-2">+{data.target_score - totalPrevious}점</span>}
                         </div>
-                        {data.target_test_date && <span className="text-sm text-gray-400">{formatDate(data.target_test_date)}</span>}
+                        {data.target_test_date && <span className="text-sm text-gray-500">{formatDate(data.target_test_date)}</span>}
                       </div>
                     )}
                     {data.target_score_2 != null && (
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-[11px] text-gray-500 mr-1.5">2차</span>
-                          <span className="text-lg font-bold text-emerald-300">{data.target_score_2}</span>
-                          {totalPrevious != null && <span className="text-xs text-gray-500 ml-2">+{data.target_score_2 - totalPrevious}점</span>}
+                          <span className="text-[11px] text-gray-400 mr-1.5">2차</span>
+                          <span className="text-lg font-bold text-emerald-500">{data.target_score_2}</span>
+                          {totalPrevious != null && <span className="text-xs text-gray-400 ml-2">+{data.target_score_2 - totalPrevious}점</span>}
                         </div>
-                        {data.target_test_date_2 && <span className="text-sm text-gray-400">{formatDate(data.target_test_date_2)}</span>}
+                        {data.target_test_date_2 && <span className="text-sm text-gray-500">{formatDate(data.target_test_date_2)}</span>}
                       </div>
                     )}
                   </div>
@@ -578,20 +578,20 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
             {/* 수업 스케줄 */}
             <SectionCard title="수업 스케줄">
               {data.ot_datetime && (
-                <div className="mb-4 p-3 bg-gray-700/50 rounded-lg">
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
                   <p className="text-xs text-gray-400 mb-1">OT 일시</p>
-                  <p className="text-sm font-medium">{formatDate(data.ot_datetime)}</p>
+                  <p className="text-sm font-medium text-gray-800">{formatDate(data.ot_datetime)}</p>
                 </div>
               )}
               {activeDays.length > 0 ? (
                 <div className="space-y-2">
-                  <p className="text-xs text-gray-500 mb-3">타임존: {data.parent_timezone ?? 'UTC'}</p>
+                  <p className="text-xs text-gray-400 mb-3">타임존: {data.parent_timezone ?? 'UTC'}</p>
                   {activeDays.map((day) => (
                     <div key={day} className="flex items-center gap-3">
-                      <span className="w-6 text-center text-sm font-medium text-gray-300">{DAY_LABELS[day]}</span>
+                      <span className="w-6 text-center text-sm font-medium text-gray-600">{DAY_LABELS[day]}</span>
                       <div className="flex gap-2 flex-wrap">
                         {scheduleByDay[day].sort((a, b) => a.hour - b.hour || a.minute - b.minute).map((slot, i) => (
-                          <span key={i} className="px-2 py-0.5 bg-gray-700 rounded text-xs font-mono text-gray-200">
+                          <span key={i} className="px-2 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700">
                             {formatScheduleTime(slot)}
                           </span>
                         ))}
@@ -600,7 +600,7 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">스케줄 미입력</p>
+                <p className="text-sm text-gray-400">스케줄 미입력</p>
               )}
             </SectionCard>
 
@@ -609,20 +609,20 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
               {data.coach_history_entries.length > 0 ? (
                 <div className="space-y-4">
                   {data.coach_history_entries.map((entry) => (
-                    <div key={entry.id} className="border-l-2 border-blue-500/40 pl-4">
+                    <div key={entry.id} className="border-l-2 border-blue-400 pl-4">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className="text-xs text-gray-500">{formatDate(entry.created_at)}</span>
-                        {entry.author && <span className="text-xs text-gray-600">· {entry.author}</span>}
+                        <span className="text-xs text-gray-400">{formatDate(entry.created_at)}</span>
+                        {entry.author && <span className="text-xs text-gray-400">· {entry.author}</span>}
                         {entry.is_raw && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-yellow-500/15 text-yellow-500 rounded">상담 메모 원본</span>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-yellow-50 text-yellow-600 border border-yellow-200 rounded">상담 메모 원본</span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">{entry.content}</p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{entry.content}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">코치 메모 없음</p>
+                <p className="text-sm text-gray-400">코치 메모 없음</p>
               )}
             </SectionCard>
           </>
