@@ -62,7 +62,13 @@ function MainApp({ studentId }: { studentId: string }) {
         setPhase('select');
         return;
       }
-      setTestState({ setNumber, questions: json.data.questions as Question[] });
+      const questions = json.data.questions as Question[];
+      if (questions.length === 0) {
+        setLoadError('아직 문제가 준비되지 않은 세트입니다.');
+        setPhase('select');
+        return;
+      }
+      setTestState({ setNumber, questions });
       setPhase('test');
     } catch {
       setLoadError('네트워크 오류가 발생했습니다.');
