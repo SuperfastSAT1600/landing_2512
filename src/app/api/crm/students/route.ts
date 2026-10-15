@@ -5,6 +5,7 @@ import type { CreateStudentInput } from '@/types/crm';
 import { isActionDoneToday, todaysMemos } from '@/types/crm';
 import { toKSTNaive } from '@/lib/sheets-sync-utils';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { STUDENT_COLUMNS } from '@/lib/student-columns';
 
 /**
  * GET /api/crm/students
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
       .map((s) => s.id);
     if (ids.length === 0) return NextResponse.json({ data: [] });
     // 2차: 추려진 소수의 학생만 전체 컬럼으로 (패널 클릭 시 전체 정보 필요).
-    const { data, error } = await supabaseAdmin.from('students').select('*').in('id', ids);
+    const { data, error } = await supabaseAdmin.from('students').select(STUDENT_COLUMNS).in('id', ids);
     if (error) {
       console.error('[crm/students GET today_actions full]', error);
       return apiError('INTERNAL_ERROR', 'Failed to fetch students', 500);
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
   const buildQuery = (forCount = false) => {
     let q = forCount
       ? supabaseAdmin.from('students').select('id', { count: 'exact', head: true })
-      : supabaseAdmin.from('students').select('*').order('created_at', { ascending: false });
+      : supabaseAdmin.from('students').select(STUDENT_COLUMNS).order('created_at', { ascending: false });
     if (retryStrategyId) {
       q = q.eq('retry_strategy_id', retryStrategyId);
     } else if (leadStatus) {
@@ -222,7 +223,7 @@ export async function POST(request: NextRequest) {
         entered_by: entered_by ?? null,
       },
     ])
-    .select()
+    .select(STUDENT_COLUMNS)
     .single();
 
   if (error) {

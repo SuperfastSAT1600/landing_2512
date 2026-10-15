@@ -5,6 +5,7 @@ import { generateEmbedding, buildEmbeddingText } from '@/lib/embedding';
 import { FUNNEL_STAGE_LABELS } from '@/types/crm';
 import { appendStageHistory } from '@/lib/stage-history';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { STUDENT_COLUMNS } from '@/lib/student-columns';
 
 /**
  * GET /api/crm/students/[id]
@@ -20,7 +21,7 @@ export async function GET(
 
   const { data, error } = await supabaseAdmin
     .from('students')
-    .select('*')
+    .select(STUDENT_COLUMNS)
     .eq('id', id)
     .single();
 
@@ -82,7 +83,7 @@ export async function PATCH(
     .from('students')
     .update(updateFields)
     .eq('id', id)
-    .select()
+    .select(STUDENT_COLUMNS)
     .maybeSingle();
 
   if (error) {

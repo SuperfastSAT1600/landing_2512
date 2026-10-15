@@ -4,6 +4,7 @@ import { isAuthenticated } from '@/lib/server-auth';
 import { FUNNEL_STAGE_LABELS, type ChurnType } from '@/types/crm';
 import { appendStageHistory } from '@/lib/stage-history';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { STUDENT_COLUMNS } from '@/lib/student-columns';
 
 export async function POST(
   request: NextRequest,
@@ -75,7 +76,7 @@ export async function POST(
       ...(history !== student.stage_history ? { stage_history: history } : {}),
     })
     .eq('id', id)
-    .select()
+    .select(STUDENT_COLUMNS)
     .single();
 
   if (updateErr) {

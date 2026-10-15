@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { STUDENT_COLUMNS } from '@/lib/student-columns';
 
 export async function POST(
   request: NextRequest,
@@ -23,7 +24,7 @@ export async function POST(
       .from('students')
       .update({ retry_strategy_id: id, retry_stage: '연락 시도', retry_assigned_at: new Date().toISOString() })
       .eq('id', body.student_id)
-      .select()
+      .select(STUDENT_COLUMNS)
       .single();
 
     if (error) {

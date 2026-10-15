@@ -1,4 +1,5 @@
 {
+  "regions": ["icn1"],
   "installCommand": "npm install --legacy-peer-deps",
   "env": {
     "npm_config_legacy_peer_deps": "true"

@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { FUNNEL_STAGE_LABELS } from '@/types/crm';
 import { generateEmbedding, buildEmbeddingText } from '@/lib/embedding';
+import { STUDENT_COLUMNS } from '@/lib/student-columns';
 
 export async function GET(
   req: NextRequest,
@@ -103,7 +104,7 @@ export async function PATCH(
     .from('students')
     .update(updates)
     .eq('id', crmStudentId)
-    .select()
+    .select(STUDENT_COLUMNS)
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
