@@ -59,10 +59,12 @@ export interface SrmSkill {
 }
 
 type ExamScore = { exam_month: string; rw_score: number | null; math_score: number | null; note: string | null };
+type TcSession = { date: string; title: string; score: number; total: number; accuracy: number };
 
 type ExtendedData = CoachViewData & {
   exam_scores: ExamScore[];
   srm_skills: SrmSkill[] | null;
+  srm_tc_sessions: TcSession[];
   srm_brief: SrmBriefData | null;
   sfv2_profile_id: string | null;
   diagnostic_result_id: string | null;
@@ -166,8 +168,13 @@ function ConfirmItem({ checked, onChange, label, value }: ConfirmItemProps) {
 }
 
 // ── 테스트센터 점수 추이 ──────────────────────
-function ExamScoresSection({ scores }: { scores: ExamScore[] }) {
-  if (scores.length === 0) return <p className="text-sm text-gray-400">실제 응시 이력 없음</p>;
+function ExamScoresSection({ scores, tcSessions }: { scores: ExamScore[]; tcSessions: TcSession[] }) {
+  const hasRealScores = scores.length > 0;
+  const hasTcSessions = tcSessions.length > 0;
+
+  if (!hasRealScores && !hasTcSessions) {
+    return <p className="text-sm text-gray-400">응시 이력 없음</p>;
+  }
 
   const maxTotal = scores.reduce((m, s) => {
     const t = (s.rw_score ?? 0) + (s.math_score ?? 0);
@@ -175,34 +182,77 @@ function ExamScoresSection({ scores }: { scores: ExamScore[] }) {
   }, 400);
 
   return (
-    <div className="space-y-3">
-      {scores.map((s, i) => {
-        const total = s.rw_score != null && s.math_score != null ? s.rw_score + s.math_score : null;
-        const prev = i > 0 ? scores[i - 1] : null;
-        const prevTotal = prev?.rw_score != null && prev?.math_score != null ? prev.rw_score + prev.math_score : null;
-        const delta = total != null && prevTotal != null ? total - prevTotal : null;
-        const pct = total != null ? Math.max(Math.round(((total - 400) / Math.max(maxTotal - 400, 1)) * 100), 2) : 2;
-        return (
-          <div key={s.exam_month} className="space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500 font-mono">{s.exam_month}</span>
-              <div className="flex items-center gap-3">
-                {s.rw_score != null && <span className="text-gray-500">RW <span className="text-gray-800 font-semibold">{s.rw_score}</span></span>}
-                {s.math_score != null && <span className="text-gray-500">M <span className="text-gray-800 font-semibold">{s.math_score}</span></span>}
-                {total != null && <span className="text-gray-900 font-bold font-mono">{total}</span>}
-                {delta != null && (
-                  <span className={`font-semibold ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-red-500' : 'text-gray-400'}`}>
-                    {delta > 0 ? `+${delta}` : delta}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-violet-500 rounded-full" style={{ width: `${pct}%` }} />
-            </div>
+    <div className="space-y-5">
+      {/* 실제 SAT 점수 */}
+      {hasRealScores && (
+        <div>
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">실제 SAT 점수</p>
+          <div className="space-y-3">
+            {scores.map((s, i) => {
+              const total = s.rw_score != null && s.math_score != null ? s.rw_score + s.math_score : null;
+              const prev = i > 0 ? scores[i - 1] : null;
+              const prevTotal = prev?.rw_score != null && prev?.math_score != null ? prev.rw_score + prev.math_score : null;
+              const delta = total != null && prevTotal != null ? total - prevTotal : null;
+              const pct = total != null ? Math.max(Math.round(((total - 400) / Math.max(maxTotal - 400, 1)) * 100), 2) : 2;
+              return (
+                <div key={s.exam_month} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-500 font-mono">{s.exam_month}</span>
+                    <div className="flex items-center gap-3">
+                      {s.rw_score != null && <span className="text-gray-500">RW <span className="text-gray-800 font-semibold">{s.rw_score}</span></span>}
+                      {s.math_score != null && <span className="text-gray-500">M <span className="text-gray-800 font-semibold">{s.math_score}</span></span>}
+                      {total != null && <span className="text-gray-900 font-bold font-mono">{total}</span>}
+                      {delta != null && (
+                        <span className={`font-semibold ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                          {delta > 0 ? `+${delta}` : delta}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-violet-500 rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
+        </div>
+      )}
+
+      {/* SRM 모의고사 세션 */}
+      {hasTcSessions && (
+        <div className={hasRealScores ? 'border-t border-gray-200 pt-4' : ''}>
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">SRM 모의고사</p>
+          <div className="space-y-3">
+            {tcSessions.map((s, i) => {
+              const prev = i > 0 ? tcSessions[i - 1] : null;
+              const delta = prev != null ? s.accuracy - prev.accuracy : null;
+              return (
+                <div key={`${s.date}-${i}`} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-gray-400 font-mono shrink-0">{s.date}</span>
+                      <span className="text-gray-600 truncate max-w-[120px]">{s.title}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-gray-500">{s.score}/{s.total}</span>
+                      <span className="text-gray-900 font-bold font-mono">{s.accuracy}%</span>
+                      {delta != null && (
+                        <span className={`font-semibold ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                          {delta > 0 ? `+${delta}` : delta}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-400 rounded-full" style={{ width: `${s.accuracy}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -510,7 +560,7 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
           <>
             {/* 테스트센터 점수 추이 */}
             <SectionCard title="테스트센터 점수 추이" accent="border-violet-200">
-              <ExamScoresSection scores={data.exam_scores} />
+              <ExamScoresSection scores={data.exam_scores} tcSessions={data.srm_tc_sessions} />
             </SectionCard>
 
             {/* AI 현황 브리핑 */}

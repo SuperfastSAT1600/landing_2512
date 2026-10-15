@@ -58,6 +58,32 @@ export interface SrmSkill {
   tc_total: number;
 }
 
+export interface TcSession {
+  date: string;
+  title: string;
+  score: number;
+  total: number;
+  accuracy: number;
+}
+
+function computeTcSessions(days: { date: string; items: DayItem[] }[]): TcSession[] {
+  const sessions: TcSession[] = [];
+  for (const day of days) {
+    for (const item of day.items) {
+      if (item.type === 'test_center' && item.totalProblems > 0) {
+        sessions.push({
+          date: day.date,
+          title: item.curriculumTitle ?? '모의고사',
+          score: item.totalScore,
+          total: item.totalProblems,
+          accuracy: Math.round((item.totalScore / item.totalProblems) * 100),
+        });
+      }
+    }
+  }
+  return sessions.sort((a, b) => a.date.localeCompare(b.date));
+}
+
 function computeSkills(days: { items: DayItem[] }[]): SrmSkill[] {
   const sh = new Map<string, { c: number; t: number }>();
   const tc = new Map<string, { c: number; t: number }>();
@@ -158,19 +184,21 @@ export default async function CoachPrepPage({ params }: Props) {
         .maybeSingle()
     : Promise.resolve({ data: null, error: null });
 
-  const skillsPromise: Promise<SrmSkill[] | null> = student.sfv2_profile_id
+  type SrmData = { skills: SrmSkill[] | null; tcSessions: TcSession[] };
+
+  const srmPromise: Promise<SrmData> = student.sfv2_profile_id
     ? (async () => {
         try {
           const { buildSrmReport } = await import('@/lib/build-srm-report');
           const report = await buildSrmReport(student.sfv2_profile_id!, { skipNarratives: true });
-          return computeSkills(report.days);
+          return { skills: computeSkills(report.days), tcSessions: computeTcSessions(report.days) };
         } catch {
-          return null;
+          return { skills: null, tcSessions: [] };
         }
       })()
-    : Promise.resolve(null);
+    : Promise.resolve({ skills: null, tcSessions: [] });
 
-  const [{ data: diagResult }, { data: briefCache }, srmSkills] = await Promise.all([
+  const [{ data: diagResult }, { data: briefCache }, srmData] = await Promise.all([
     supabaseAdmin
       .from('diagnostic_test_results')
       .select('submitted_at, previous_rw_score, previous_math_score, total_time_seconds, edited_insights')
@@ -179,7 +207,7 @@ export default async function CoachPrepPage({ params }: Props) {
       .limit(1)
       .maybeSingle(),
     briefQuery,
-    skillsPromise,
+    srmPromise,
   ]);
 
   // 캐시에서 SRM 브리핑 파싱 (서버 사이드 — auth 불필요)
@@ -227,7 +255,8 @@ export default async function CoachPrepPage({ params }: Props) {
       } | null,
     } : null,
     exam_scores: (examScoresRaw ?? []) as ExamScoreRow[],
-    srm_skills: srmSkills,
+    srm_skills: srmData.skills,
+    srm_tc_sessions: srmData.tcSessions,
     srm_brief: srmBrief,
     sfv2_profile_id: student.sfv2_profile_id ?? null,
     diagnostic_result_id: student.diagnostic_result_id ?? null,
