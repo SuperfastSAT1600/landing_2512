@@ -1,10 +1,54 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import type { CoachViewData } from '@/app/api/admin/srm/student/crm/[crmStudentId]/coach-view/route';
+import { useState } from 'react';
 import type { WeeklySlot } from '@/types/crm';
-import type { SrmBriefData } from '@/app/api/crm/students/[id]/srm-brief/route';
-import type { SrmSkill } from './page';
+
+// 서버 파일(API route, page.tsx)에서 타입을 import하면 서버 전용 모듈이 클라이언트 번들에 포함됨 — 인라인 정의
+interface CoachViewData {
+  id: string;
+  name: string;
+  grade: string;
+  school_type: string | null;
+  desired_subjects: string | null;
+  preferred_language: string | null;
+  previous_rw_score: number | null;
+  previous_math_score: number | null;
+  target_score: number | null;
+  target_test_date: string | null;
+  target_score_2: number | null;
+  target_test_date_2: string | null;
+  ot_datetime: string | null;
+  weekly_schedule: WeeklySlot[] | null;
+  parent_timezone: string | null;
+  coach_history_entries: Array<{
+    id: string;
+    created_at: string;
+    content: string;
+    author?: string;
+    is_raw?: boolean;
+  }>;
+  diagnostic: {
+    submitted_at: string;
+    previous_rw_score: number | null;
+    previous_math_score: number | null;
+  } | null;
+}
+
+interface SrmBriefData {
+  headline: string;
+  strengths: string[];
+  weaknesses: string[];
+  risks: string[];
+  recommendation: string;
+}
+
+export interface SrmSkill {
+  skill: string;
+  sh_accuracy: number | null;
+  sh_total: number;
+  tc_accuracy: number | null;
+  tc_total: number;
+}
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 

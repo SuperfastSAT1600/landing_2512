@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { CoachPrepView } from './CoachPrepView';
-import type { CoachViewData } from '@/app/api/admin/srm/student/crm/[crmStudentId]/coach-view/route';
 import type { WeeklySlot, ConsultationEntry } from '@/types/crm';
 import type { DayItem } from '@/types/srm-portal';
 
@@ -157,11 +156,7 @@ export default async function CoachPrepPage({ params }: Props) {
     }
   }
 
-  const data: CoachViewData & {
-    exam_scores: ExamScoreRow[];
-    srm_skills: SrmSkill[] | null;
-    sfv2_profile_id: string | null;
-  } = {
+  const data = {
     id: student.id,
     name: student.name,
     grade: student.grade,
