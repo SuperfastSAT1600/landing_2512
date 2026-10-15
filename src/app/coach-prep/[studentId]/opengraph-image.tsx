@@ -29,7 +29,7 @@ export default async function Image({ params }: { params: Promise<{ studentId: s
   const name = (data as { name?: string; grade?: string } | null)?.name ?? '학생';
   const grade = (data as { name?: string; grade?: string } | null)?.grade ?? '';
 
-  const fontText = `코치 준비 자료SuperfastSAT${name}${grade}`;
+  const fontText = `수업 준비 자료SuperfastSAT${name}${grade}`;
   const fontData = await loadGoogleFont(fontText);
 
   const fonts = fontData
@@ -117,7 +117,7 @@ export default async function Image({ params }: { params: Promise<{ studentId: s
               textTransform: 'uppercase',
             }}
           >
-            코치 준비 자료
+            수업 준비 자료
           </span>
         </div>
 

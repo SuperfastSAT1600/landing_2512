@@ -18,8 +18,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .maybeSingle();
   const name = (data as { name?: string } | null)?.name ?? '학생';
   return {
-    title: `${name} 코치 준비 자료 · SuperfastSAT`,
-    openGraph: { title: `${name} 코치 준비 자료` },
+    title: `${name}학생 수업 준비 자료 · SuperfastSAT`,
+    openGraph: { title: `${name}학생 수업 준비 자료` },
   };
 }
 
