@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
         entered_by: entered_by ?? null,
       },
     ])
-    .select()
+    .select(STUDENT_COLUMNS)
     .single();
 
   if (error) {
