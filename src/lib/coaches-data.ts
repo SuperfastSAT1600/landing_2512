@@ -88,6 +88,19 @@ export async function getCoachBySlug(slug: string): Promise<CoachData | undefine
     return rowToCoach(data);
 }
 
+// 코치 소개/커리큘럼 글(category = 학습코치)은 /coaches/[slug] 와 본문이 84% 겹치고
+// 블로그 목록에서도 가려져 있다. Google은 /coaches/[slug] 쪽만 색인했으므로
+// 블로그 URL로 들어온 요청은 정본으로 넘긴다.
+export async function getCoachByPostSlug(postSlug: string): Promise<CoachData | undefined> {
+    const { data, error } = await supabaseAdmin
+        .from('coaches')
+        .select('*')
+        .or(`intro_post_slug.eq.${postSlug},curriculum_post_slug.eq.${postSlug}`)
+        .limit(1);
+    if (error || !data || data.length === 0) return undefined;
+    return rowToCoach(data[0]);
+}
+
 export async function addCoach(coach: CoachData): Promise<boolean> {
     const { error } = await supabaseAdmin.from('coaches').insert({
         slug: coach.slug,

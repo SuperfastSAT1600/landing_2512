@@ -9,6 +9,8 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
     title: '학습코치 | SuperfastSAT',
     description: 'SuperfastSAT 전문 SAT·AP 학습코치를 만나보세요.',
+    // 루트 레이아웃의 canonical(https://superfastsat.com)을 물려받지 않도록 명시한다.
+    alternates: { canonical: 'https://tutoring.superfastsat.com/coaches' },
 };
 
 interface Props {
