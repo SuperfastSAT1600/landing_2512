@@ -86,7 +86,7 @@ export function SrmTestCenterTrend({ report }: { report: LearningReport }) {
       </div>
 
       <p className="text-[10px] text-gray-400 leading-relaxed">
-        · SAT 점수는 raw 정답수 기반 <span className="font-medium">예상치</span>(공식 커브 아님). RW·Math 각 200~800, 총점 400~1600.
+        · SAT 점수는 SRM 리포트와 같은 환산표로 계산한 <span className="font-medium">예상치</span>(공식 커브 아님). 과목 모듈을 다 풀어야 그 과목 점수가 나옵니다.
       </p>
     </div>
   );

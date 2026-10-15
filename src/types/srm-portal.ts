@@ -17,6 +17,8 @@ export interface StudyHallDay {
 
 export interface TestCenterLesson {
   title?: string;
+  /** 시험 구조(chapter 제목)에서 읽은 과목 — SRM과 같은 규칙(/math/i). 예전 데이터엔 없음 */
+  section?: 'rw' | 'math';
   score: number;
   total: number;
   skills?: { skill: string; correct: number; total: number }[];
@@ -31,6 +33,8 @@ export interface TestCenterDay {
   totalProblems: number;
   aiNarrative?: string;
   skills?: StudyHallSkill[];
+  /** 시험의 과목별 모듈 수(보통 RW 2 · Math 2). 다 풀어야 그 과목 점수를 낸다(SRM 규칙) */
+  expectedModules?: { rw: number; math: number };
 }
 
 export interface DailyReportDay {
