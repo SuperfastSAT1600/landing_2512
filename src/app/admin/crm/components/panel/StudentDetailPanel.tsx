@@ -25,6 +25,7 @@ import { StrategyHistorySection } from './sections/StrategyHistorySection';
 import { PaymentHistorySection } from './sections/PaymentHistorySection';
 import { ActivityFeedSection } from './sections/ActivityFeedSection';
 import { SrmDataCard } from './sections/SrmDataCard';
+import { CoachRoomCard } from './sections/CoachRoomCard';
 import { PlaudRecordingPicker } from './PlaudRecordingPicker';
 import type { StudentDetailPanelProps } from './types';
 import type { ConsultationEntry } from '@/types/crm';
@@ -230,6 +231,8 @@ export function StudentDetailPanel({
     <>
       <div className="fixed inset-0 z-50 flex justify-end">
         <div className="absolute inset-0 bg-black/50" onClick={handleBackdropClick} />
+        {/* 맨 왼쪽 코치룸 수업 내역 (넓은 화면에서만) */}
+        <CoachRoomCard studentId={student.id} adminKey={adminKey} />
         {/* 왼쪽 SRM 데이터 카드 (데스크톱에서만) */}
         <SrmDataCard studentId={student.id} studentName={localStudent.name} adminKey={adminKey} />
         <div className="relative w-full max-w-[440px] bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden shadow-xl">
