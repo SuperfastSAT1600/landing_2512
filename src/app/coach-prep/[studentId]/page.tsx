@@ -32,6 +32,7 @@ type StudentRow = {
   target_test_date_2: string | null; ot_datetime: string | null;
   weekly_schedule: unknown; parent_timezone: string | null;
   consultation_timeline: unknown; sfv2_profile_id: string | null;
+  diagnostic_result_id: string | null;
 };
 
 type ExamScoreRow = {
@@ -114,7 +115,7 @@ export default async function CoachPrepPage({ params }: Props) {
       .select(
         'id, name, grade, school_type, desired_subjects, preferred_language, ' +
         'previous_rw_score, previous_math_score, target_score, target_test_date, target_score_2, target_test_date_2, ' +
-        'ot_datetime, weekly_schedule, parent_timezone, consultation_timeline, sfv2_profile_id'
+        'ot_datetime, weekly_schedule, parent_timezone, consultation_timeline, sfv2_profile_id, diagnostic_result_id'
       )
       .eq('id', studentId)
       .single(),
@@ -229,6 +230,7 @@ export default async function CoachPrepPage({ params }: Props) {
     srm_skills: srmSkills,
     srm_brief: srmBrief,
     sfv2_profile_id: student.sfv2_profile_id ?? null,
+    diagnostic_result_id: student.diagnostic_result_id ?? null,
   };
 
   return <CoachPrepView data={data} />;
