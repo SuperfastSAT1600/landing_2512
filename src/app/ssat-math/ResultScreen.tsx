@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
 
-const COMPLETED_KEY = 'ssat_math_completed_v1';
+const RESULTS_KEY = 'ssat_math_results_v1';
 const PREDICT_SECONDS = 10;
 
 interface GradedDetail {
@@ -111,13 +111,12 @@ interface Props {
 
 type SubPhase = 'score' | 'predict' | 'reveal';
 
-function markCompleted(setNumber: number) {
+function markResult(setNumber: number, score: number, total: number) {
   if (typeof window === 'undefined') return;
   try {
-    const existing = JSON.parse(sessionStorage.getItem(COMPLETED_KEY) ?? '[]') as number[];
-    if (!existing.includes(setNumber)) {
-      sessionStorage.setItem(COMPLETED_KEY, JSON.stringify([...existing, setNumber]));
-    }
+    const existing = JSON.parse(sessionStorage.getItem(RESULTS_KEY) ?? '{}') as Record<string, { score: number; total: number }>;
+    existing[String(setNumber)] = { score, total };
+    sessionStorage.setItem(RESULTS_KEY, JSON.stringify(existing));
   } catch { /* ignore */ }
 }
 
@@ -399,7 +398,7 @@ function RevealPhase({
 
 // ─── Main export ─────────────────────────────────────────────────────────────
 export function ResultScreen({ result, setNumber, elapsedSeconds, questions, onReturnToSelect }: Props) {
-  markCompleted(setNumber);
+  markResult(setNumber, result.score, result.total);
 
   const [subPhase, setSubPhase] = useState<SubPhase>('score');
   const [predicted, setPredicted] = useState<Set<string>>(new Set());

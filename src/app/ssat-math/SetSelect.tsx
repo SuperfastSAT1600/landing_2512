@@ -1,18 +1,20 @@
 'use client';
 
-const COMPLETED_KEY = 'ssat_math_completed_v1';
+const RESULTS_KEY = 'ssat_math_results_v1';
 
-function getCompleted(): number[] {
-  if (typeof window === 'undefined') return [];
+interface SetResult { score: number; total: number }
+
+function getResults(): Record<string, SetResult> {
+  if (typeof window === 'undefined') return {};
   try {
-    return JSON.parse(sessionStorage.getItem(COMPLETED_KEY) ?? '[]') as number[];
+    return JSON.parse(sessionStorage.getItem(RESULTS_KEY) ?? '{}') as Record<string, SetResult>;
   } catch {
-    return [];
+    return {};
   }
 }
 
 export function SetSelect({ studentId, onSelect }: { studentId: string; onSelect: (setNumber: number) => void }) {
-  const completed = getCompleted();
+  const results = getResults();
   const displayName = studentId.split('_')[0] ?? studentId;
 
   return (
@@ -24,8 +26,9 @@ export function SetSelect({ studentId, onSelect }: { studentId: string; onSelect
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((setNum) => {
-            const done = completed.includes(setNum);
+          {Array.from({ length: 20 }, (_, i) => i + 1).map((setNum) => {
+            const result = results[String(setNum)];
+            const done = !!result;
             return (
               <button
                 key={setNum}
@@ -42,7 +45,11 @@ export function SetSelect({ studentId, onSelect }: { studentId: string; onSelect
                   </span>
                 )}
                 <div className="text-2xl font-bold mb-1 text-white">Set {setNum}</div>
-                <div className="text-xs text-gray-500">15문제 · 4분 30초</div>
+                {done ? (
+                  <div className="text-sm font-bold text-green-400">{result.score}/{result.total}점</div>
+                ) : (
+                  <div className="text-xs text-gray-500">15문제 · 4분 30초</div>
+                )}
               </button>
             );
           })}
