@@ -1,5 +1,5 @@
 // SFv2 시간 집계 — 구매·환불·완료·예약 시간을 학생(profile_id) 단위와 (학생 × 과목) 단위로 모은다.
-// 함수는 iad1, DB는 한국 리전이라 왕복 한 번이 수백 ms다. 모든 테이블을 동시에 읽고,
+// DB가 한국 리전이라 왕복을 줄이는 게 핵심이다(함수도 icn1 — vercel.json regions). 모든 테이블을 동시에 읽고,
 // 테이블 안의 페이지도 scanAllPages로 동시에 받는다(순차 페이지네이션 대비 왕복 약 30회 → 2회).
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 import { scanAllPages } from '@/lib/supabase-scan';

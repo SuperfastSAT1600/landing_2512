@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { buildCrmPayload, normalizePhone, toKSTNaive } from '@/lib/sheets-sync-utils';
 import type { SheetsSyncPayload } from '@/lib/sheets-sync-utils';
+import { STUDENT_COLUMNS } from '@/lib/student-columns';
 
 function isSyncAuthenticated(request: NextRequest): boolean {
   const key = request.headers.get('x-sync-key');
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
       .from('students')
       .update({ campaign_tags: mergedTags })
       .eq('id', student.id)
-      .select()
+      .select(STUDENT_COLUMNS)
       .single();
 
     if (updateError) {

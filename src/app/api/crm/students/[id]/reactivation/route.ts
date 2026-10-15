@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { ReactivationEntry } from '@/types/crm';
 import { apiError, unauthorized } from '@/lib/api-response';
+import { STUDENT_COLUMNS } from '@/lib/student-columns';
 
 /**
  * POST /api/crm/students/[id]/reactivation
@@ -138,7 +139,7 @@ export async function PATCH(
     .from('students')
     .update(updatePayload)
     .eq('id', id)
-    .select()
+    .select(STUDENT_COLUMNS)
     .single();
 
   if (saveError || !savedData) {
