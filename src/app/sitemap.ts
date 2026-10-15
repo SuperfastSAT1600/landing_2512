@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { getSortedPostsData } from '../lib/posts';
 import { excludeHiddenCategories } from '../lib/posts-filter';
 import { getActiveCoaches } from '../lib/coaches-data';
+import { PRACTICE_SLUGS } from '../lib/practice-catalog';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const headersList = await headers();
@@ -30,6 +31,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         const coachPages = coaches.map((coach) => ({
             url: `${baseUrl}/coaches/${encodeURIComponent(coach.slug)}`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly' as const,
+            priority: 0.6,
+        }));
+
+        // 인스타 유입용 문제풀이 랜딩. 게이트 아래에 소개 본문을 서버 렌더링하면서
+        // 색인 대상이 됐다. 문항 자체는 여전히 액세스 코드 뒤에 있다.
+        const practicePages = PRACTICE_SLUGS.map((slug) => ({
+            url: `${baseUrl}/practice/${slug}`,
             lastModified: new Date(),
             changeFrequency: 'monthly' as const,
             priority: 0.6,
@@ -74,6 +84,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             },
             ...blogPosts,
             ...coachPages,
+            ...practicePages,
         ];
     }
 
