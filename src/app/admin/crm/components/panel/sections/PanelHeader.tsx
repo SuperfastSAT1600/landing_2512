@@ -12,7 +12,6 @@ interface Props {
   localStudent: Student;
   duplicateNames?: string[];
   isPaused?: boolean;
-  pauseUntil?: string | null;
   hasPortal: boolean;
   portalCopied: boolean;
   portalLoading: boolean;
@@ -47,7 +46,7 @@ interface Props {
 }
 
 export function PanelHeader({
-  localStudent, duplicateNames = [], isPaused, pauseUntil, hasPortal, portalCopied, portalLoading,
+  localStudent, duplicateNames = [], isPaused, hasPortal, portalCopied, portalLoading,
   hasSignup, signupConsumed, signupCopied, signupLoading, coachPrepCopied, deleting, funnelChanging,
   showFunnelMenu, showReactivateForm, reactivateStrategy, reactivating,
   onClose, onIssuePortal, onCopyPortalLink, onPreviewPortal, onCopySignupLink, onRegenerateSignup,
@@ -79,12 +78,7 @@ export function PanelHeader({
           </p>
           {isPaused && (
             <p className="text-[11px] font-medium text-orange-600 bg-orange-50 border border-orange-200 rounded-md px-2 py-1 mt-1.5 leading-snug inline-flex items-center gap-1">
-              <span>휴원 중</span>
-              {pauseUntil && (
-                <span className="font-normal text-orange-500">
-                  · {new Date(pauseUntil).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })} 재개 예정
-                </span>
-              )}
+              휴원 중
             </p>
           )}
           {duplicateNames.length > 0 && (
