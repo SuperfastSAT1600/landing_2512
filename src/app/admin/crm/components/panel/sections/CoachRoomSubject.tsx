@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { CoachLessonStatus, CoachSubjectLedger } from '@/lib/coach-room-ledger';
-
-const MGMT_LABEL: Record<string, string> = { onboarding: '온보딩', active: '수업 중', paused: '휴원', inactive: '종료', excluded: '제외' };
+import { SRM_STATUS_LABEL, isSrmStatus } from '@/lib/srm-status';
 
 const h = (n: number) => `${Math.round(n * 10) / 10}h`;
 
@@ -46,7 +45,7 @@ export function CoachRoomSubject({ ledger }: { ledger: CoachSubjectLedger }) {
     <div className="rounded-xl border border-gray-100 bg-white p-3 space-y-2.5">
       <div className="flex items-center gap-2">
         <span className="text-xs font-bold text-gray-800">{ledger.subject}</span>
-        {ledger.managementStatus && <span className="text-[10px] text-gray-400">{MGMT_LABEL[ledger.managementStatus] ?? ledger.managementStatus}</span>}
+        {ledger.managementStatus && <span className="text-[10px] text-gray-400">{isSrmStatus(ledger.managementStatus) ? SRM_STATUS_LABEL[ledger.managementStatus] : ledger.managementStatus}</span>}
         {t.refunded > 0 && <span className="ml-auto text-[10px] text-gray-400">환불 {h(t.refunded)}</span>}
       </div>
 

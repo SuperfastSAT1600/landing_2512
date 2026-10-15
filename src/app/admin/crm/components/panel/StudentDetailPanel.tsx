@@ -26,6 +26,8 @@ import { PaymentHistorySection } from './sections/PaymentHistorySection';
 import { ActivityFeedSection } from './sections/ActivityFeedSection';
 import { SrmDataCard } from './sections/SrmDataCard';
 import { CoachRoomCard } from './sections/CoachRoomCard';
+import { SrmStatusBar, type SubjectStatus } from './sections/SrmStatusBar';
+import { rollUpSrmStatus } from '@/lib/srm-status';
 import { PlaudRecordingPicker } from './PlaudRecordingPicker';
 import type { StudentDetailPanelProps } from './types';
 import type { ConsultationEntry } from '@/types/crm';
@@ -74,8 +76,9 @@ export function StudentDetailPanel({
     setTimelineOpenSignal((s) => s + 1);
     onUpdate(student.id, { last_contacted_at: new Date().toISOString() } as Partial<Student>);
   }
+  // 휴원 표시는 SRM 수강 상태(과목별 롤업) 기준 — CRM 휴원 기록(student_pauses)과 엇갈리지 않게 한다
   const [isPaused, setIsPaused] = useState(false);
-  const [pauseUntil, setPauseUntilDate] = useState<string | null>(null);
+  const [coachRoomVersion, setCoachRoomVersion] = useState(0);
 
   // 진단 테스트 현황(전용 퍼널) 변경 — 낙관적 반영 후 PATCH(onUpdate가 처리)
   function handleDiagFunnelChange(stage: number) {
@@ -134,15 +137,8 @@ export function StudentDetailPanel({
       .catch((err) => console.error('[StudentDetailPanel] duplicate names fetch failed:', err));
   }, [localStudent.id, localStudent.name, adminKey]);
 
-  useEffect(() => {
-    fetch(`/api/admin/srm/student/crm/${student.id}/pause`)
-      .then((r) => r.json())
-      .then((json: { pause: { pause_until: string | null } | null }) => {
-        setIsPaused(!!json.pause);
-        setPauseUntilDate(json.pause?.pause_until ?? null);
-      })
-      .catch((err) => console.error('[StudentDetailPanel] pause fetch failed:', err));
-  }, [student.id]);
+  const applySrmStatuses = (list: SubjectStatus[]) =>
+    setIsPaused(rollUpSrmStatus(list.map((x) => x.status ?? '')) === 'paused');
 
   const editFormHook = useEditForm({
     studentId: student.id,
@@ -232,7 +228,7 @@ export function StudentDetailPanel({
       <div className="fixed inset-0 z-50 flex justify-end">
         <div className="absolute inset-0 bg-black/50" onClick={handleBackdropClick} />
         {/* 맨 왼쪽 코치룸 수업 내역 (넓은 화면에서만) */}
-        <CoachRoomCard studentId={student.id} adminKey={adminKey} />
+        <CoachRoomCard key={coachRoomVersion} studentId={student.id} adminKey={adminKey} />
         {/* 왼쪽 SRM 데이터 카드 (데스크톱에서만) */}
         <SrmDataCard studentId={student.id} studentName={localStudent.name} adminKey={adminKey} />
         <div className="relative w-full max-w-[440px] bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden shadow-xl">
@@ -240,7 +236,6 @@ export function StudentDetailPanel({
             localStudent={localStudent}
             duplicateNames={duplicateNames}
             isPaused={isPaused}
-            pauseUntil={pauseUntil}
             hasPortal={portalHook.hasPortal}
             portalCopied={portalHook.portalCopied}
             portalLoading={portalHook.portalLoading}
@@ -293,6 +288,16 @@ export function StudentDetailPanel({
               } else {
                 funnelHook.handleLeadStatusChange('inactive');
               }
+            }}
+          />
+          <SrmStatusBar
+            key={student.id}
+            studentId={student.id}
+            adminKey={adminKey}
+            onLoad={applySrmStatuses}
+            onChange={(list) => {
+              applySrmStatuses(list);
+              setCoachRoomVersion((v) => v + 1);
             }}
           />
 
