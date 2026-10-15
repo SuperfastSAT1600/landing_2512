@@ -8,7 +8,7 @@ export async function GET(
   const { setId } = await params;
   const setNumber = parseInt(setId, 10);
 
-  if (isNaN(setNumber) || setNumber < 1 || setNumber > 10) {
+  if (isNaN(setNumber) || setNumber < 1 || setNumber > 20) {
     return NextResponse.json(
       { error: { code: 'INVALID_SET', message: '유효하지 않은 세트 번호입니다.' } },
       { status: 400 }
