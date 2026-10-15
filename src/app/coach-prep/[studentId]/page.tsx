@@ -41,6 +41,14 @@ type ExamScoreRow = {
   note: string | null;
 };
 
+interface SrmBriefData {
+  headline: string;
+  strengths: string[];
+  weaknesses: string[];
+  risks: string[];
+  recommendation: string;
+}
+
 export interface SrmSkill {
   skill: string;
   sh_accuracy: number | null;
@@ -99,6 +107,7 @@ function computeSkills(days: { items: DayItem[] }[]): SrmSkill[] {
 export default async function CoachPrepPage({ params }: Props) {
   const { studentId } = await params;
 
+  // 1단계: 학생 + 시험 점수 병렬 조회
   const [{ data: raw, error }, { data: examScoresRaw }] = await Promise.all([
     supabaseAdmin
       .from('students')
@@ -136,25 +145,57 @@ export default async function CoachPrepPage({ params }: Props) {
       is_raw: !e.ai_coach_history?.trim(),
     }));
 
-  const { data: diagResult } = await supabaseAdmin
-    .from('diagnostic_test_results')
-    .select('submitted_at, previous_rw_score, previous_math_score')
-    .ilike('student_name', `%${student.name}%`)
-    .order('submitted_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  // 2단계: 학생 ID 확보 후 병렬 조회 (진단, SRM 브리핑 캐시, 스킬)
+  const briefQuery = student.sfv2_profile_id
+    ? supabaseAdmin
+        .from('portal_narrative_cache')
+        .select('narrative')
+        .eq('profile_id', student.sfv2_profile_id)
+        .eq('item_type', 'situation_brief')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    : Promise.resolve({ data: null, error: null });
 
-  // SRM 스킬 집계 (sfv2_profile_id가 있을 때만)
-  let srmSkills: SrmSkill[] | null = null;
-  if (student.sfv2_profile_id) {
-    try {
-      const { buildSrmReport } = await import('@/lib/build-srm-report');
-      const report = await buildSrmReport(student.sfv2_profile_id, { skipNarratives: true });
-      srmSkills = computeSkills(report.days);
-    } catch {
-      // 스킬 집계 실패 시 섹션 숨김
-    }
+  const skillsPromise: Promise<SrmSkill[] | null> = student.sfv2_profile_id
+    ? (async () => {
+        try {
+          const { buildSrmReport } = await import('@/lib/build-srm-report');
+          const report = await buildSrmReport(student.sfv2_profile_id!, { skipNarratives: true });
+          return computeSkills(report.days);
+        } catch {
+          return null;
+        }
+      })()
+    : Promise.resolve(null);
+
+  const [{ data: diagResult }, { data: briefCache }, srmSkills] = await Promise.all([
+    supabaseAdmin
+      .from('diagnostic_test_results')
+      .select('submitted_at, previous_rw_score, previous_math_score, total_time_seconds, edited_insights')
+      .ilike('student_name', `%${student.name}%`)
+      .order('submitted_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    briefQuery,
+    skillsPromise,
+  ]);
+
+  // 캐시에서 SRM 브리핑 파싱 (서버 사이드 — auth 불필요)
+  let srmBrief: SrmBriefData | null = null;
+  if (briefCache && 'narrative' in briefCache && briefCache.narrative) {
+    try { srmBrief = JSON.parse(briefCache.narrative as string) as SrmBriefData; } catch {}
   }
+
+  type DiagRow = {
+    submitted_at: string;
+    previous_rw_score: number | null;
+    previous_math_score: number | null;
+    total_time_seconds: number | null;
+    edited_insights: unknown;
+  };
+
+  const diag = diagResult as DiagRow | null;
 
   const data = {
     id: student.id,
@@ -173,9 +214,20 @@ export default async function CoachPrepPage({ params }: Props) {
     weekly_schedule: (student.weekly_schedule ?? null) as WeeklySlot[] | null,
     parent_timezone: student.parent_timezone ?? null,
     coach_history_entries: coachHistoryEntries,
-    diagnostic: diagResult ?? null,
+    diagnostic: diag ? {
+      submitted_at: diag.submitted_at,
+      previous_rw_score: diag.previous_rw_score,
+      previous_math_score: diag.previous_math_score,
+      total_time_seconds: diag.total_time_seconds,
+      edited_insights: diag.edited_insights as {
+        executiveSummary?: string;
+        topWeakDomains?: Array<{ domain: string; delta: number; note: string }>;
+        keyRecommendations?: string[];
+      } | null,
+    } : null,
     exam_scores: (examScoresRaw ?? []) as ExamScoreRow[],
     srm_skills: srmSkills,
+    srm_brief: srmBrief,
     sfv2_profile_id: student.sfv2_profile_id ?? null,
   };
 

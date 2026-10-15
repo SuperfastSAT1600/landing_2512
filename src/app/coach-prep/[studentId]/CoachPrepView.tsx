@@ -3,7 +3,19 @@
 import { useState } from 'react';
 import type { WeeklySlot } from '@/types/crm';
 
-// 서버 파일(API route, page.tsx)에서 타입을 import하면 서버 전용 모듈이 클라이언트 번들에 포함됨 — 인라인 정의
+// 서버 파일(API route, page.tsx)에서 import하면 서버 전용 모듈이 클라이언트 번들에 포함됨 — 인라인 정의
+interface DiagnosticData {
+  submitted_at: string;
+  previous_rw_score: number | null;
+  previous_math_score: number | null;
+  total_time_seconds: number | null;
+  edited_insights: {
+    executiveSummary?: string;
+    topWeakDomains?: Array<{ domain: string; delta: number; note: string }>;
+    keyRecommendations?: string[];
+  } | null;
+}
+
 interface CoachViewData {
   id: string;
   name: string;
@@ -27,14 +39,10 @@ interface CoachViewData {
     author?: string;
     is_raw?: boolean;
   }>;
-  diagnostic: {
-    submitted_at: string;
-    previous_rw_score: number | null;
-    previous_math_score: number | null;
-  } | null;
+  diagnostic: DiagnosticData | null;
 }
 
-interface SrmBriefData {
+export interface SrmBriefData {
   headline: string;
   strengths: string[];
   weaknesses: string[];
@@ -50,6 +58,16 @@ export interface SrmSkill {
   tc_total: number;
 }
 
+type ExamScore = { exam_month: string; rw_score: number | null; math_score: number | null; note: string | null };
+
+type ExtendedData = CoachViewData & {
+  exam_scores: ExamScore[];
+  srm_skills: SrmSkill[] | null;
+  srm_brief: SrmBriefData | null;
+  sfv2_profile_id: string | null;
+};
+
+// ────────────────────────────────────────────
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
 const SUBJECT_LABELS: Record<string, string> = {
@@ -77,6 +95,13 @@ function formatDate(iso: string | null): string {
   return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+function formatDuration(seconds: number | null): string {
+  if (!seconds) return '-';
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}분 ${s}초`;
+}
+
 function formatScheduleTime(slot: WeeklySlot): string {
   const h = slot.hour.toString().padStart(2, '0');
   const m = slot.minute.toString().padStart(2, '0');
@@ -92,10 +117,7 @@ function ScoreBar({ label, score, max = 800 }: { label: string; score: number | 
         <span className="font-mono font-semibold text-white">{score ?? '-'}</span>
       </div>
       <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-blue-500 rounded-full transition-all"
-          style={{ width: `${pct}%` }}
-        />
+        <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -121,9 +143,7 @@ function ConfirmItem({ checked, onChange, label, value }: ConfirmItemProps) {
   return (
     <div
       className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
-        checked
-          ? 'bg-emerald-500/10 border-emerald-500/30'
-          : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+        checked ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-gray-800 border-gray-700 hover:border-gray-600'
       }`}
       onClick={() => onChange(!checked)}
     >
@@ -131,13 +151,9 @@ function ConfirmItem({ checked, onChange, label, value }: ConfirmItemProps) {
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">{label}</p>
         <div className="text-sm font-medium text-white">{value}</div>
       </div>
-      <div
-        className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
-          checked
-            ? 'bg-emerald-500 border-emerald-500'
-            : 'bg-transparent border-gray-600'
-        }`}
-      >
+      <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+        checked ? 'bg-emerald-500 border-emerald-500' : 'bg-transparent border-gray-600'
+      }`}>
         {checked && (
           <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -148,15 +164,10 @@ function ConfirmItem({ checked, onChange, label, value }: ConfirmItemProps) {
   );
 }
 
-// ────────────────────────────────────────────
-// 테스트센터 점수 추이 섹션
-// ────────────────────────────────────────────
-type ExamScore = { exam_month: string; rw_score: number | null; math_score: number | null; note: string | null };
-
+// ── 테스트센터 점수 추이 ──────────────────────
 function ExamScoresSection({ scores }: { scores: ExamScore[] }) {
-  if (scores.length === 0) {
-    return <p className="text-sm text-gray-500">실제 응시 이력 없음</p>;
-  }
+  if (scores.length === 0) return <p className="text-sm text-gray-500">실제 응시 이력 없음</p>;
+
   const maxTotal = scores.reduce((m, s) => {
     const t = (s.rw_score ?? 0) + (s.math_score ?? 0);
     return t > m ? t : m;
@@ -169,8 +180,7 @@ function ExamScoresSection({ scores }: { scores: ExamScore[] }) {
         const prev = i > 0 ? scores[i - 1] : null;
         const prevTotal = prev?.rw_score != null && prev?.math_score != null ? prev.rw_score + prev.math_score : null;
         const delta = total != null && prevTotal != null ? total - prevTotal : null;
-        const pct = total != null ? Math.round(((total - 400) / (maxTotal - 400 || 1)) * 100) : 0;
-
+        const pct = total != null ? Math.max(Math.round(((total - 400) / Math.max(maxTotal - 400, 1)) * 100), 2) : 2;
         return (
           <div key={s.exam_month} className="space-y-1">
             <div className="flex items-center justify-between text-xs">
@@ -178,21 +188,16 @@ function ExamScoresSection({ scores }: { scores: ExamScore[] }) {
               <div className="flex items-center gap-3">
                 {s.rw_score != null && <span className="text-gray-400">RW <span className="text-white font-semibold">{s.rw_score}</span></span>}
                 {s.math_score != null && <span className="text-gray-400">M <span className="text-white font-semibold">{s.math_score}</span></span>}
-                {total != null && (
-                  <span className="text-white font-bold font-mono">{total}</span>
-                )}
+                {total != null && <span className="text-white font-bold font-mono">{total}</span>}
                 {delta != null && (
-                  <span className={`text-xs font-semibold ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                  <span className={`font-semibold ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-gray-500'}`}>
                     {delta > 0 ? `+${delta}` : delta}
                   </span>
                 )}
               </div>
             </div>
             <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-violet-500 rounded-full"
-                style={{ width: `${Math.max(pct, 2)}%` }}
-              />
+              <div className="h-full bg-violet-500 rounded-full" style={{ width: `${pct}%` }} />
             </div>
           </div>
         );
@@ -201,113 +206,16 @@ function ExamScoresSection({ scores }: { scores: ExamScore[] }) {
   );
 }
 
-// ────────────────────────────────────────────
-// 강점 / 취약 스킬 섹션
-// ────────────────────────────────────────────
-function SkillsSection({ skills }: { skills: SrmSkill[] }) {
-  if (skills.length === 0) {
-    return <p className="text-sm text-gray-500">학습 기록 없음</p>;
-  }
-  const ranked = [...skills].sort((a, b) => {
-    const aAcc = a.sh_accuracy ?? a.tc_accuracy ?? 100;
-    const bAcc = b.sh_accuracy ?? b.tc_accuracy ?? 100;
-    return aAcc - bAcc;
-  });
-  const weak = ranked.slice(0, 4);
-  const strong = [...ranked].reverse().slice(0, 4);
-
-  function SkillRow({ sk, highlight }: { sk: SrmSkill; highlight: 'weak' | 'strong' }) {
-    const primary = sk.sh_accuracy ?? sk.tc_accuracy ?? 0;
-    const barColor = highlight === 'weak' ? 'bg-red-500' : 'bg-emerald-500';
+// ── AI 현황 브리핑 (서버에서 캐시 조회 결과를 prop으로 받음) ──
+function SrmBriefCard({ brief, hasProfile }: { brief: SrmBriefData | null; hasProfile: boolean }) {
+  if (!hasProfile) return null;
+  if (!brief) {
     return (
-      <div className="space-y-1">
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-gray-300 truncate max-w-[60%]">{sk.skill}</span>
-          <div className="flex items-center gap-2">
-            {sk.sh_accuracy != null && (
-              <span className="text-gray-500">연습 <span className="text-gray-300">{sk.sh_accuracy}%</span></span>
-            )}
-            {sk.tc_accuracy != null && (
-              <span className="text-gray-500">실전 <span className="text-gray-300">{sk.tc_accuracy}%</span></span>
-            )}
-          </div>
-        </div>
-        <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
-          <div className={`h-full ${barColor} rounded-full`} style={{ width: `${primary}%` }} />
-        </div>
-      </div>
+      <p className="text-sm text-gray-500">
+        CRM에서 AI 브리핑을 먼저 생성하면 여기에 표시됩니다.
+      </p>
     );
   }
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <p className="text-[11px] font-semibold text-red-400 uppercase tracking-wider mb-3">취약 스킬</p>
-        <div className="space-y-3">
-          {weak.map((sk) => <SkillRow key={sk.skill} sk={sk} highlight="weak" />)}
-        </div>
-      </div>
-      <div className="border-t border-gray-700 pt-4">
-        <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-3">강점 스킬</p>
-        <div className="space-y-3">
-          {strong.map((sk) => <SkillRow key={sk.skill} sk={sk} highlight="strong" />)}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ────────────────────────────────────────────
-// AI 현황 브리핑 섹션 (클라이언트 lazy fetch)
-// ────────────────────────────────────────────
-function SrmBriefSection({ studentId }: { studentId: string }) {
-  const [brief, setBrief] = useState<SrmBriefData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [fetched, setFetched] = useState(false);
-
-  function load() {
-    if (fetched || loading) return;
-    setLoading(true);
-    setFetched(true);
-    fetch(`/api/crm/students/${studentId}/srm-brief`, { method: 'POST' })
-      .then(async (r) => {
-        const json = await r.json() as { data?: { brief: SrmBriefData }; error?: string };
-        if (json.data?.brief) {
-          setBrief(json.data.brief);
-        } else {
-          setError(json.error ?? '브리핑을 불러오지 못했습니다');
-        }
-      })
-      .catch(() => setError('브리핑을 불러오지 못했습니다'))
-      .finally(() => setLoading(false));
-  }
-
-  if (!fetched) {
-    return (
-      <button
-        onClick={load}
-        className="w-full py-2.5 px-4 rounded-lg bg-violet-600/20 border border-violet-500/30 text-violet-300 text-sm font-medium hover:bg-violet-600/30 transition-colors"
-      >
-        AI 현황 브리핑 불러오기
-      </button>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="space-y-3 animate-pulse">
-        <div className="h-5 bg-gray-700 rounded w-3/4" />
-        <div className="h-3 bg-gray-700 rounded w-1/2" />
-        <div className="h-3 bg-gray-700 rounded w-2/3" />
-      </div>
-    );
-  }
-
-  if (error || !brief) {
-    return <p className="text-sm text-red-400">{error ?? '브리핑을 불러오지 못했습니다'}</p>;
-  }
-
   return (
     <div className="space-y-4">
       <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
@@ -355,15 +263,123 @@ function SrmBriefSection({ studentId }: { studentId: string }) {
   );
 }
 
-// ────────────────────────────────────────────
-// Main View
-// ────────────────────────────────────────────
-type ExtendedData = CoachViewData & {
-  exam_scores: ExamScore[];
-  srm_skills: SrmSkill[] | null;
-  sfv2_profile_id: string | null;
-};
+// ── 강점 / 취약 스킬 ──────────────────────────
+function SkillsSection({ skills }: { skills: SrmSkill[] }) {
+  if (skills.length === 0) return <p className="text-sm text-gray-500">학습 기록 없음 (SRM 데이터 로딩 후 표시됩니다)</p>;
 
+  const ranked = [...skills].sort((a, b) => {
+    const aAcc = a.sh_accuracy ?? a.tc_accuracy ?? 100;
+    const bAcc = b.sh_accuracy ?? b.tc_accuracy ?? 100;
+    return aAcc - bAcc;
+  });
+  const weak = ranked.slice(0, 4);
+  const strong = [...ranked].reverse().slice(0, 4);
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <p className="text-[11px] font-semibold text-red-400 uppercase tracking-wider mb-3">취약 스킬</p>
+        <div className="space-y-3">
+          {weak.map((sk) => <SkillBarRow key={sk.skill} sk={sk} highlight="weak" />)}
+        </div>
+      </div>
+      <div className="border-t border-gray-700 pt-4">
+        <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-3">강점 스킬</p>
+        <div className="space-y-3">
+          {strong.map((sk) => <SkillBarRow key={sk.skill} sk={sk} highlight="strong" />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SkillBarRow({ sk, highlight }: { sk: SrmSkill; highlight: 'weak' | 'strong' }) {
+  const primary = sk.sh_accuracy ?? sk.tc_accuracy ?? 0;
+  const barColor = highlight === 'weak' ? 'bg-red-500' : 'bg-emerald-500';
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-gray-300 truncate max-w-[60%]">{sk.skill}</span>
+        <div className="flex items-center gap-2">
+          {sk.sh_accuracy != null && <span className="text-gray-500">연습 <span className="text-gray-300">{sk.sh_accuracy}%</span></span>}
+          {sk.tc_accuracy != null && <span className="text-gray-500">실전 <span className="text-gray-300">{sk.tc_accuracy}%</span></span>}
+        </div>
+      </div>
+      <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+        <div className={`h-full ${barColor} rounded-full`} style={{ width: `${primary}%` }} />
+      </div>
+    </div>
+  );
+}
+
+// ── 진단테스트 결과 ───────────────────────────
+function DiagnosticSection({ diagnostic }: { diagnostic: DiagnosticData }) {
+  const insights = diagnostic.edited_insights;
+  return (
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-400">제출일</span>
+          <span>{formatDate(diagnostic.submitted_at)}</span>
+        </div>
+        {diagnostic.total_time_seconds != null && (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-400">소요 시간</span>
+            <span className="font-mono">{formatDuration(diagnostic.total_time_seconds)}</span>
+          </div>
+        )}
+        {diagnostic.previous_rw_score != null && (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-400">RW (자기 보고)</span>
+            <span className="font-mono">{diagnostic.previous_rw_score}</span>
+          </div>
+        )}
+        {diagnostic.previous_math_score != null && (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-400">Math (자기 보고)</span>
+            <span className="font-mono">{diagnostic.previous_math_score}</span>
+          </div>
+        )}
+      </div>
+
+      {insights?.executiveSummary && (
+        <div className="border-t border-gray-700 pt-4">
+          <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">진단 요약</p>
+          <p className="text-sm text-gray-300 leading-relaxed">{insights.executiveSummary}</p>
+        </div>
+      )}
+
+      {insights?.topWeakDomains && insights.topWeakDomains.length > 0 && (
+        <div className="border-t border-gray-700 pt-4">
+          <p className="text-[11px] font-semibold text-red-400 uppercase tracking-wider mb-3">취약 영역</p>
+          <div className="space-y-2">
+            {insights.topWeakDomains.slice(0, 4).map((d) => (
+              <div key={d.domain} className="flex items-center justify-between text-xs">
+                <span className="text-gray-300 truncate max-w-[60%]">{d.domain}</span>
+                <span className="text-red-400 font-mono">{d.delta > 0 ? `+${d.delta}` : d.delta}%p</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {insights?.keyRecommendations && insights.keyRecommendations.length > 0 && (
+        <div className="border-t border-gray-700 pt-4">
+          <p className="text-[11px] font-semibold text-blue-400 uppercase tracking-wider mb-2">핵심 권장사항</p>
+          <ul className="space-y-1.5">
+            {insights.keyRecommendations.map((r, i) => (
+              <li key={i} className="text-xs text-gray-300 flex gap-2">
+                <span className="text-blue-500 shrink-0 font-bold">{i + 1}.</span>{r}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main View ─────────────────────────────────
 export function CoachPrepView({ data }: { data: ExtendedData }) {
   const [confirmedScore, setConfirmedScore] = useState(false);
   const [confirmedTargetDate, setConfirmedTargetDate] = useState(false);
@@ -453,20 +469,9 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
               </span>
             )}
           </div>
-
           <div className="space-y-3">
-            <ConfirmItem
-              checked={confirmedScore}
-              onChange={setConfirmedScore}
-              label="이전 시험 점수"
-              value={scoreValue}
-            />
-            <ConfirmItem
-              checked={confirmedTargetDate}
-              onChange={setConfirmedTargetDate}
-              label="목표 시험 시점"
-              value={targetDateValue}
-            />
+            <ConfirmItem checked={confirmedScore} onChange={setConfirmedScore} label="이전 시험 점수" value={scoreValue} />
+            <ConfirmItem checked={confirmedTargetDate} onChange={setConfirmedTargetDate} label="목표 시험 시점" value={targetDateValue} />
             <ConfirmItem
               checked={confirmedLanguage}
               onChange={setConfirmedLanguage}
@@ -478,15 +483,12 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
               }
             />
           </div>
-
           {!allConfirmed && (
-            <p className="mt-4 text-xs text-gray-500 text-center">
-              위 3가지 항목을 모두 확인한 후 상세 자료가 공개됩니다.
-            </p>
+            <p className="mt-4 text-xs text-gray-500 text-center">위 3가지 항목을 모두 확인한 후 상세 자료가 공개됩니다.</p>
           )}
         </div>
 
-        {/* 상세 섹션: 모두 확인 후에만 표시 */}
+        {/* 상세 섹션 */}
         {allConfirmed && (
           <>
             {/* 테스트센터 점수 추이 */}
@@ -494,24 +496,28 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
               <ExamScoresSection scores={data.exam_scores} />
             </SectionCard>
 
-            {/* SRM 학습 현황 */}
+            {/* AI 현황 브리핑 */}
             {data.sfv2_profile_id && (
-              <>
-                {/* AI 현황 브리핑 */}
-                <SectionCard title="AI 현황 브리핑" accent="border-violet-500/20">
-                  <SrmBriefSection studentId={data.id} />
-                </SectionCard>
-
-                {/* 강점 / 취약 스킬 */}
-                {data.srm_skills !== null && (
-                  <SectionCard title="스킬 분석">
-                    <SkillsSection skills={data.srm_skills} />
-                  </SectionCard>
-                )}
-              </>
+              <SectionCard title="AI 현황 브리핑" accent="border-violet-500/20">
+                <SrmBriefCard brief={data.srm_brief} hasProfile={!!data.sfv2_profile_id} />
+              </SectionCard>
             )}
 
-            {/* Scores */}
+            {/* 강점 / 취약 스킬 */}
+            {data.sfv2_profile_id && data.srm_skills !== null && (
+              <SectionCard title="스킬 분석">
+                <SkillsSection skills={data.srm_skills} />
+              </SectionCard>
+            )}
+
+            {/* 진단테스트 결과 */}
+            {data.diagnostic && (
+              <SectionCard title="진단테스트 결과">
+                <DiagnosticSection diagnostic={data.diagnostic} />
+              </SectionCard>
+            )}
+
+            {/* 점수 현황 */}
             <SectionCard title="점수 현황">
               <div className="space-y-4">
                 <div>
@@ -521,9 +527,7 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
                     <ScoreBar label="Math" score={data.previous_math_score} />
                   </div>
                   {totalPrevious != null && (
-                    <p className="text-right text-sm text-gray-400 mt-2">
-                      합계 <span className="font-mono font-bold text-white">{totalPrevious}</span>
-                    </p>
+                    <p className="text-right text-sm text-gray-400 mt-2">합계 <span className="font-mono font-bold text-white">{totalPrevious}</span></p>
                   )}
                 </div>
                 {(data.target_score != null || data.target_score_2 != null) && (
@@ -534,13 +538,9 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
                         <div>
                           <span className="text-[11px] text-gray-500 mr-1.5">1차</span>
                           <span className="text-lg font-bold text-emerald-400">{data.target_score}</span>
-                          {totalPrevious != null && (
-                            <span className="text-xs text-gray-500 ml-2">+{data.target_score - totalPrevious}점</span>
-                          )}
+                          {totalPrevious != null && <span className="text-xs text-gray-500 ml-2">+{data.target_score - totalPrevious}점</span>}
                         </div>
-                        {data.target_test_date && (
-                          <span className="text-sm text-gray-400">{formatDate(data.target_test_date)}</span>
-                        )}
+                        {data.target_test_date && <span className="text-sm text-gray-400">{formatDate(data.target_test_date)}</span>}
                       </div>
                     )}
                     {data.target_score_2 != null && (
@@ -548,13 +548,9 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
                         <div>
                           <span className="text-[11px] text-gray-500 mr-1.5">2차</span>
                           <span className="text-lg font-bold text-emerald-300">{data.target_score_2}</span>
-                          {totalPrevious != null && (
-                            <span className="text-xs text-gray-500 ml-2">+{data.target_score_2 - totalPrevious}점</span>
-                          )}
+                          {totalPrevious != null && <span className="text-xs text-gray-500 ml-2">+{data.target_score_2 - totalPrevious}점</span>}
                         </div>
-                        {data.target_test_date_2 && (
-                          <span className="text-sm text-gray-400">{formatDate(data.target_test_date_2)}</span>
-                        )}
+                        {data.target_test_date_2 && <span className="text-sm text-gray-400">{formatDate(data.target_test_date_2)}</span>}
                       </div>
                     )}
                   </div>
@@ -562,31 +558,7 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
               </div>
             </SectionCard>
 
-            {/* Diagnostic */}
-            {data.diagnostic && (
-              <SectionCard title="진단테스트 결과">
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">제출일</span>
-                    <span>{formatDate(data.diagnostic.submitted_at)}</span>
-                  </div>
-                  {data.diagnostic.previous_rw_score != null && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">RW (자기 보고)</span>
-                      <span className="font-mono">{data.diagnostic.previous_rw_score}</span>
-                    </div>
-                  )}
-                  {data.diagnostic.previous_math_score != null && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Math (자기 보고)</span>
-                      <span className="font-mono">{data.diagnostic.previous_math_score}</span>
-                    </div>
-                  )}
-                </div>
-              </SectionCard>
-            )}
-
-            {/* Schedule */}
+            {/* 수업 스케줄 */}
             <SectionCard title="수업 스케줄">
               {data.ot_datetime && (
                 <div className="mb-4 p-3 bg-gray-700/50 rounded-lg">
@@ -596,20 +568,13 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
               )}
               {activeDays.length > 0 ? (
                 <div className="space-y-2">
-                  <p className="text-xs text-gray-500 mb-3">
-                    타임존: {data.parent_timezone ?? 'UTC'}
-                  </p>
+                  <p className="text-xs text-gray-500 mb-3">타임존: {data.parent_timezone ?? 'UTC'}</p>
                   {activeDays.map((day) => (
                     <div key={day} className="flex items-center gap-3">
-                      <span className="w-6 text-center text-sm font-medium text-gray-300">
-                        {DAY_LABELS[day]}
-                      </span>
+                      <span className="w-6 text-center text-sm font-medium text-gray-300">{DAY_LABELS[day]}</span>
                       <div className="flex gap-2 flex-wrap">
                         {scheduleByDay[day].sort((a, b) => a.hour - b.hour || a.minute - b.minute).map((slot, i) => (
-                          <span
-                            key={i}
-                            className="px-2 py-0.5 bg-gray-700 rounded text-xs font-mono text-gray-200"
-                          >
+                          <span key={i} className="px-2 py-0.5 bg-gray-700 rounded text-xs font-mono text-gray-200">
                             {formatScheduleTime(slot)}
                           </span>
                         ))}
@@ -622,7 +587,7 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
               )}
             </SectionCard>
 
-            {/* Coach History */}
+            {/* 학습 이력 & 코치 메모 */}
             <SectionCard title="학습 이력 & 코치 메모">
               {data.coach_history_entries.length > 0 ? (
                 <div className="space-y-4">
@@ -630,18 +595,12 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
                     <div key={entry.id} className="border-l-2 border-blue-500/40 pl-4">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <span className="text-xs text-gray-500">{formatDate(entry.created_at)}</span>
-                        {entry.author && (
-                          <span className="text-xs text-gray-600">· {entry.author}</span>
-                        )}
+                        {entry.author && <span className="text-xs text-gray-600">· {entry.author}</span>}
                         {entry.is_raw && (
-                          <span className="text-[10px] px-1.5 py-0.5 bg-yellow-500/15 text-yellow-500 rounded">
-                            상담 메모 원본
-                          </span>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-yellow-500/15 text-yellow-500 rounded">상담 메모 원본</span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
-                        {entry.content}
-                      </p>
+                      <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">{entry.content}</p>
                     </div>
                   ))}
                 </div>
@@ -651,7 +610,6 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
             </SectionCard>
           </>
         )}
-
       </div>
     </div>
   );
