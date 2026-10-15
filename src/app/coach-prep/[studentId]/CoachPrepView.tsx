@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { CoachViewData } from '@/app/api/admin/srm/student/crm/[crmStudentId]/coach-view/route';
 import type { WeeklySlot } from '@/types/crm';
+import type { SrmBriefData } from '@/app/api/crm/students/[id]/srm-brief/route';
+import type { SrmSkill } from './page';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -55,9 +57,9 @@ function ScoreBar({ label, score, max = 800 }: { label: string; score: number | 
   );
 }
 
-function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+function SectionCard({ title, children, accent }: { title: string; children: React.ReactNode; accent?: string }) {
   return (
-    <div className="bg-gray-800 rounded-xl border border-gray-700 p-5">
+    <div className={`bg-gray-800 rounded-xl border p-5 ${accent ?? 'border-gray-700'}`}>
       <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">{title}</h2>
       {children}
     </div>
@@ -102,7 +104,223 @@ function ConfirmItem({ checked, onChange, label, value }: ConfirmItemProps) {
   );
 }
 
-export function CoachPrepView({ data }: { data: CoachViewData }) {
+// ────────────────────────────────────────────
+// 테스트센터 점수 추이 섹션
+// ────────────────────────────────────────────
+type ExamScore = { exam_month: string; rw_score: number | null; math_score: number | null; note: string | null };
+
+function ExamScoresSection({ scores }: { scores: ExamScore[] }) {
+  if (scores.length === 0) {
+    return <p className="text-sm text-gray-500">실제 응시 이력 없음</p>;
+  }
+  const maxTotal = scores.reduce((m, s) => {
+    const t = (s.rw_score ?? 0) + (s.math_score ?? 0);
+    return t > m ? t : m;
+  }, 400);
+
+  return (
+    <div className="space-y-3">
+      {scores.map((s, i) => {
+        const total = s.rw_score != null && s.math_score != null ? s.rw_score + s.math_score : null;
+        const prev = i > 0 ? scores[i - 1] : null;
+        const prevTotal = prev?.rw_score != null && prev?.math_score != null ? prev.rw_score + prev.math_score : null;
+        const delta = total != null && prevTotal != null ? total - prevTotal : null;
+        const pct = total != null ? Math.round(((total - 400) / (maxTotal - 400 || 1)) * 100) : 0;
+
+        return (
+          <div key={s.exam_month} className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-400 font-mono">{s.exam_month}</span>
+              <div className="flex items-center gap-3">
+                {s.rw_score != null && <span className="text-gray-400">RW <span className="text-white font-semibold">{s.rw_score}</span></span>}
+                {s.math_score != null && <span className="text-gray-400">M <span className="text-white font-semibold">{s.math_score}</span></span>}
+                {total != null && (
+                  <span className="text-white font-bold font-mono">{total}</span>
+                )}
+                {delta != null && (
+                  <span className={`text-xs font-semibold ${delta > 0 ? 'text-emerald-400' : delta < 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                    {delta > 0 ? `+${delta}` : delta}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-violet-500 rounded-full"
+                style={{ width: `${Math.max(pct, 2)}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────
+// 강점 / 취약 스킬 섹션
+// ────────────────────────────────────────────
+function SkillsSection({ skills }: { skills: SrmSkill[] }) {
+  if (skills.length === 0) {
+    return <p className="text-sm text-gray-500">학습 기록 없음</p>;
+  }
+  const ranked = [...skills].sort((a, b) => {
+    const aAcc = a.sh_accuracy ?? a.tc_accuracy ?? 100;
+    const bAcc = b.sh_accuracy ?? b.tc_accuracy ?? 100;
+    return aAcc - bAcc;
+  });
+  const weak = ranked.slice(0, 4);
+  const strong = [...ranked].reverse().slice(0, 4);
+
+  function SkillRow({ sk, highlight }: { sk: SrmSkill; highlight: 'weak' | 'strong' }) {
+    const primary = sk.sh_accuracy ?? sk.tc_accuracy ?? 0;
+    const barColor = highlight === 'weak' ? 'bg-red-500' : 'bg-emerald-500';
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-gray-300 truncate max-w-[60%]">{sk.skill}</span>
+          <div className="flex items-center gap-2">
+            {sk.sh_accuracy != null && (
+              <span className="text-gray-500">연습 <span className="text-gray-300">{sk.sh_accuracy}%</span></span>
+            )}
+            {sk.tc_accuracy != null && (
+              <span className="text-gray-500">실전 <span className="text-gray-300">{sk.tc_accuracy}%</span></span>
+            )}
+          </div>
+        </div>
+        <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+          <div className={`h-full ${barColor} rounded-full`} style={{ width: `${primary}%` }} />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <p className="text-[11px] font-semibold text-red-400 uppercase tracking-wider mb-3">취약 스킬</p>
+        <div className="space-y-3">
+          {weak.map((sk) => <SkillRow key={sk.skill} sk={sk} highlight="weak" />)}
+        </div>
+      </div>
+      <div className="border-t border-gray-700 pt-4">
+        <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-3">강점 스킬</p>
+        <div className="space-y-3">
+          {strong.map((sk) => <SkillRow key={sk.skill} sk={sk} highlight="strong" />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────
+// AI 현황 브리핑 섹션 (클라이언트 lazy fetch)
+// ────────────────────────────────────────────
+function SrmBriefSection({ studentId }: { studentId: string }) {
+  const [brief, setBrief] = useState<SrmBriefData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fetched, setFetched] = useState(false);
+
+  function load() {
+    if (fetched || loading) return;
+    setLoading(true);
+    setFetched(true);
+    fetch(`/api/crm/students/${studentId}/srm-brief`, { method: 'POST' })
+      .then(async (r) => {
+        const json = await r.json() as { data?: { brief: SrmBriefData }; error?: string };
+        if (json.data?.brief) {
+          setBrief(json.data.brief);
+        } else {
+          setError(json.error ?? '브리핑을 불러오지 못했습니다');
+        }
+      })
+      .catch(() => setError('브리핑을 불러오지 못했습니다'))
+      .finally(() => setLoading(false));
+  }
+
+  if (!fetched) {
+    return (
+      <button
+        onClick={load}
+        className="w-full py-2.5 px-4 rounded-lg bg-violet-600/20 border border-violet-500/30 text-violet-300 text-sm font-medium hover:bg-violet-600/30 transition-colors"
+      >
+        AI 현황 브리핑 불러오기
+      </button>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-3 animate-pulse">
+        <div className="h-5 bg-gray-700 rounded w-3/4" />
+        <div className="h-3 bg-gray-700 rounded w-1/2" />
+        <div className="h-3 bg-gray-700 rounded w-2/3" />
+      </div>
+    );
+  }
+
+  if (error || !brief) {
+    return <p className="text-sm text-red-400">{error ?? '브리핑을 불러오지 못했습니다'}</p>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
+        <p className="text-sm font-semibold text-violet-200">{brief.headline}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-2">강점</p>
+          <ul className="space-y-1">
+            {brief.strengths.map((s, i) => (
+              <li key={i} className="text-xs text-gray-300 flex gap-1.5">
+                <span className="text-emerald-500 shrink-0">+</span>{s}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p className="text-[11px] font-semibold text-red-400 uppercase tracking-wider mb-2">취약</p>
+          <ul className="space-y-1">
+            {brief.weaknesses.map((s, i) => (
+              <li key={i} className="text-xs text-gray-300 flex gap-1.5">
+                <span className="text-red-500 shrink-0">–</span>{s}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      {brief.risks.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider mb-2">리스크</p>
+          <ul className="space-y-1">
+            {brief.risks.map((s, i) => (
+              <li key={i} className="text-xs text-gray-300 flex gap-1.5">
+                <span className="text-amber-500 shrink-0">!</span>{s}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div className="pt-2 border-t border-gray-700">
+        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">권장 액션</p>
+        <p className="text-sm text-white">{brief.recommendation}</p>
+      </div>
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────
+// Main View
+// ────────────────────────────────────────────
+type ExtendedData = CoachViewData & {
+  exam_scores: ExamScore[];
+  srm_skills: SrmSkill[] | null;
+  sfv2_profile_id: string | null;
+};
+
+export function CoachPrepView({ data }: { data: ExtendedData }) {
   const [confirmedScore, setConfirmedScore] = useState(false);
   const [confirmedTargetDate, setConfirmedTargetDate] = useState(false);
   const [confirmedLanguage, setConfirmedLanguage] = useState(false);
@@ -227,6 +445,28 @@ export function CoachPrepView({ data }: { data: CoachViewData }) {
         {/* 상세 섹션: 모두 확인 후에만 표시 */}
         {allConfirmed && (
           <>
+            {/* 테스트센터 점수 추이 */}
+            <SectionCard title="테스트센터 점수 추이" accent="border-violet-500/20">
+              <ExamScoresSection scores={data.exam_scores} />
+            </SectionCard>
+
+            {/* SRM 학습 현황 */}
+            {data.sfv2_profile_id && (
+              <>
+                {/* AI 현황 브리핑 */}
+                <SectionCard title="AI 현황 브리핑" accent="border-violet-500/20">
+                  <SrmBriefSection studentId={data.id} />
+                </SectionCard>
+
+                {/* 강점 / 취약 스킬 */}
+                {data.srm_skills !== null && (
+                  <SectionCard title="스킬 분석">
+                    <SkillsSection skills={data.srm_skills} />
+                  </SectionCard>
+                )}
+              </>
+            )}
+
             {/* Scores */}
             <SectionCard title="점수 현황">
               <div className="space-y-4">
