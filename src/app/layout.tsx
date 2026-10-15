@@ -11,12 +11,18 @@ export const metadata: Metadata = {
   // React 하이드레이션 전에 DOM을 변형 → "attributes didn't match" 미스매치를 유발.
   // 자동 감지를 꺼서 원천 차단(관리자 화면에도 전화번호가 많아 오탐 방지 겸용).
   formatDetection: { telephone: false, date: false, address: false, email: false },
+  // 이 앱은 tutoring.superfastsat.com 전용이다. www.superfastsat.com 은 별도 배포라
+  // 이 저장소의 라우트(/coaches, /practice/*, /supertest 등)가 전부 404 난다.
+  metadataBase: new URL("https://tutoring.superfastsat.com"),
   alternates: {
-    canonical: "https://superfastsat.com",
+    // './' 는 현재 경로로 해석된다. 예전에는 여기에 "https://superfastsat.com" 이
+    // 고정값으로 박혀 있어서, 자기 canonical 을 선언하지 않은 라우트 71개가 전부
+    // 남의 도메인을 정본으로 가리켰다. 공통 틀에는 경로 고정값을 두면 안 된다.
+    canonical: "./",
   },
   openGraph: {
     type: "website",
-    url: "https://superfastsat.com",
+    url: "./",
     siteName: "SuperfastSAT",
     title: "SAT 목표 점수에 가장 빠르게 | SuperfastSAT",
     description: "SuperfastSAT은 Digital SAT 전문 온라인 학원입니다. 목표 점수 달성까지 최단 경로로 안내합니다.",

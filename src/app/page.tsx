@@ -56,7 +56,9 @@ const courseSchema = {
     '@context': 'https://schema.org',
     '@type': 'Course',
     name: 'Digital SAT 완전 정복 과정',
-    description: 'Digital SAT 전문 강사진이 설계한 체계적인 커리큘럼. AI 진단부터 실전 모의고사까지 목표 점수 달성을 보장합니다.',
+    // "보장합니다" 는 학원이 점수를 약속하는 표현이라 과장광고 소지가 있다.
+    // 구조화 데이터는 검색엔진에 그대로 전달되는 선언이므로 표현을 낮춘다.
+    description: 'Digital SAT 전문 강사진이 설계한 체계적인 커리큘럼. AI 진단부터 실전 모의고사까지 목표 점수 달성을 지원합니다.',
     provider: {
         '@type': 'Organization',
         name: 'SuperfastSAT',
