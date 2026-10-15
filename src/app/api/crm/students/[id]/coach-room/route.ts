@@ -17,7 +17,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!profileId) return apiError('no_v2_profile', 'SRM 프로필이 연결되지 않았습니다.', 404);
 
   try {
-    const subjects = buildCoachRoomLedger(await fetchCoachRoomLedgerInput(profileId));
+    const input = await fetchCoachRoomLedgerInput(profileId);
+    const subjects = buildCoachRoomLedger({ ...input, now: new Date().toISOString() });
     return NextResponse.json({ data: { subjects } });
   } catch (e) {
     return apiError('UPSTREAM_ERROR', e instanceof Error ? e.message : 'SFv2 조회 실패', 502);

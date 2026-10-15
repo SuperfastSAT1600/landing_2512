@@ -10,6 +10,8 @@ const h = (n: number) => `${Math.round(n * 10) / 10}h`;
 
 const STATUS_STYLE: Record<CoachLessonStatus, { label: string; cls: string }> = {
   completed: { label: '완료', cls: 'bg-blue-50 text-blue-700' },
+  held: { label: '완료 처리 대기', cls: 'bg-orange-50 text-orange-700' },
+  unverified: { label: '확인 필요', cls: 'bg-red-50 text-red-600' },
   scheduled: { label: '예정', cls: 'bg-emerald-50 text-emerald-700' },
   pending: { label: '확인 대기', cls: 'bg-amber-50 text-amber-700' },
 };
@@ -37,8 +39,8 @@ export function CoachRoomSubject({ ledger }: { ledger: CoachSubjectLedger }) {
   const [showPayments, setShowPayments] = useState(false);
   const t = ledger.totals;
   const registered = Math.round((t.purchased - t.refunded) * 10) / 10;
-  const pct = registered > 0 ? Math.min(100, Math.round((t.completed / registered) * 100)) : 0;
-  const over = t.remaining < 0;
+  const pct = registered > 0 ? Math.min(100, Math.round((t.actualCompleted / registered) * 100)) : 0;
+  const over = t.actualRemaining < 0;
 
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-3 space-y-2.5">
@@ -50,9 +52,9 @@ export function CoachRoomSubject({ ledger }: { ledger: CoachSubjectLedger }) {
 
       <div className="grid grid-cols-4 gap-1.5">
         <Stat label="등록" value={h(registered)} testId="coach-registered" />
-        <Stat label="진행" value={h(t.completed)} testId="coach-completed" tone="text-blue-700" />
-        <Stat label="잔여" value={h(t.remaining)} testId="coach-remaining" tone={over ? 'text-red-600' : 'text-gray-900'} />
-        <Stat label="예약" value={h(t.scheduled)} testId="coach-scheduled" tone="text-emerald-700" />
+        <Stat label="진행" value={h(t.actualCompleted)} testId="coach-completed" tone="text-blue-700" />
+        <Stat label="잔여" value={h(t.actualRemaining)} testId="coach-remaining" tone={over ? 'text-red-600' : 'text-gray-900'} />
+        <Stat label="예약" value={h(t.upcoming)} testId="coach-scheduled" tone="text-emerald-700" />
       </div>
 
       <div>
@@ -61,22 +63,35 @@ export function CoachRoomSubject({ ledger }: { ledger: CoachSubjectLedger }) {
         </div>
         <p className="mt-1 text-[10px] text-gray-400">
           {over
-            ? <span className="text-red-600 font-semibold">초과 진행 {h(-t.remaining)} — 결제분보다 많이 수업함</span>
+            ? <span className="text-red-600 font-semibold">초과 진행 {h(-t.actualRemaining)} — 결제분보다 많이 수업함</span>
             : <>진행 {pct}% · 예약 안 된 잔여 {h(Math.max(0, t.unscheduled))}{t.unscheduled < 0 && ` · 초과 예약 ${h(-t.unscheduled)}`}</>}
         </p>
+        {t.held > 0 && (
+          <p className="mt-0.5 text-[10px] text-orange-700">
+            SRM 기준 진행 {h(t.completed)} · 잔여 {h(t.remaining)} — 수업은 했지만 SRM 완료 처리 안 된 {h(t.held)} 반영 전
+          </p>
+        )}
+        {t.unverified > 0 && (
+          <p className="mt-0.5 text-[10px] text-red-600">접속 기록이 없는 지난 수업 {h(t.unverified)} — 진행 여부 확인 필요(잔여에서 빼지 않음)</p>
+        )}
       </div>
 
       {ledger.lessons.length > 0 ? (
         <ul className="divide-y divide-gray-50">
           {ledger.lessons.map((l) => (
-            <li key={l.id} className="flex items-center gap-2 py-1.5 text-[11px]">
-              <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${STATUS_STYLE[l.status].cls}`}>{STATUS_STYLE[l.status].label}</span>
-              <span className="tabular-nums text-gray-700">{kstRange(l.startsAt, l.endsAt)}</span>
-              <span className="tabular-nums text-gray-500">{h(l.hours)}</span>
-              <span className="truncate text-gray-400">{l.teacher ?? ''}</span>
-              {l.cumulativeCompleted != null && (
-                <span className="ml-auto shrink-0 tabular-nums text-blue-600 font-medium">누적 {h(l.cumulativeCompleted)}</span>
-              )}
+            <li key={l.id} className="py-1.5 text-[11px]">
+              <div className="flex items-center gap-2">
+                <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${STATUS_STYLE[l.status].cls}`}>{STATUS_STYLE[l.status].label}</span>
+                <span className="tabular-nums text-gray-700 whitespace-nowrap">{kstRange(l.startsAt, l.endsAt)}</span>
+                {l.cumulative != null && (
+                  <span className="ml-auto shrink-0 tabular-nums text-blue-600 font-medium">누적 {h(l.cumulative)}</span>
+                )}
+              </div>
+              <div className="mt-0.5 flex gap-2 pl-1 text-[10px] text-gray-400">
+                <span className="tabular-nums">{h(l.hours)}</span>
+                {l.teacher && <span className="truncate">{l.teacher}</span>}
+                {l.togetherMinutes != null && l.togetherMinutes > 0 && <span className="tabular-nums">함께 {l.togetherMinutes}분</span>}
+              </div>
             </li>
           ))}
         </ul>
