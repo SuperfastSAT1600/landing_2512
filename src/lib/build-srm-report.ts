@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 import OpenAI from 'openai';
+import { localDate, sectionOfChapter, groupTestCenterExams, fetchAllRows, type TcAttemptRow, type TcLessonInfo } from '@/lib/srm-test-center';
 import type {
   LearningReport, DayReport, StudyHallDay, StudyHallSkill,
   TestCenterDay, TestCenterLesson, DailyReportDay, VocaDay, LessonFeedbackDay,
@@ -76,12 +77,6 @@ function openaiClient(): OpenAI {
     _openai = new OpenAI({ apiKey });
   }
   return _openai;
-}
-
-function toKSTDate(isoStr: string): string {
-  const d = new Date(isoStr);
-  d.setHours(d.getHours() + 9);
-  return d.toISOString().slice(0, 10);
 }
 
 function hashInput(data: unknown): string {
@@ -745,6 +740,26 @@ async function generateVocaNarrative(
   return raw ? await humanizeNarrative(raw) : '';
 }
 
+// 시험 구조(curriculum → chapters → lessons)에서 레슨별 과목을 읽는다. 과목 = chapter 제목(/math/i), SRM과 같은 규칙
+async function loadTcLessonInfo(curriculumIds: string[]): Promise<Map<string, TcLessonInfo>> {
+  const out = new Map<string, TcLessonInfo>();
+  if (!curriculumIds.length) return out;
+  const { data: cChaps } = await supabaseSFv2.from('curriculum_chapters').select('curriculum_id, chapter_id').in('curriculum_id', curriculumIds);
+  const chapterCurriculum = new Map((cChaps ?? []).map(r => [r.chapter_id as string, r.curriculum_id as string]));
+  const chapterIds = [...chapterCurriculum.keys()];
+  if (!chapterIds.length) return out;
+  const [{ data: chs }, { data: chLessons }] = await Promise.all([
+    supabaseSFv2.from('chapters').select('id, title').in('id', chapterIds),
+    supabaseSFv2.from('chapter_lessons').select('chapter_id, lesson_id').in('chapter_id', chapterIds),
+  ]);
+  const chapterTitle = new Map((chs ?? []).map(c => [c.id as string, (c.title as string | null) ?? '']));
+  for (const r of chLessons ?? []) {
+    const chapterId = r.chapter_id as string;
+    out.set(r.lesson_id as string, { section: sectionOfChapter(chapterTitle.get(chapterId) ?? ''), curriculumId: chapterCurriculum.get(chapterId) ?? '' });
+  }
+  return out;
+}
+
 // skipNarratives: 캐시된 AI 내러티브는 사용하되, 캐시 미스 시 LLM 생성을 생략한다.
 // 지표(정답률·점수·단어수·스킬)와 코치 피드백·데일리리포트는 그대로 채워지므로,
 // 빠른 운영 확인용 로딩에 쓴다(포털은 옵션 없이 호출 → 전체 내러티브 유지).
@@ -755,8 +770,8 @@ export async function buildSrmReport(
   const skipNarratives = opts.skipNarratives ?? false;
   const [
     narrativeCache,
+    { data: studentProfile },
     { data: shSessions },
-    { data: shAttempts },
     { data: tcAttempts },
     { data: tcUnitAttempts },
     { data: dailyReports },
@@ -764,14 +779,25 @@ export async function buildSrmReport(
     { data: vocabExposed },
   ] = await Promise.all([
     prefetchNarrativeCache(profileId),
+    supabaseSFv2.from('profiles').select('timezone').eq('id', profileId).maybeSingle(),
     supabaseSFv2.from('study_hall_session').select('id, started_at, ended_at').eq('user_id', profileId).not('ended_at', 'is', null).order('started_at', { ascending: false }).limit(60),
-    supabaseSFv2.from('study_hall_unit_attempts').select('study_hall_session_id, is_correct, attempted_at, unit_id, chat_messages, time_spent_seconds, confidence_level').eq('student_id', profileId).order('attempted_at', { ascending: false }).limit(500),
-    supabaseSFv2.from('test_center_lesson_attempts').select('id, test_center_session_id, score, total, status, lesson_id, curriculum_id').eq('student_id', profileId).not('score', 'is', null),
-    supabaseSFv2.from('test_center_unit_attempts').select('test_lesson_attempt_id, unit_id, is_correct, time_spent_seconds, confidence_level').eq('student_id', profileId).order('attempted_at', { ascending: false }).limit(2000),
+    // PostgREST 1000행 상한 — 많이 푼 학생도 잘리지 않게 끝까지 읽는다
+    fetchAllRows<TcAttemptRow>((from, to) => supabaseSFv2.from('test_center_lesson_attempts').select('id, test_center_session_id, score, total, status, lesson_id, curriculum_id, started_at, submitted_at').eq('student_id', profileId).order('id').range(from, to)).then(data => ({ data })),
+    fetchAllRows<{ test_lesson_attempt_id: string; unit_id: string; is_correct: boolean | null; time_spent_seconds: number | null; confidence_level: number | null }>((from, to) => supabaseSFv2.from('test_center_unit_attempts').select('test_lesson_attempt_id, unit_id, is_correct, time_spent_seconds, confidence_level').eq('student_id', profileId).order('id').range(from, to)).then(data => ({ data })),
     supabaseSFv2.from('daily_reports').select('report_date, report_md, status').eq('student_id', profileId).eq('status', 'sent').order('report_date', { ascending: false }).limit(30),
-    supabaseSFv2.schema('vocab').from('events').select('entry_id, is_correct, prev_box, new_box, occurred_at').eq('subject_id', profileId).eq('kind', 'graded').order('occurred_at', { ascending: false }).limit(1000),
-    supabaseSFv2.schema('vocab').from('events').select('entry_id').eq('subject_id', profileId).limit(10000),
+    fetchAllRows<{ entry_id: string | null; is_correct: boolean | null; prev_box: number | null; new_box: number | null; occurred_at: string }>((from, to) => supabaseSFv2.schema('vocab').from('events').select('entry_id, is_correct, prev_box, new_box, occurred_at').eq('subject_id', profileId).eq('kind', 'graded').order('id').range(from, to)).then(data => ({ data })),
+    fetchAllRows<{ entry_id: string | null }>((from, to) => supabaseSFv2.schema('vocab').from('events').select('entry_id').eq('subject_id', profileId).order('id').range(from, to)).then(data => ({ data })),
   ]);
+
+  // 날짜는 학생 시간대 기준(SRM Growth Report와 같음). 없으면 KST
+  const tz = (studentProfile as { timezone?: string | null } | null)?.timezone ?? null;
+  const toDate = (iso: string) => localDate(iso, tz);
+
+  // Study Hall 풀이는 조회한 세션(최근 60개) 것만, 잘림 없이 읽는다
+  const shSessionIds = (shSessions ?? []).map(s => s.id as string);
+  const shAttempts = shSessionIds.length
+    ? await fetchAllRows<{ study_hall_session_id: string; is_correct: boolean | null; attempted_at: string; unit_id: string; chat_messages: unknown; time_spent_seconds: number | null; confidence_level: number | null }>((from, to) => supabaseSFv2.from('study_hall_unit_attempts').select('id, study_hall_session_id, is_correct, attempted_at, unit_id, chat_messages, time_spent_seconds, confidence_level').in('study_hall_session_id', shSessionIds).order('id').range(from, to))
+    : [];
 
   const vocabExposedCount = new Set((vocabExposed ?? []).map(r => r.entry_id as string).filter(Boolean)).size;
 
@@ -805,14 +831,13 @@ export async function buildSrmReport(
     }
   }
 
-  const tcSessionIds = [...new Set((tcAttempts ?? []).map(a => a.test_center_session_id as string).filter(Boolean))];
   const tcLessonIds = [...new Set((tcAttempts ?? []).map(a => a.lesson_id as string).filter(Boolean))];
   const tcCurriculumIds = [...new Set((tcAttempts ?? []).map(a => a.curriculum_id as string).filter(Boolean))];
 
-  const [{ data: tcSessions }, { data: tcLessons }, { data: tcCurricula }] = await Promise.all([
-    tcSessionIds.length ? supabaseSFv2.from('test_center_session').select('id, started_at').in('id', tcSessionIds) : { data: [] },
+  const [{ data: tcLessons }, { data: tcCurricula }, tcLessonInfo] = await Promise.all([
     tcLessonIds.length ? supabaseSFv2.from('lessons').select('id, title').in('id', tcLessonIds) : { data: [] },
     tcCurriculumIds.length ? supabaseSFv2.from('curricula').select('id, title, domain').in('id', tcCurriculumIds) : { data: [] },
+    loadTcLessonInfo(tcCurriculumIds),
   ]);
 
   const lessonTitleMap = new Map<string, string>();
@@ -827,14 +852,22 @@ export async function buildSrmReport(
   }
 
   // Study Hall
-  const shSessionMap = new Map<string, { started_at: string; ended_at: string }>();
-  for (const s of shSessions ?? []) shSessionMap.set(s.id, { started_at: s.started_at, ended_at: s.ended_at });
+  // SRM과 같은 기준: 문제는 '푼 시각'의 날짜로, 학습 시간은 세션 시작 날짜로 묶는다(자정을 넘긴 세션은 둘로 나뉜다).
+  // 학습 시간은 그날 시작한 세션 전부(문제를 안 푼 세션 포함)를 더하고, 문제를 푼 날에만 표시한다(SRM과 동일).
+  // 세션 6시간·하루 16시간 상한을 둔다(닫히지 않은 세션 방어, SRM과 동일).
+  const shMinutesByDate = new Map<string, number>();
+  for (const s of shSessions ?? []) {
+    const mins = Math.min(Math.round((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000), 6 * 60);
+    if (!(mins > 0)) continue;
+    const date = toDate(s.started_at);
+    shMinutesByDate.set(date, Math.min((shMinutesByDate.get(date) ?? 0) + mins, 16 * 60));
+  }
 
-  const shBySession = new Map<string, { total: number; correct: number }>();
+  const shBySession = new Map<string, { total: number; correct: number }>(); // key = 푼 날짜
   for (const a of shAttempts ?? []) {
-    const sid = a.study_hall_session_id as string;
-    if (!shBySession.has(sid)) shBySession.set(sid, { total: 0, correct: 0 });
-    const e = shBySession.get(sid)!; e.total++;
+    const day = toDate(a.attempted_at);
+    if (!shBySession.has(day)) shBySession.set(day, { total: 0, correct: 0 });
+    const e = shBySession.get(day)!; e.total++;
     if (a.is_correct) e.correct++;
   }
 
@@ -852,15 +885,16 @@ export async function buildSrmReport(
 
   type ConfidenceBreakdown = { confidentCorrect: number; confidentWrong: number; uncertainCorrect: number };
   type SkillEntry = { skill: string; domain: string; correct: number; total: number; totalSeconds: number; quadrants: QuadrantCounts; confidence: ConfidenceBreakdown };
-  const shSkillsBySession = new Map<string, Map<string, SkillEntry>>();
+  const shSkillsBySession = new Map<string, Map<string, SkillEntry>>(); // key = 푼 날짜
   for (const a of shAttempts ?? []) {
     const sid = a.study_hall_session_id as string;
     const uid = a.unit_id as string;
     if (!uid) continue;
     const meta = unitsMap.get(uid);
     if (!meta?.skill) continue;
-    if (!shSkillsBySession.has(sid)) shSkillsBySession.set(sid, new Map());
-    const skillMap = shSkillsBySession.get(sid)!;
+    const day = toDate(a.attempted_at);
+    if (!shSkillsBySession.has(day)) shSkillsBySession.set(day, new Map());
+    const skillMap = shSkillsBySession.get(day)!;
     if (!skillMap.has(meta.skill)) skillMap.set(meta.skill, { skill: meta.skill, domain: meta.domain, correct: 0, total: 0, totalSeconds: 0, quadrants: { fluency: 0, effortful: 0, impulsive: 0, stuck: 0 }, confidence: { confidentCorrect: 0, confidentWrong: 0, uncertainCorrect: 0 } });
     const sk = skillMap.get(meta.skill)!; sk.total++;
     if (a.is_correct) sk.correct++;
@@ -881,28 +915,24 @@ export async function buildSrmReport(
 
   // Eden 대화 데이터 수집 (스킬별 그룹)
   type EdenConvo = { skill: string; isCorrect: boolean; messages: { role: string; content: string }[] };
-  const edenBySession = new Map<string, EdenConvo[]>();
+  const edenBySession = new Map<string, EdenConvo[]>(); // key = 푼 날짜
   for (const a of shAttempts ?? []) {
-    const sid = a.study_hall_session_id as string;
     const uid = a.unit_id as string;
     const msgs = a.chat_messages as { role: string; content: string }[] | null;
     if (!msgs || msgs.length === 0) continue;
     const meta = unitsMap.get(uid);
     if (!meta?.skill) continue;
-    if (!edenBySession.has(sid)) edenBySession.set(sid, []);
-    edenBySession.get(sid)!.push({ skill: meta.skill, isCorrect: !!a.is_correct, messages: msgs });
+    const day = toDate(a.attempted_at);
+    if (!edenBySession.has(day)) edenBySession.set(day, []);
+    edenBySession.get(day)!.push({ skill: meta.skill, isCorrect: !!a.is_correct, messages: msgs });
   }
 
   const shByDate = new Map<string, { totalMinutes: number; totalProblems: number; correctCount: number; skillMap: Map<string, SkillEntry>; edenConvos: EdenConvo[] }>();
-  for (const [sid, stats] of shBySession) {
-    const s = shSessionMap.get(sid);
-    if (!s) continue;
-    const date = toKSTDate(s.started_at);
-    const minutes = Math.round((new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000);
-    if (!shByDate.has(date)) shByDate.set(date, { totalMinutes: 0, totalProblems: 0, correctCount: 0, skillMap: new Map(), edenConvos: [] });
+  for (const [date, stats] of shBySession) {
+    if (!shByDate.has(date)) shByDate.set(date, { totalMinutes: shMinutesByDate.get(date) ?? 0, totalProblems: 0, correctCount: 0, skillMap: new Map(), edenConvos: [] });
     const d = shByDate.get(date)!;
-    d.totalMinutes += minutes; d.totalProblems += stats.total; d.correctCount += stats.correct;
-    const sessionSkills = shSkillsBySession.get(sid);
+    d.totalProblems += stats.total; d.correctCount += stats.correct;
+    const sessionSkills = shSkillsBySession.get(date);
     if (sessionSkills) {
       for (const [skillKey, sk] of sessionSkills) {
         if (!d.skillMap.has(skillKey)) d.skillMap.set(skillKey, { skill: sk.skill, domain: sk.domain, correct: 0, total: 0, totalSeconds: 0, quadrants: { fluency: 0, effortful: 0, impulsive: 0, stuck: 0 }, confidence: { confidentCorrect: 0, confidentWrong: 0, uncertainCorrect: 0 } });
@@ -914,20 +944,17 @@ export async function buildSrmReport(
         ds.confidence.uncertainCorrect += sk.confidence.uncertainCorrect;
       }
     }
-    const sessionEden = edenBySession.get(sid);
+    const sessionEden = edenBySession.get(date);
     if (sessionEden) d.edenConvos.push(...sessionEden);
   }
 
-  // Test Center — build session map before cross-ref computation
-  const tcSessionDateMap = new Map<string, string>();
-  for (const s of tcSessions ?? []) tcSessionDateMap.set(s.id, toKSTDate(s.started_at));
-
-  // lesson attempt id → session id 매핑 (unit attempts 집계에 필요)
-  const tcLessonAttemptToSession = new Map<string, string>();
-  for (const a of tcAttempts ?? []) {
-    const lessonAttemptId = a.id as string;
-    const sid = a.test_center_session_id as string;
-    if (lessonAttemptId && sid) tcLessonAttemptToSession.set(lessonAttemptId, sid);
+  // Test Center — 시험(curriculum) 단위로 묶는다(SRM과 같음). RW·Math를 다른 접속에서 풀어도 한 시험
+  const tcExams = groupTestCenterExams(tcAttempts ?? [], tcLessonInfo);
+  const tcSessionDateMap = new Map<string, string>(); // key = curriculum id
+  const tcLessonAttemptToSession = new Map<string, string>(); // 정본 lesson attempt id → curriculum id
+  for (const exam of tcExams) {
+    tcSessionDateMap.set(exam.curriculumId, toDate(exam.takenAt));
+    for (const a of exam.attempts) tcLessonAttemptToSession.set(a.id, exam.curriculumId);
   }
 
   // TC 세션별 median 소요 시간 계산 (행동 패턴 분류 기준선)
@@ -970,26 +997,20 @@ export async function buildSrmReport(
     if (conf >= 75 && !a.is_correct) sk.confidentWrong++;
   }
 
-  const tcBySession = new Map<string, { lessons: Array<{ title?: string; score: number; total: number; skills?: TCSkillBehavior[] }>; curriculumTitle?: string; curriculumDomain?: string; skills: { skill: string; domain: string; correct: number; total: number }[] }>();
-  for (const a of tcAttempts ?? []) {
-    const sid = a.test_center_session_id as string;
-    if (!tcSessionDateMap.has(sid)) continue;
-    if (!tcBySession.has(sid)) {
-      const currId = a.curriculum_id as string | undefined;
-      const curriculum = currId ? curriculumMap.get(currId) : undefined;
-      tcBySession.set(sid, { lessons: [], curriculumTitle: curriculum?.title, curriculumDomain: curriculum?.domain, skills: [] });
-    }
-    const lessonAttemptId = a.id as string;
-    const lessonId = a.lesson_id as string | undefined;
-    const lessonSkills = lessonAttemptId
-      ? Array.from(tcSkillsByLessonAttempt.get(lessonAttemptId)?.values() ?? [])
-      : [];
-    tcBySession.get(sid)!.lessons.push({
-      title: lessonId ? lessonTitleMap.get(lessonId) : undefined,
-      score: a.score as number,
-      total: a.total as number,
-      skills: lessonSkills.length > 0 ? lessonSkills : undefined,
+  const tcBySession = new Map<string, { lessons: Array<{ title?: string; section?: 'rw' | 'math'; score: number; total: number; skills?: TCSkillBehavior[] }>; curriculumTitle?: string; curriculumDomain?: string; skills: { skill: string; domain: string; correct: number; total: number }[]; expectedModules: { rw: number; math: number } }>();
+  for (const exam of tcExams) {
+    const curriculum = curriculumMap.get(exam.curriculumId);
+    const lessons = exam.attempts.map(a => {
+      const lessonSkills = Array.from(tcSkillsByLessonAttempt.get(a.id)?.values() ?? []);
+      return {
+        title: lessonTitleMap.get(a.lesson_id),
+        section: tcLessonInfo.get(a.lesson_id)?.section,
+        score: a.score as number,
+        total: a.total as number,
+        skills: lessonSkills.length > 0 ? lessonSkills : undefined,
+      };
     });
+    tcBySession.set(exam.curriculumId, { lessons, curriculumTitle: curriculum?.title, curriculumDomain: curriculum?.domain, skills: [], expectedModules: exam.expectedModules });
   }
   // 세션 레벨 skills = 레슨 스킬 합산 (cross-ref용, correct/total만 집계)
   for (const [, data] of tcBySession) {
@@ -1061,7 +1082,7 @@ export async function buildSrmReport(
   // 날짜별 수업 피드백 조회 — targetDate 이전의 가장 최근 수업 피드백 반환
   // (수업은 SH/TC와 같은 날이 아니어도 되므로, 해당 날짜 이전 최근 것을 사용)
   function getCoachFeedbackForDate(targetDate: string): string | undefined {
-    const lessonFb = lessonFeedbackEvents.find(e => toKSTDate(e.starts_at) <= targetDate);
+    const lessonFb = lessonFeedbackEvents.find(e => toDate(e.starts_at) <= targetDate);
     if (lessonFb?.feedback) return lessonFb.feedback.slice(0, COACH_FEEDBACK_MAX_CHARS) || undefined;
     const dr = (dailyReports ?? []).find(r => (r.report_date as string) <= targetDate);
     return ((dr?.report_md as string | null) ?? '').slice(0, COACH_FEEDBACK_MAX_CHARS) || undefined;
@@ -1073,7 +1094,7 @@ export async function buildSrmReport(
   for (const e of vocabEvents ?? []) {
     const entryId = e.entry_id as string | null;
     if (!entryId) continue;
-    const date = toKSTDate(e.occurred_at as string);
+    const date = toDate(e.occurred_at as string);
     if (!vocaByDate.has(date)) vocaByDate.set(date, { entryIds: new Set(), gradedCount: 0, correctCount: 0, masteredIds: new Set(), missedIds: [] });
     const agg = vocaByDate.get(date)!;
     agg.entryIds.add(entryId); agg.gradedCount++;
@@ -1085,9 +1106,16 @@ export async function buildSrmReport(
   }
 
   const missedEntryIds = [...new Set(Array.from(vocaByDate.values()).flatMap(a => a.missedIds))];
-  const { data: vocabEntries } = missedEntryIds.length ? await supabaseSFv2.schema('vocab').from('entries').select('id, term').in('id', missedEntryIds) : { data: [] };
+  // 이벤트를 전부 읽으면 오답 단어가 수백 개가 될 수 있어 URL 길이 제한에 맞춰 나눠 조회한다
+  const vocabEntryBatches = await Promise.all(
+    Array.from({ length: Math.ceil(missedEntryIds.length / UNIT_BATCH) }, (_, i) =>
+      supabaseSFv2.schema('vocab').from('entries').select('id, term').in('id', missedEntryIds.slice(i * UNIT_BATCH, (i + 1) * UNIT_BATCH))
+    )
+  );
   const termMap = new Map<string, string>();
-  for (const en of vocabEntries ?? []) { if (en.id && en.term) termMap.set(en.id as string, en.term as string); }
+  for (const { data } of vocabEntryBatches) {
+    for (const en of data ?? []) { if (en.id && en.term) termMap.set(en.id as string, en.term as string); }
+  }
 
   // Vocab context: 날짜별 최근 7일 누적 (missedTerms, masteredTerms)
   function getVocabContextForDate(targetDate: string): VocabContext | undefined {
@@ -1213,7 +1241,7 @@ export async function buildSrmReport(
       }
     }
     // data.lessons skills have TCSkillBehavior (superset of TestCenterLesson.skills) — structurally compatible
-    getOrCreate(date).items.push({ type: 'test_center', curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, lessons: data.lessons as TestCenterLesson[], totalScore, totalProblems, aiNarrative: narrative, skills: tcSkills } satisfies TestCenterDay);
+    getOrCreate(date).items.push({ type: 'test_center', curriculumTitle: data.curriculumTitle, curriculumDomain: data.curriculumDomain, lessons: data.lessons as TestCenterLesson[], totalScore, totalProblems, aiNarrative: narrative, skills: tcSkills, expectedModules: data.expectedModules } satisfies TestCenterDay);
   }));
 
   // Daily Reports
@@ -1231,7 +1259,7 @@ export async function buildSrmReport(
     for (const p of teacherProfiles ?? []) { if (p.id && p.full_name) teacherMap.set(p.id as string, p.full_name as string); }
 
     for (const ev of lessonFeedbackEvents) {
-      const date = toKSTDate(ev.starts_at);
+      const date = toDate(ev.starts_at);
       const coachName = ev.assigned_teacher_id ? teacherMap.get(ev.assigned_teacher_id) : undefined;
       getOrCreate(date).items.push({
         type: 'lesson_feedback',
