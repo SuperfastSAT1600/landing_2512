@@ -11,12 +11,22 @@ function rows<T>(res: { data: unknown; error: { message: string } | null }): T[]
   return (res.data ?? []) as T[];
 }
 
-async function fetchLessons(profileId: string): Promise<LedgerInput['lessons']> {
+async function fetchSessions(mids: string[]): Promise<LedgerInput['sessions']> {
+  const out: LedgerInput['sessions'] = [];
+  for (let from = 0; ; from += 1000) {
+    const page = rows<LedgerInput['sessions'][number]>(await supabaseSFv2.from('coach_room_session')
+      .select('matching_id, role, started_at, ended_at').in('matching_id', mids).order('id').range(from, from + 999));
+    out.push(...page);
+    if (page.length < 1000) return out;
+  }
+}
+
+async function fetchLessons(profileId: string): Promise<Pick<LedgerInput, 'lessons' | 'sessions'>> {
   const ms = rows<{ matching_id: string }>(await supabaseSFv2.from('matching_students').select('matching_id').eq('student_id', profileId));
   const mids = [...new Set(ms.map((r) => r.matching_id))];
-  if (!mids.length) return [];
+  if (!mids.length) return { lessons: [], sessions: [] };
 
-  const [matchings, teachers, events] = await Promise.all([
+  const [matchings, teachers, events, sessions] = await Promise.all([
     supabaseSFv2.from('matchings').select('id, subject').in('id', mids),
     supabaseSFv2.from('matching_teachers').select('matching_id, teacher_id, response').in('matching_id', mids),
     // PostgREST 1000행 상한 — 오래 다닌 학생도 잘리지 않게 끝까지 읽는다
@@ -24,6 +34,8 @@ async function fetchLessons(profileId: string): Promise<LedgerInput['lessons']> 
       .select('id, matching_id, assigned_teacher_id, starts_at, ends_at, status')
       .eq('category', 'coach_room').in('status', LESSON_STATUSES).in('matching_id', mids)
       .order('id').range(from, to)).then((data) => ({ data, error: null })),
+    // 실제 진행 판단용 입퇴장 기록(매칭 단위). 조회가 실패하면 조용히 비지 않게 던진다(빈 기록 = 전부 '확인 필요'가 되므로)
+    fetchSessions(mids),
   ]);
   const subjectByMatching = new Map(rows<{ id: string; subject: string | null }>(matchings).map((m) => [m.id, m.subject]));
   const teacherRows = rows<{ matching_id: string; teacher_id: string; response: string | null }>(teachers);
@@ -40,18 +52,19 @@ async function fetchLessons(profileId: string): Promise<LedgerInput['lessons']> 
     if (!matchingCoach.has(t.matching_id)) matchingCoach.set(t.matching_id, t.teacher_id);
   }
 
-  return eventRows.map((e) => {
+  const lessons = eventRows.map((e) => {
     const coachId = e.assigned_teacher_id ?? matchingCoach.get(e.matching_id) ?? null;
     return {
-      id: e.id, subject: subjectByMatching.get(e.matching_id) ?? null,
+      id: e.id, subject: subjectByMatching.get(e.matching_id) ?? null, matching_id: e.matching_id,
       starts_at: e.starts_at, ends_at: e.ends_at, status: e.status,
       teacher: coachId ? nameById.get(coachId) ?? null : null,
     };
   });
+  return { lessons, sessions };
 }
 
-export async function fetchCoachRoomLedgerInput(profileId: string): Promise<LedgerInput> {
-  const [transactions, paymentsRes, lessons] = await Promise.all([
+export async function fetchCoachRoomLedgerInput(profileId: string): Promise<Omit<LedgerInput, 'now'>> {
+  const [transactions, paymentsRes, { lessons, sessions }] = await Promise.all([
     fetchAllRows((from, to) => supabaseSFv2.from('payment_transactions').select('subject, hours, paid_at, product').eq('student_id', profileId).order('id').range(from, to))
       .then((data) => ({ data, error: null })),
     supabaseSFv2.from('payments').select('id, subject, management_status').eq('student_id', profileId),
@@ -61,5 +74,5 @@ export async function fetchCoachRoomLedgerInput(profileId: string): Promise<Ledg
   const refunds = payments.length
     ? rows<LedgerInput['refunds'][number]>(await supabaseSFv2.from('payment_refunds').select('payment_id, hours_refunded, refunded_at, reason').in('payment_id', payments.map((p) => p.id)))
     : [];
-  return { transactions: rows<LedgerInput['transactions'][number]>(transactions), payments, refunds, lessons };
+  return { transactions: rows<LedgerInput['transactions'][number]>(transactions), payments, refunds, lessons, sessions };
 }

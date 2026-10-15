@@ -9,10 +9,12 @@ const base: LedgerInput = {
   payments: [{ id: 'p1', subject: 'SAT', management_status: 'active' }],
   refunds: [],
   lessons: [
-    { id: 'l1', subject: 'SAT', starts_at: '2026-10-02T07:00:00Z', ends_at: '2026-10-02T08:30:00Z', status: 'completed', teacher: '박기훈' },
-    { id: 'l2', subject: 'SAT', starts_at: '2026-10-05T07:00:00Z', ends_at: '2026-10-05T09:00:00Z', status: 'completed', teacher: '박기훈' },
-    { id: 'l3', subject: 'SAT', starts_at: '2026-10-19T07:00:00Z', ends_at: '2026-10-19T09:00:00Z', status: 'approved', teacher: '박기훈' },
+    { id: 'l1', subject: 'SAT', starts_at: '2026-10-02T07:00:00Z', ends_at: '2026-10-02T08:30:00Z', status: 'completed', teacher: '박기훈', matching_id: 'm1' },
+    { id: 'l2', subject: 'SAT', starts_at: '2026-10-05T07:00:00Z', ends_at: '2026-10-05T09:00:00Z', status: 'completed', teacher: '박기훈', matching_id: 'm1' },
+    { id: 'l3', subject: 'SAT', starts_at: '2026-10-19T07:00:00Z', ends_at: '2026-10-19T09:00:00Z', status: 'approved', teacher: '박기훈', matching_id: 'm1' },
   ],
+  sessions: [],
+  now: '2026-10-15T06:00:00Z',
 };
 
 // REQ-001 (crm-coach-room-card)
@@ -21,12 +23,12 @@ describe('buildCoachRoomLedger', () => {
     const [sat] = buildCoachRoomLedger(base);
     expect(sat.subject).toBe('SAT');
     expect(sat.managementStatus).toBe('active');
-    expect(sat.totals).toEqual({ purchased: 20, refunded: 0, completed: 3.5, remaining: 16.5, scheduled: 2, unscheduled: 14.5 });
+    expect(sat.totals).toMatchObject({ purchased: 20, refunded: 0, completed: 3.5, remaining: 16.5, scheduled: 2, unscheduled: 14.5, upcoming: 2, held: 0, actualRemaining: 16.5 });
   });
 
   it('수업은 최신순, 완료 수업엔 누적 진행 시간', () => {
     const [sat] = buildCoachRoomLedger(base);
-    expect(sat.lessons.map((l) => [l.id, l.status, l.hours, l.cumulativeCompleted])).toEqual([
+    expect(sat.lessons.map((l) => [l.id, l.status, l.hours, l.cumulative])).toEqual([
       ['l3', 'scheduled', 2, null],
       ['l2', 'completed', 2, 3.5],
       ['l1', 'completed', 1.5, 1.5],
@@ -64,7 +66,7 @@ describe('buildCoachRoomLedger', () => {
   });
 
   it('아무것도 없으면 빈 배열', () => {
-    expect(buildCoachRoomLedger({ transactions: [], payments: [], refunds: [], lessons: [] })).toEqual([]);
+    expect(buildCoachRoomLedger({ transactions: [], payments: [], refunds: [], lessons: [], sessions: [], now: base.now })).toEqual([]);
   });
 
   it('과목 없는 매칭의 수업은 SAT 잔여에 섞지 않고 따로 보인다', () => {
@@ -80,5 +82,43 @@ describe('buildCoachRoomLedger', () => {
       { ...base.lessons[0], id: 'b', starts_at: '2026-10-02T06:30:00Z', ends_at: '2026-10-02T07:00:00Z' },
     ] });
     expect(sat.lessons.map((l) => l.id)).toEqual(['a', 'b']);
+  });
+
+  // REQ-005: 지난 '예정' 수업을 접속 기록으로 나눈다
+  it('지난 수업: 접속 확인되면 완료 처리 대기(실제 진행), 기록 없으면 확인 필요', () => {
+    const past = (id: string, day: string) => ({ ...base.lessons[2], id, starts_at: `2026-10-${day}T02:00:00Z`, ends_at: `2026-10-${day}T03:00:00Z` });
+    const [sat] = buildCoachRoomLedger({
+      ...base,
+      lessons: [...base.lessons, past('p13', '13'), past('p14', '14')],
+      sessions: [
+        { matching_id: 'm1', role: 'teacher', started_at: '2026-10-13T01:59:00Z', ended_at: '2026-10-13T03:03:00Z' },
+        { matching_id: 'm1', role: 'student', started_at: '2026-10-13T02:00:00Z', ended_at: '2026-10-13T02:58:00Z' },
+      ],
+    });
+    const byId = Object.fromEntries(sat.lessons.map((l) => [l.id, l]));
+    expect(byId.p13.status).toBe('held');
+    expect(byId.p13.togetherMinutes).toBe(58);
+    expect(byId.p13.cumulative).toBe(4.5);
+    expect(byId.p14.status).toBe('unverified');
+    expect(byId.p14.togetherMinutes).toBe(0);
+    expect(byId.l3.togetherMinutes).toBeNull();
+    expect(sat.totals).toMatchObject({ completed: 3.5, held: 1, unverified: 1, upcoming: 2, actualCompleted: 4.5, remaining: 16.5, actualRemaining: 15.5 });
+  });
+
+  it('끝난 지 30분 안 된 수업은 아직 판정하지 않고, 닫히지 않은 접속은 지금까지로 본다', () => {
+    const just = { ...base.lessons[2], id: 'just', starts_at: '2026-10-15T05:00:00Z', ends_at: '2026-10-15T05:50:00Z' };
+    const earlier = { ...base.lessons[2], id: 'open', starts_at: '2026-10-15T04:00:00Z', ends_at: '2026-10-15T05:00:00Z' };
+    const [sat] = buildCoachRoomLedger({
+      ...base,
+      lessons: [just, earlier],
+      sessions: [
+        { matching_id: 'm1', role: 'teacher', started_at: '2026-10-15T04:00:00Z', ended_at: null },
+        { matching_id: 'm1', role: 'student', started_at: '2026-10-15T04:00:00Z', ended_at: null },
+      ],
+    });
+    const byId = Object.fromEntries(sat.lessons.map((l) => [l.id, l]));
+    expect(byId.just.status).toBe('scheduled');
+    expect(byId.open.status).toBe('held');
+    expect(byId.open.togetherMinutes).toBe(90);
   });
 });

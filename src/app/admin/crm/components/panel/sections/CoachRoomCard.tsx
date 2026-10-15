@@ -75,7 +75,7 @@ export function CoachRoomCard({ studentId, adminKey, className }: Props) {
         {status === 'loaded' && subjects.map((s) => <CoachRoomSubject key={s.subject} ledger={s} />)}
         {status === 'loaded' && subjects.length > 0 && (
           <p className="text-[10px] text-gray-400 leading-relaxed">
-            · SRM 관리자 Payment 화면과 같은 기준: 잔여 = 결제 − 환불 − 완료 수업. 예정·확인 대기 수업은 차감 전. 시간은 한국 시간.
+            · 진행 = SRM 완료 + 접속 기록으로 확인된 지난 수업(완료 처리 대기). 잔여 = 결제 − 환불 − 진행. 함께 = 코치·학생이 같이 접속한 시간. 시간은 한국 시간.
           </p>
         )}
       </div>

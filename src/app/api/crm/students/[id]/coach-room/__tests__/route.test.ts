@@ -36,7 +36,8 @@ describe('GET /api/crm/students/[id]/coach-room', () => {
       transactions: [{ subject: 'SAT', hours: 10, paid_at: '2026-10-01T00:00:00Z', product: 'SAT 10h' }],
       payments: [{ id: 'pay1', subject: 'SAT', management_status: 'active' }],
       refunds: [],
-      lessons: [{ id: 'l1', subject: 'SAT', starts_at: '2026-10-02T07:00:00Z', ends_at: '2026-10-02T09:00:00Z', status: 'completed', teacher: '박기훈' }],
+      sessions: [],
+      lessons: [{ id: 'l1', subject: 'SAT', matching_id: 'm1', starts_at: '2026-10-02T07:00:00Z', ends_at: '2026-10-02T09:00:00Z', status: 'completed', teacher: '박기훈' }],
     });
     const { GET } = await import('../route');
     const res = await GET(req(), { params });
