@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
-import { RECENT_AHEAD_DAYS, RECENT_PAST_DAYS, type CoachRoster as Roster } from '@/lib/coach-roster';
+import type { CoachRoster as Roster } from '@/lib/coach-roster';
 import { CoachCard, RosterRow, StudentList } from './CoachCard';
 import { CoachOrderEditor } from './CoachOrderEditor';
 
@@ -44,7 +44,7 @@ function Summary({ roster }: { roster: Roster }) {
   return (
     <p data-testid="roster-summary" className="text-[13px] text-gray-500">
       재원 학생 {active.size}명 · 수업 중 코치 {teaching}명 · 미배정 {roster.unassigned.length}명
-      <span className="ml-2 text-[11px] text-gray-400">(담당 = 최근 {RECENT_PAST_DAYS}일·앞으로 {RECENT_AHEAD_DAYS}일 수업을 연 코치, 그 기간 수업이 없으면 SRM 매칭 코치)</span>
+      <span className="ml-2 text-[11px] text-gray-400">(담당 = SRM 진행 중 매칭의 코치 · 코치가 바뀌거나 끝나면 SRM에서 매칭 Deactivate · 코치가 2명 이상이면 코치마다 표시)</span>
     </p>
   );
 }

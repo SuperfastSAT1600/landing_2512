@@ -8,15 +8,15 @@ const roster: Roster = {
     {
       key: 'ben', slug: 'ben', name: 'Ben', linked: true, registered: true, activeCount: 1, onboardingCount: 0, pausedCount: 1,
       students: [
-        { profileId: 'p1', crmStudentId: 'crm-1', name: '김주하', status: 'active', recentLesson: true, subjects: [{ subject: 'SAT', status: 'active', recent: true }] },
-        { profileId: 'p2', crmStudentId: null, name: '에이든', status: 'paused', recentLesson: false, subjects: [{ subject: 'SAT', status: 'paused', recent: false }] },
+        { profileId: 'p1', crmStudentId: 'crm-1', name: '김주하', status: 'active', subjects: [{ subject: 'SAT', status: 'active' }] },
+        { profileId: 'p2', crmStudentId: null, name: '에이든', status: 'paused', subjects: [{ subject: 'SAT', status: 'paused' }] },
       ],
     },
     { key: 'julie', slug: 'julie', name: 'Julie', linked: true, registered: true, activeCount: 0, onboardingCount: 0, pausedCount: 0, students: [] },
     { key: 'v2:t9', slug: null, name: '배병윤', linked: true, registered: false, activeCount: 1, onboardingCount: 0, pausedCount: 0,
-      students: [{ profileId: 'p1', crmStudentId: 'crm-1', name: '김주하', status: 'active', recentLesson: true, subjects: [{ subject: 'SAT', status: 'active', recent: true }] }] },
+      students: [{ profileId: 'p1', crmStudentId: 'crm-1', name: '김주하', status: 'active', subjects: [{ subject: 'SAT', status: 'active' }] }] },
   ],
-  unassigned: [{ profileId: 'p3', crmStudentId: 'crm-3', name: '조유인', status: 'active', recentLesson: false, subjects: [] }],
+  unassigned: [{ profileId: 'p3', crmStudentId: 'crm-3', name: '조유인', status: 'active', subjects: [] }],
 };
 
 const fetchMock = vi.fn();
@@ -38,21 +38,6 @@ describe('CoachRoster', () => {
     expect(screen.getByTestId('roster-summary').textContent).toContain('재원 학생 2명');
     expect(screen.getByTestId('roster-summary').textContent).toContain('미배정 1명');
     expect(fetchMock).toHaveBeenCalledWith('/api/crm/coach-roster', expect.objectContaining({ headers: { 'x-admin-key': 'k' } }));
-  });
-
-  // REQ-003 (crm-coach-roster-actual)
-  it('재원인데 최근 수업이 없는 학생에만 \'최근 수업 없음\'을 붙인다(휴원은 제외)', async () => {
-    const stale = { ...roster, coaches: [{ ...roster.coaches[0], students: [
-      { ...roster.coaches[0].students[0], recentLesson: false },
-      roster.coaches[0].students[1],
-    ] }] };
-    fetchMock.mockReturnValueOnce(json({ data: stale }));
-    render(<CoachRoster adminKey="k" onSelectStudentById={vi.fn()} />);
-    const [ben] = await screen.findAllByTestId('coach-card');
-    fireEvent.click(within(ben).getByRole('button', { name: /Ben/ }));
-    expect(within(ben).getAllByText('최근 수업 없음')).toHaveLength(1);
-    expect(within(ben).getByRole('button', { name: /김주하/ }).textContent).toContain('최근 수업 없음');
-    expect(within(ben).getByText('에이든').closest('li')!.textContent).not.toContain('최근 수업 없음');
   });
 
   it('CRM 학생을 누르면 패널을 연다(미연결 학생은 버튼이 아니다)', async () => {
