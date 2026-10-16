@@ -33,7 +33,7 @@ describe('CoachRoster', () => {
     const cards = await screen.findAllByTestId('coach-card');
     expect(cards.map((c) => within(c).getByTestId('coach-name').textContent)).toEqual(['Ben', 'Julie', '배병윤']);
     expect(within(cards[0]).getByTestId('coach-active').textContent).toBe('1');
-    expect(within(cards[0]).getByText('휴원 1')).toBeTruthy();
+    expect(within(cards[0]).queryByText('김주하')).toBeNull();
     expect(within(cards[2]).getByText('CRM 미등록')).toBeTruthy();
     expect(screen.getByTestId('roster-summary').textContent).toContain('재원 학생 2명');
     expect(screen.getByTestId('roster-summary').textContent).toContain('미배정 1명');
@@ -49,6 +49,7 @@ describe('CoachRoster', () => {
     fetchMock.mockReturnValueOnce(json({ data: stale }));
     render(<CoachRoster adminKey="k" onSelectStudentById={vi.fn()} />);
     const [ben] = await screen.findAllByTestId('coach-card');
+    fireEvent.click(within(ben).getByRole('button', { name: /Ben/ }));
     expect(within(ben).getAllByText('최근 수업 없음')).toHaveLength(1);
     expect(within(ben).getByRole('button', { name: /김주하/ }).textContent).toContain('최근 수업 없음');
     expect(within(ben).getByText('에이든').closest('li')!.textContent).not.toContain('최근 수업 없음');
@@ -59,9 +60,35 @@ describe('CoachRoster', () => {
     const onSelect = vi.fn();
     render(<CoachRoster adminKey="k" onSelectStudentById={onSelect} />);
     const [ben] = await screen.findAllByTestId('coach-card');
+    fireEvent.click(within(ben).getByRole('button', { name: /Ben/ }));
     fireEvent.click(within(ben).getByRole('button', { name: /김주하/ }));
     expect(onSelect).toHaveBeenCalledWith('crm-1');
     expect(within(ben).queryByRole('button', { name: /에이든/ })).toBeNull();
+  });
+
+  // REQ-001 (crm-coach-roster-accordion)
+  it('코치 줄은 접혀 있고, 누르면 담당 학생 명단이 펼쳐졌다가 다시 누르면 접힌다', async () => {
+    fetchMock.mockReturnValueOnce(json({ data: roster }));
+    render(<CoachRoster adminKey="k" onSelectStudentById={vi.fn()} />);
+    const [ben] = await screen.findAllByTestId('coach-card');
+    const header = within(ben).getByRole('button', { name: /Ben/ });
+    expect(header.getAttribute('aria-expanded')).toBe('false');
+    expect(within(ben).queryByText('에이든')).toBeNull();
+    fireEvent.click(header);
+    expect(header.getAttribute('aria-expanded')).toBe('true');
+    expect(within(ben).getByText('에이든')).toBeTruthy();
+    fireEvent.click(header);
+    expect(within(ben).queryByText('에이든')).toBeNull();
+  });
+
+  it('코치 미배정도 접힌 줄로 두고, 누르면 명단을 보여 준다', async () => {
+    fetchMock.mockReturnValueOnce(json({ data: roster }));
+    render(<CoachRoster adminKey="k" onSelectStudentById={vi.fn()} />);
+    const row = await screen.findByTestId('unassigned-row');
+    expect(within(row).getByTestId('unassigned-count').textContent).toBe('1');
+    expect(within(row).queryByText('조유인')).toBeNull();
+    fireEvent.click(within(row).getByRole('button', { name: /코치 미배정/ }));
+    expect(within(row).getByText('조유인')).toBeTruthy();
   });
 
   it('순서 편집 → 저장하면 CRM 코치 slug 순서를 PATCH한다', async () => {
