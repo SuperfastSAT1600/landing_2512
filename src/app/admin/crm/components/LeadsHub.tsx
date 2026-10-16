@@ -9,8 +9,9 @@ import { LeadPool } from './LeadPool';
 import { EnrolledLeads } from './EnrolledLeads';
 import { RetryKanban } from './RetryKanban';
 import { RenewalKanban } from './RenewalKanban';
+import { CoachRoster } from './coach-roster/CoachRoster';
 
-type HubTab = 'kanban' | 'renewal' | 'retry' | 'enrolled' | 'pool';
+type HubTab = 'kanban' | 'renewal' | 'retry' | 'enrolled' | 'pool' | 'coaches';
 
 // 재시도 보드 사용 빈도가 낮아 UI 숨김. true로 바꾸면 탭·진입이 복구된다.
 const RETRY_TAB_ENABLED = false;
@@ -62,6 +63,7 @@ export function LeadsHub({
           ...(RETRY_TAB_ENABLED ? [{ key: 'retry', label: '재시도' }] : []),
           { key: 'enrolled', label: '튜터링 중' },
           { key: 'pool', label: '이탈 리드풀' },
+          { key: 'coaches', label: '코치 현황' },
         ] as { key: HubTab; label: string }[]).map(({ key, label }) => (
           <button key={key} onClick={() => setSubTab(key)}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors shrink-0 whitespace-nowrap ${subTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -113,6 +115,10 @@ export function LeadsHub({
 
       {subTab === 'enrolled' && (
         <EnrolledLeads adminKey={adminKey} onStudentClick={onStudentClick} onStudentUpdate={onStudentUpdate} />
+      )}
+
+      {subTab === 'coaches' && (
+        <CoachRoster adminKey={adminKey} onSelectStudentById={onSelectStudentById} />
       )}
 
       {subTab === 'pool' && (
