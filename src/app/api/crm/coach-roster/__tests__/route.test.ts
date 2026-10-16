@@ -23,6 +23,7 @@ describe('GET /api/crm/coach-roster', () => {
       matchingTeachers: [{ matching_id: 'm1', teacher_id: 't1', response: 'accepted' }],
       matchingStudents: [{ matching_id: 'm1', student_id: 'p1' }],
       lastEventTeacher: {},
+      recentEvents: [],
       payments: [{ student_id: 'p1', subject: 'SAT', management_status: 'active' }],
       profileNames: { p1: 'Alice' },
       crmStudents: [],

@@ -23,6 +23,7 @@ function input(over: Partial<RosterInput> = {}): RosterInput {
       { matching_id: 'm3', student_id: 'p-c' },
     ],
     lastEventTeacher: {},
+    recentEvents: [],
     payments: [
       { student_id: 'p-a', subject: 'SAT', management_status: 'active' },
       { student_id: 'p-b', subject: 'SAT', management_status: 'paused' },
@@ -41,7 +42,7 @@ describe('buildCoachRoster', () => {
     const ben = r.coaches.find((c) => c.name === 'Ben')!;
     expect(ben.activeCount).toBe(1);
     expect(ben.students).toEqual([
-      { profileId: 'p-a', crmStudentId: 'crm-a', name: '앨리스', status: 'active', subjects: [{ subject: 'SAT', status: 'active' }] },
+      { profileId: 'p-a', crmStudentId: 'crm-a', name: '앨리스', status: 'active', recentLesson: false, subjects: [{ subject: 'SAT', status: 'active', recent: false }] },
     ]);
     const julie = r.coaches.find((c) => c.name === 'Julie')!;
     expect(julie.activeCount).toBe(0);
@@ -82,7 +83,7 @@ describe('buildCoachRoster', () => {
     }));
     const ben = r.coaches.find((c) => c.name === 'Ben')!;
     expect(ben.activeCount).toBe(1);
-    expect(ben.students[0].subjects).toEqual([{ subject: 'AP', status: 'active' }, { subject: 'SAT', status: 'active' }]);
+    expect(ben.students[0].subjects).toEqual([{ subject: 'AP', status: 'active', recent: false }, { subject: 'SAT', status: 'active', recent: false }]);
   });
 
   it('매칭 과목의 결제 계정이 없으면 학생의 롤업 상태를 쓴다', () => {
@@ -92,7 +93,7 @@ describe('buildCoachRoster', () => {
       matchingStudents: [{ matching_id: 'm4', student_id: 'p-a' }],
       payments: [{ student_id: 'p-a', subject: 'SAT', management_status: 'paused' }],
     }));
-    expect(r.coaches.find((c) => c.name === 'Ben')!.students[0].subjects).toEqual([{ subject: 'AP', status: 'paused' }]);
+    expect(r.coaches.find((c) => c.name === 'Ben')!.students[0].subjects).toEqual([{ subject: 'AP', status: 'paused', recent: false }]);
   });
 
   it('순서 없는 코치끼리는 등록순, 순서 있는 코치 뒤에 온다', () => {
@@ -144,5 +145,95 @@ describe('buildCoachRoster', () => {
   it('CRM에 있지만 SRM 미연결인 활동 코치는 linked=false로 남긴다', () => {
     const r = buildCoachRoster(input({ coaches: [coach('ben', 'Ben', 't-ben'), coach('new', 'New', null)] }));
     expect(r.coaches.find((c) => c.slug === 'new')).toMatchObject({ linked: false, registered: true, students: [] });
+  });
+});
+
+// REQ-001 (crm-coach-roster-actual)
+describe('buildCoachRoster — 최근 수업 기준', () => {
+  // 학생 p-a가 SAT 매칭 3건(ben·julie·lina)에 걸려 있다 — 옛 매칭이 정리되지 않은 상태
+  const stale = (over: Partial<RosterInput> = {}) => input({
+    coaches: [coach('ben', 'Ben', 't-ben'), coach('julie', 'Julie', 't-julie'), coach('lina', 'Lina', 't-lina')],
+    matchings: [
+      { id: 'm1', status: 'active', subject: 'SAT' },
+      { id: 'm2', status: 'active', subject: 'SAT' },
+      { id: 'm5', status: 'active', subject: 'SAT' },
+    ],
+    matchingTeachers: [
+      { matching_id: 'm1', teacher_id: 't-ben', response: 'accepted' },
+      { matching_id: 'm2', teacher_id: 't-julie', response: 'accepted' },
+      { matching_id: 'm5', teacher_id: 't-lina', response: 'accepted' },
+    ],
+    matchingStudents: [
+      { matching_id: 'm1', student_id: 'p-a' },
+      { matching_id: 'm2', student_id: 'p-a' },
+      { matching_id: 'm5', student_id: 'p-a' },
+    ],
+    payments: [{ student_id: 'p-a', subject: 'SAT', management_status: 'active' }],
+    ...over,
+  });
+  const studentsOf = (r: ReturnType<typeof buildCoachRoster>, name: string) => r.coaches.find((c) => c.name === name)!.students;
+
+  it('최근 수업이 있는 매칭의 코치 아래에만 나오고 recentLesson=true', () => {
+    const r = buildCoachRoster(stale({ recentEvents: [{ matching_id: 'm1', assigned_teacher_id: null }] }));
+    expect(studentsOf(r, 'Ben')).toEqual([
+      { profileId: 'p-a', crmStudentId: 'crm-a', name: '앨리스', status: 'active', recentLesson: true, subjects: [{ subject: 'SAT', status: 'active', recent: true }] },
+    ]);
+    expect(studentsOf(r, 'Julie')).toEqual([]);
+    expect(studentsOf(r, 'Lina')).toEqual([]);
+  });
+
+  it('최근 수업이 없으면 모든 매칭 코치 아래에 recentLesson=false로 남긴다', () => {
+    const r = buildCoachRoster(stale());
+    for (const name of ['Ben', 'Julie', 'Lina']) expect(studentsOf(r, name)[0].recentLesson).toBe(false);
+  });
+
+  it('수업에 지정된 담당 교사가 있으면 그 교사가 담당이다', () => {
+    const r = buildCoachRoster(stale({ recentEvents: [{ matching_id: 'm1', assigned_teacher_id: 't-lina' }] }));
+    expect(studentsOf(r, 'Lina').map((s) => s.profileId)).toEqual(['p-a']);
+    expect(studentsOf(r, 'Ben')).toEqual([]);
+  });
+
+  it('CRM에 없는 교사가 수업했으면 그 교사의 미등록 카드에 넣는다', () => {
+    const r = buildCoachRoster(stale({
+      recentEvents: [{ matching_id: 'm1', assigned_teacher_id: 't-x' }],
+      profileNames: { 'p-a': 'Alice', 't-x': '외부 교사' },
+    }));
+    expect(r.coaches.find((c) => c.name === '외부 교사')).toMatchObject({ registered: false, activeCount: 1 });
+    expect(studentsOf(r, 'Ben')).toEqual([]);
+  });
+
+  it('수업에 담당 교사도 매칭 코치도 없으면 매칭 코치 기준으로 둔다', () => {
+    const r = buildCoachRoster(stale({
+      matchingTeachers: [{ matching_id: 'm2', teacher_id: 't-julie', response: 'accepted' }],
+      recentEvents: [{ matching_id: 'm1', assigned_teacher_id: null }],
+    }));
+    expect(studentsOf(r, 'Julie')[0].recentLesson).toBe(false);
+  });
+
+  it('과목별로 따로 판단한다 — SAT는 수업 코치만, 수업 없는 AP는 매칭 코치 유지', () => {
+    const r = buildCoachRoster(stale({
+      matchings: [
+        { id: 'm1', status: 'active', subject: 'SAT' },
+        { id: 'm2', status: 'active', subject: 'SAT' },
+        { id: 'm5', status: 'active', subject: 'AP' },
+      ],
+      recentEvents: [{ matching_id: 'm1', assigned_teacher_id: null }],
+    }));
+    expect(studentsOf(r, 'Julie')).toEqual([]);
+    expect(studentsOf(r, 'Lina')[0]).toMatchObject({ recentLesson: false, subjects: [{ subject: 'AP', status: 'active', recent: false }] });
+    expect(studentsOf(r, 'Ben')[0].recentLesson).toBe(true);
+  });
+
+  it('비활성 매칭의 수업은 담당 판단에 쓰지 않는다', () => {
+    const r = buildCoachRoster(stale({
+      matchings: [
+        { id: 'm1', status: 'inactive', subject: 'SAT' },
+        { id: 'm2', status: 'active', subject: 'SAT' },
+        { id: 'm5', status: 'active', subject: 'SAT' },
+      ],
+      recentEvents: [{ matching_id: 'm1', assigned_teacher_id: null }],
+    }));
+    expect(studentsOf(r, 'Ben')).toEqual([]);
+    expect(studentsOf(r, 'Julie')[0].recentLesson).toBe(false);
   });
 });
