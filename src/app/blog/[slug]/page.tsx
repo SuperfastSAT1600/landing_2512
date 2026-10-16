@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { permanentRedirect } from 'next/navigation';
 import { getPostData, getAllPostIds, getRelatedPosts } from '../../../lib/posts';
 import { HIDDEN_BLOG_CATEGORIES } from '../../../lib/posts-filter';
-import { getCoachByPostSlug } from '../../../lib/coaches-data';
+import { getCoachByPostSlug, getCoaches } from '../../../lib/coaches-data';
 import { getPopupTargetPost } from '../../../lib/popup-rules';
 import Footer from '../../components/Footer';
 import { PostContent } from './PostContent';
@@ -28,6 +28,7 @@ export async function generateStaticParams() {
 }
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tutoring.superfastsat.com';
+const ORG_NAME = 'SuperfastSAT';
 
 export async function generateMetadata({ params }: Props) {
     const { slug } = await params;
@@ -97,6 +98,24 @@ export default async function Post({ params }: Props) {
         getPopupTargetPost(decodedSlug),
     ]);
 
+    // 저자 노드. 예전에는 Person 이름에 'SuperfastSAT' 이 들어가 조직이 사람으로
+    // 선언됐고, url 은 글쓴이와 무관하게 항상 /blog 를 가리켰다. 현재 DB의 author 는
+    // 대부분 'SuperfastSAT' 이라 그대로 두면 모든 글이 같은 문제를 안는다.
+    // 이름이 코치와 일치하면 그 코치 페이지로 연결하고, 조직명이거나 비어 있으면
+    // Organization 으로 선언한다.
+    const authorName = postData.author?.trim();
+    const isOrgAuthor = !authorName || authorName.toLowerCase() === ORG_NAME.toLowerCase();
+    const authorCoach = isOrgAuthor
+        ? undefined
+        : (await getCoaches()).find((c) => c.name === authorName);
+    const authorNode = isOrgAuthor
+        ? { '@type': 'Organization', name: ORG_NAME, url: BASE_URL }
+        : {
+            '@type': 'Person',
+            name: authorName,
+            ...(authorCoach ? { url: `${BASE_URL}/coaches/${authorCoach.slug}` } : {}),
+        };
+
     return (
         <div className="bg-[#fafaf9] min-h-screen text-gray-800 font-sans selection:bg-blue-200">
             <script
@@ -109,11 +128,7 @@ export default async function Post({ params }: Props) {
                         description: postData.description || postData.excerpt,
                         datePublished: postData.date,
                         dateModified: postData.updatedAt || postData.date,
-                        author: {
-                            '@type': 'Person',
-                            name: postData.author || 'SuperfastSAT',
-                            url: `${BASE_URL}/blog`,
-                        },
+                        author: authorNode,
                         publisher: {
                             '@type': 'Organization',
                             name: 'SuperfastSAT',
