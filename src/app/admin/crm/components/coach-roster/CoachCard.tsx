@@ -45,8 +45,8 @@ export function StudentList({ students, onOpen }: { students: RosterStudent[]; o
 }
 
 /** 접히는 한 줄 — 헤더(이름 · 담당 수)를 누르면 학생 명단을 펼친다 */
-export function RosterRow({ label, count, tone = 'default', testId, countTestId, children }: {
-  label: ReactNode; count: number; tone?: 'default' | 'amber'; testId: string; countTestId: string; children: ReactNode;
+export function RosterRow({ label, count, hint, tone = 'default', testId, countTestId, children }: {
+  label: ReactNode; count: number; hint?: ReactNode; tone?: 'default' | 'amber'; testId: string; countTestId: string; children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -61,9 +61,11 @@ export function RosterRow({ label, count, tone = 'default', testId, countTestId,
         className={`flex w-full items-center gap-2 px-4 py-2.5 text-left ${amber ? 'hover:bg-amber-50' : 'hover:bg-gray-50'}`}
       >
         <ChevronRight size={14} className={`shrink-0 text-gray-400 transition-transform ${open ? 'rotate-90' : ''}`} />
-        <span className="flex min-w-0 flex-1 items-center gap-2">{label}</span>
-        <span data-testid={countTestId} className={`text-sm font-bold tabular-nums ${count ? (amber ? 'text-amber-700' : 'text-emerald-600') : 'text-gray-300'}`}>{count}</span>
-        <span className="text-[11px] text-gray-400">명</span>
+        <span className="flex min-w-0 items-center gap-2">{label}</span>
+        <span className="shrink-0 text-[12px] text-gray-400">
+          <span data-testid={countTestId} className={`text-sm font-bold tabular-nums ${count ? (amber ? 'text-amber-700' : 'text-emerald-600') : 'text-gray-300'}`}>{count}</span>명
+        </span>
+        {hint}
       </button>
       {open && <div id={panelId} className="px-4 pb-3 pl-9">{children}</div>}
     </div>

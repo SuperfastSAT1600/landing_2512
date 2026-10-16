@@ -27,14 +27,18 @@ const json = (body: unknown, status = 200) => Promise.resolve(new Response(JSON.
 describe('CoachRoster', () => {
   beforeEach(() => fetchMock.mockReset());
 
-  it('코치 순서대로 재원 수와 명단, 요약(중복 없는 재원 수)을 보여 준다', async () => {
+  it('미배정 맨 위, 코치는 담당 많은 순(같으면 API 순서)으로 재원 수와 명단, 요약(중복 없는 재원 수)을 보여 준다', async () => {
     fetchMock.mockReturnValueOnce(json({ data: roster }));
     render(<CoachRoster adminKey="k" onSelectStudentById={vi.fn()} />);
     const cards = await screen.findAllByTestId('coach-card');
-    expect(cards.map((c) => within(c).getByTestId('coach-name').textContent)).toEqual(['Ben', 'Julie', '배병윤']);
+    // 담당(재원) 많은 순, 같은 수면 API 순서 유지
+    expect(cards.map((c) => within(c).getByTestId('coach-name').textContent)).toEqual(['Ben', '배병윤', 'Julie']);
     expect(within(cards[0]).getByTestId('coach-active').textContent).toBe('1');
     expect(within(cards[0]).queryByText('김주하')).toBeNull();
-    expect(within(cards[2]).getByText('CRM 미등록')).toBeTruthy();
+    expect(within(cards[1]).getByText('CRM 미등록')).toBeTruthy();
+    // 미배정 줄이 맨 위
+    const unassigned = screen.getByTestId('unassigned-row');
+    expect(unassigned.compareDocumentPosition(cards[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByTestId('roster-summary').textContent).toContain('재원 학생 2명');
     expect(screen.getByTestId('roster-summary').textContent).toContain('미배정 1명');
     expect(fetchMock).toHaveBeenCalledWith('/api/crm/coach-roster', expect.objectContaining({ headers: { 'x-admin-key': 'k' } }));
@@ -83,6 +87,7 @@ describe('CoachRoster', () => {
     render(<CoachRoster adminKey="k" onSelectStudentById={vi.fn()} />);
     await screen.findAllByTestId('coach-card');
     fireEvent.click(screen.getByRole('button', { name: '순서 편집' }));
+    expect(screen.getByText(/담당 학생 수가 같은 코치끼리/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Ben 아래로' }));
     fireEvent.click(screen.getByRole('button', { name: '순서 저장' }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));

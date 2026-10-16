@@ -49,7 +49,7 @@ function Summary({ roster }: { roster: Roster }) {
   );
 }
 
-// 리드 허브 '코치 현황' 탭 — 직접 정한 코치 순서대로 코치별 재원 학생 수와 명단
+// 리드 허브 '코치 현황' 탭 — 미배정 맨 위, 코치는 담당(재원) 많은 순(같으면 직접 정한 순서)으로 재원 학생 수와 명단
 export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
   const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [roster, setRoster] = useState<Roster | null>(null);
@@ -92,6 +92,8 @@ export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
     );
   }
 
+  // 담당(재원) 많은 순 — 같은 수면 API 순서(직접 정한 순서) 유지
+  const byActive = [...roster.coaches].sort((a, b) => b.activeCount - a.activeCount);
   const registered = roster.coaches.filter((c) => c.registered && c.slug).map((c) => ({ slug: c.slug!, name: c.name }));
   return (
     <div className="space-y-4">
@@ -99,7 +101,7 @@ export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
         <Summary roster={roster} />
         <div className="ml-auto flex gap-2">
           {!editing && (
-            <button onClick={() => { setSaveError(null); setEditing(true); }} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50">순서 편집</button>
+            <button onClick={() => { setSaveError(null); setEditing(true); }} title="담당 학생 수가 같은 코치끼리의 순서" className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50">순서 편집</button>
           )}
           <button onClick={reload} disabled={state === 'loading' || editing} className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50">
             <RefreshCw size={12} className={state === 'loading' ? 'animate-spin' : ''} /> 새로고침
@@ -111,18 +113,19 @@ export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
         <CoachOrderEditor initial={registered} saving={saving} error={saveError} onSave={handleSave} onCancel={() => setEditing(false)} />
       ) : (
         <div className="max-w-3xl divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white">
-          {roster.coaches.map((c) => <CoachCard key={c.key} coach={c} onOpen={onSelectStudentById} />)}
           {roster.unassigned.length > 0 && (
             <RosterRow
               testId="unassigned-row"
               countTestId="unassigned-count"
               tone="amber"
               count={roster.unassigned.length}
-              label={<><span className="text-sm font-semibold text-amber-800">코치 미배정</span><span className="truncate text-[11px] text-amber-700">재원·온보딩·휴원이지만 SRM에 진행 중인 코치 매칭이 없음</span></>}
+              label={<span className="whitespace-nowrap text-sm font-semibold text-amber-800">코치 미배정</span>}
+              hint={<span className="min-w-0 flex-1 truncate text-[11px] text-amber-700">재원·온보딩·휴원이지만 SRM에 진행 중인 코치 매칭이 없음</span>}
             >
               <StudentList students={roster.unassigned} onOpen={onSelectStudentById} />
             </RosterRow>
           )}
+          {byActive.map((c) => <CoachCard key={c.key} coach={c} onOpen={onSelectStudentById} />)}
         </div>
       )}
     </div>
