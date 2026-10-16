@@ -1,5 +1,7 @@
 'use client';
 
+import { useId, useState, type ReactNode } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { SRM_STATUS_LABEL } from '@/lib/srm-status';
 import type { RosterCoach, RosterStudent } from '@/lib/coach-roster';
 
@@ -44,26 +46,44 @@ export function StudentList({ students, onOpen }: { students: RosterStudent[]; o
   return <ul className="space-y-0.5">{students.map((s) => <StudentLine key={s.profileId} student={s} onOpen={onOpen} />)}</ul>;
 }
 
-// 코치 한 명 — 재원 수(큰 숫자), 온보딩·휴원 수, 명단
-export function CoachCard({ coach, onOpen }: { coach: RosterCoach; onOpen: (crmStudentId: string) => void }) {
+/** 접히는 한 줄 — 헤더(이름 · 담당 수)를 누르면 학생 명단을 펼친다 */
+export function RosterRow({ label, count, tone = 'default', testId, countTestId, children }: {
+  label: ReactNode; count: number; tone?: 'default' | 'amber'; testId: string; countTestId: string; children: ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+  const amber = tone === 'amber';
   return (
-    <div data-testid="coach-card" className="flex flex-col rounded-xl border border-gray-200 bg-white p-3">
-      <div className="mb-2 flex items-start gap-2">
-        <div className="min-w-0 flex-1">
-          <p data-testid="coach-name" className="truncate text-sm font-semibold text-gray-900">{coach.name}</p>
-          <div className="mt-0.5 flex flex-wrap gap-1 text-[10px]">
-            {!coach.registered && <span className="rounded bg-amber-50 px-1 text-amber-700">CRM 미등록</span>}
-            {coach.registered && !coach.linked && <span className="rounded bg-gray-100 px-1 text-gray-500">SRM 미연결</span>}
-            {coach.onboardingCount > 0 && <span className="text-gray-400">온보딩 {coach.onboardingCount}</span>}
-            {coach.pausedCount > 0 && <span className="text-gray-400">휴원 {coach.pausedCount}</span>}
-          </div>
-        </div>
-        <div className="text-right">
-          <p data-testid="coach-active" className={`text-2xl font-bold leading-none ${coach.activeCount ? 'text-emerald-600' : 'text-gray-300'}`}>{coach.activeCount}</p>
-          <p className="text-[10px] text-gray-400">재원</p>
-        </div>
-      </div>
-      <StudentList students={coach.students} onOpen={onOpen} />
+    <div data-testid={testId} className={amber ? 'bg-amber-50/40' : ''}>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((v) => !v)}
+        className={`flex w-full items-center gap-2 px-4 py-2.5 text-left ${amber ? 'hover:bg-amber-50' : 'hover:bg-gray-50'}`}
+      >
+        <ChevronRight size={14} className={`shrink-0 text-gray-400 transition-transform ${open ? 'rotate-90' : ''}`} />
+        <span className="flex min-w-0 flex-1 items-center gap-2">{label}</span>
+        <span data-testid={countTestId} className={`text-sm font-bold tabular-nums ${count ? (amber ? 'text-amber-700' : 'text-emerald-600') : 'text-gray-300'}`}>{count}</span>
+        <span className="text-[11px] text-gray-400">명</span>
+      </button>
+      {open && <div id={panelId} className="px-4 pb-3 pl-9">{children}</div>}
     </div>
+  );
+}
+
+// 코치 한 명 — 줄에는 이름과 담당(재원) 학생 수, 펼치면 명단
+export function CoachCard({ coach, onOpen }: { coach: RosterCoach; onOpen: (crmStudentId: string) => void }) {
+  const label = (
+    <>
+      <span data-testid="coach-name" className="truncate text-sm font-semibold text-gray-900">{coach.name}</span>
+      {!coach.registered && <span className="shrink-0 rounded bg-amber-50 px-1 text-[10px] text-amber-700">CRM 미등록</span>}
+      {coach.registered && !coach.linked && <span className="shrink-0 rounded bg-gray-100 px-1 text-[10px] text-gray-500">SRM 미연결</span>}
+    </>
+  );
+  return (
+    <RosterRow testId="coach-card" countTestId="coach-active" label={label} count={coach.activeCount}>
+      <StudentList students={coach.students} onOpen={onOpen} />
+    </RosterRow>
   );
 }

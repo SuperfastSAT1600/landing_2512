@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { RECENT_AHEAD_DAYS, RECENT_PAST_DAYS, type CoachRoster as Roster } from '@/lib/coach-roster';
-import { CoachCard, StudentList } from './CoachCard';
+import { CoachCard, RosterRow, StudentList } from './CoachCard';
 import { CoachOrderEditor } from './CoachOrderEditor';
 
 interface Props { adminKey: string; onSelectStudentById: (id: string) => void }
@@ -110,17 +110,20 @@ export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
       {editing ? (
         <CoachOrderEditor initial={registered} saving={saving} error={saveError} onSave={handleSave} onCancel={() => setEditing(false)} />
       ) : (
-        <>
-          <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {roster.coaches.map((c) => <CoachCard key={c.key} coach={c} onOpen={onSelectStudentById} />)}
-          </div>
+        <div className="max-w-3xl divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white">
+          {roster.coaches.map((c) => <CoachCard key={c.key} coach={c} onOpen={onSelectStudentById} />)}
           {roster.unassigned.length > 0 && (
-            <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50/40 p-3">
-              <p className="mb-2 text-sm font-semibold text-amber-800">코치 미배정 {roster.unassigned.length}명 <span className="text-[11px] font-normal text-amber-700">— 재원·온보딩·휴원이지만 SRM에 진행 중인 코치 매칭이 없음</span></p>
+            <RosterRow
+              testId="unassigned-row"
+              countTestId="unassigned-count"
+              tone="amber"
+              count={roster.unassigned.length}
+              label={<><span className="text-sm font-semibold text-amber-800">코치 미배정</span><span className="truncate text-[11px] text-amber-700">재원·온보딩·휴원이지만 SRM에 진행 중인 코치 매칭이 없음</span></>}
+            >
               <StudentList students={roster.unassigned} onOpen={onSelectStudentById} />
-            </div>
+            </RosterRow>
           )}
-        </>
+        </div>
       )}
     </div>
   );
