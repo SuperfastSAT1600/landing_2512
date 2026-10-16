@@ -16,6 +16,8 @@ function StudentLine({ student, onOpen }: { student: RosterStudent; onOpen: (crm
     <>
       <span className={`truncate ${dim ? 'text-gray-400' : 'text-gray-800'}`}>{student.name}</span>
       <span className="ml-auto flex shrink-0 gap-1">
+        {/* 휴원·온보딩은 수업이 없는 게 정상 — 재원인데 수업이 없을 때만 표시 */}
+        {student.status === 'active' && !student.recentLesson && <span className="rounded-full bg-gray-100 px-1.5 text-[10px] text-gray-400">최근 수업 없음</span>}
         {chips.map((s) => (
           <span key={s.subject} className={`rounded-full border px-1.5 text-[10px] font-medium ${STATUS_TONE[s.status]}`}>
             {s.subject && `${s.subject} `}{SRM_STATUS_LABEL[s.status]}

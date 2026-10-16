@@ -1,5 +1,7 @@
 // 코치 현황 — 코치별 수업 중 학생 명단. 순수 함수.
-// 코치 ↔ 학생은 SFv2 활성 매칭(matchings.status='active')으로 잇는다. 예정 수업이 없는 매칭도 잡기 위해 일정이 아니라 매칭을 본다.
+// 코치 ↔ 학생은 SFv2 활성 매칭(matchings.status='active')으로 잇는다.
+// 단, 학생 × 과목에 최근 수업(RECENT_* 창, 취소 제외)이 있으면 그 수업을 연 코치만 담당 — 정리 안 된 옛 매칭을 걸러 낸다.
+// 최근 수업이 없으면(막 매칭됨·공백) 매칭 코치로 두고 recent=false.
 // 상태는 학생 × 매칭 과목의 payments.management_status(#533과 같은 기준). 과목 계정이 없으면 학생 롤업 상태.
 import { rollUpSrmStatus } from '@/lib/srm-status';
 
@@ -12,6 +14,8 @@ export interface RosterInput {
   matchingStudents: { matching_id: string; student_id: string }[];
   /** 수락 코치가 없는 매칭 → 가장 최근 coach_room 담당 교사 */
   lastEventTeacher: Record<string, string>;
+  /** 최근 수업 창 안의 coach_room 수업(취소 제외) */
+  recentEvents: { matching_id: string; assigned_teacher_id: string | null }[];
   payments: { student_id: string | null; subject: string | null; management_status: string | null }[];
   /** SFv2 profiles 이름(학생·교사) */
   profileNames: Record<string, string | null>;
@@ -23,7 +27,9 @@ export interface RosterStudent {
   crmStudentId: string | null;
   name: string;
   status: RosterStatus;
-  subjects: { subject: string; status: RosterStatus }[];
+  /** 과목 중 하나라도 최근 수업이 있음 */
+  recentLesson: boolean;
+  subjects: { subject: string; status: RosterStatus; recent: boolean }[];
 }
 
 export interface RosterCoach {
@@ -43,6 +49,9 @@ export interface RosterCoach {
 
 export interface CoachRoster { coaches: RosterCoach[]; unassigned: RosterStudent[] }
 
+/** 최근 수업 창 — 이 안에 수업이 있으면 그 수업 코치만 담당 */
+export const RECENT_PAST_DAYS = 28;
+export const RECENT_AHEAD_DAYS = 14;
 const ORDER: RosterStatus[] = ['active', 'onboarding', 'paused'];
 const isRosterStatus = (s: string | null): s is RosterStatus => !!s && (ORDER as string[]).includes(s);
 
@@ -80,6 +89,24 @@ function coachesByMatching(input: RosterInput, activeIds: Set<string>) {
   return out;
 }
 
+/** 학생|과목 → 최근 수업을 연 코치들(지정 담당 교사, 없으면 매칭 코치) */
+function recentTeachers(input: RosterInput, subjectOf: Map<string, string | null>, teachersOf: Map<string, string[]>) {
+  const studentsOf = new Map<string, string[]>();
+  for (const ms of input.matchingStudents) studentsOf.set(ms.matching_id, [...(studentsOf.get(ms.matching_id) ?? []), ms.student_id]);
+  const out = new Map<string, Set<string>>();
+  for (const e of input.recentEvents) {
+    if (!subjectOf.has(e.matching_id)) continue;
+    const tids = e.assigned_teacher_id ? [e.assigned_teacher_id] : teachersOf.get(e.matching_id) ?? [];
+    for (const sid of studentsOf.get(e.matching_id) ?? []) {
+      const key = `${sid}|${subjectOf.get(e.matching_id)}`;
+      const set = out.get(key) ?? new Set<string>();
+      tids.forEach((t) => set.add(t));
+      out.set(key, set);
+    }
+  }
+  return out;
+}
+
 /** 직접 정한 순서(sort_order) → 순서 없는 코치는 뒤로, 등록순 */
 export function compareCoachOrder(
   a: { sort_order: number | null; created_at: string }, b: { sort_order: number | null; created_at: string },
@@ -99,29 +126,35 @@ export function buildCoachRoster(input: RosterInput): CoachRoster {
   const crmByProfile = new Map(input.crmStudents.filter((s) => s.sfv2_profile_id).map((s) => [s.sfv2_profile_id!, s]));
   const nameOf = (pid: string) => crmByProfile.get(pid)?.name ?? input.profileNames[pid] ?? '(이름 없음)';
 
+  const recent = recentTeachers(input, subjectOf, teachersOf);
+
   // 교사 → 학생 → 과목별 상태
-  const perTeacher = new Map<string, Map<string, Map<string, RosterStatus>>>();
+  type Cell = { status: RosterStatus; recent: boolean };
+  const perTeacher = new Map<string, Map<string, Map<string, Cell>>>();
   const coached = new Set<string>();
+  const place = (tid: string, sid: string, subject: string, cell: Cell) => {
+    coached.add(sid);
+    const students = perTeacher.get(tid) ?? new Map<string, Map<string, Cell>>();
+    perTeacher.set(tid, students);
+    const subjects = students.get(sid) ?? new Map<string, Cell>();
+    students.set(sid, subjects);
+    subjects.set(subject, cell);
+  };
   for (const ms of input.matchingStudents) {
     if (!subjectOf.has(ms.matching_id)) continue;
-    const subject = subjectOf.get(ms.matching_id) ?? '과목 미지정';
-    const st = status.of(ms.student_id, subjectOf.get(ms.matching_id) ?? null);
+    const raw = subjectOf.get(ms.matching_id) ?? null;
+    const st = status.of(ms.student_id, raw);
     if (!isRosterStatus(st)) continue;
-    for (const tid of teachersOf.get(ms.matching_id) ?? []) {
-      coached.add(ms.student_id);
-      const students = perTeacher.get(tid) ?? new Map<string, Map<string, RosterStatus>>();
-      perTeacher.set(tid, students);
-      const subjects = students.get(ms.student_id) ?? new Map<string, RosterStatus>();
-      students.set(ms.student_id, subjects);
-      subjects.set(subject, st);
-    }
+    const taught = recent.get(`${ms.student_id}|${raw}`);
+    const tids = taught?.size ? [...taught] : teachersOf.get(ms.matching_id) ?? [];
+    for (const tid of tids) place(tid, ms.student_id, raw ?? '과목 미지정', { status: st, recent: !!taught?.size });
   }
 
-  const toStudent = (pid: string, subjects: Map<string, RosterStatus>): RosterStudent => {
-    const list = [...subjects].map(([subject, st]) => ({ subject, status: st })).sort((a, b) => a.subject.localeCompare(b.subject));
+  const toStudent = (pid: string, subjects: Map<string, Cell>): RosterStudent => {
+    const list = [...subjects].map(([subject, c]) => ({ subject, status: c.status, recent: c.recent })).sort((a, b) => a.subject.localeCompare(b.subject));
     return {
       profileId: pid, crmStudentId: crmByProfile.get(pid)?.id ?? null, name: nameOf(pid),
-      status: rollUpSrmStatus(list.map((s) => s.status)) as RosterStatus, subjects: list,
+      status: rollUpSrmStatus(list.map((s) => s.status)) as RosterStatus, recentLesson: list.some((s) => s.recent), subjects: list,
     };
   };
   const card = (key: string, slug: string | null, name: string, tid: string | null, registered: boolean): RosterCoach => {
@@ -143,7 +176,7 @@ export function buildCoachRoster(input: RosterInput): CoachRoster {
     .filter((pid) => !coached.has(pid))
     .flatMap((pid) => {
       const st = status.rollup(pid);
-      return isRosterStatus(st) ? [{ profileId: pid, crmStudentId: crmByProfile.get(pid)?.id ?? null, name: nameOf(pid), status: st, subjects: [] }] : [];
+      return isRosterStatus(st) ? [{ profileId: pid, crmStudentId: crmByProfile.get(pid)?.id ?? null, name: nameOf(pid), status: st, recentLesson: false, subjects: [] }] : [];
     })
     .sort(byStatusThenName);
 
