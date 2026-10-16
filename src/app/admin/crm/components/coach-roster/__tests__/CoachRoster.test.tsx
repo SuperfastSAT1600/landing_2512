@@ -19,6 +19,9 @@ const roster: Roster = {
   unassigned: [{ profileId: 'p3', crmStudentId: 'crm-3', name: '조유인', status: 'active', subjects: [] }],
 };
 
+// 오른쪽 매칭 정리 패널은 따로 테스트(MatchingCleanupPanel.test.tsx) — 여기서는 목록 fetch만 본다
+vi.mock('../MatchingCleanupPanel', () => ({ MatchingCleanupPanel: () => null }));
+
 const fetchMock = vi.fn();
 vi.stubGlobal('fetch', fetchMock);
 const json = (body: unknown, status = 200) => Promise.resolve(new Response(JSON.stringify(body), { status }));

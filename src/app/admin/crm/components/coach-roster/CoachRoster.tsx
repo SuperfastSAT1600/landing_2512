@@ -5,6 +5,7 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import type { CoachRoster as Roster } from '@/lib/coach-roster';
 import { CoachCard, RosterRow, StudentList } from './CoachCard';
 import { CoachOrderEditor } from './CoachOrderEditor';
+import { MatchingCleanupPanel } from './MatchingCleanupPanel';
 
 interface Props { adminKey: string; onSelectStudentById: (id: string) => void }
 
@@ -112,7 +113,8 @@ export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
       {editing ? (
         <CoachOrderEditor initial={registered} saving={saving} error={saveError} onSave={handleSave} onCancel={() => setEditing(false)} />
       ) : (
-        <div className="max-w-3xl divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <div className="min-w-0 flex-1 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white lg:max-w-3xl">
           {roster.unassigned.length > 0 && (
             <RosterRow
               testId="unassigned-row"
@@ -126,6 +128,10 @@ export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
             </RosterRow>
           )}
           {byActive.map((c) => <CoachCard key={c.key} coach={c} onOpen={onSelectStudentById} />)}
+        </div>
+        <div className="lg:w-[400px] lg:shrink-0">
+          <MatchingCleanupPanel adminKey={adminKey} reloadKey={reloadKey} onSelectStudentById={onSelectStudentById} />
+        </div>
         </div>
       )}
     </div>

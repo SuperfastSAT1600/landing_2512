@@ -51,7 +51,7 @@ function byStatusThenName(a: RosterStudent, b: RosterStudent) {
 }
 
 /** 학생 × 과목 → 상태. 과목 계정이 없으면 학생의 모든 계정 롤업 */
-function statusLookup(payments: RosterInput['payments']) {
+export function statusLookup(payments: RosterInput['payments']) {
   const bySubject = new Map<string, string | null>();
   const byStudent = new Map<string, string[]>();
   for (const p of payments) {
