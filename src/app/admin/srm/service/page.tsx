@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RefreshCw, BookOpen, FlaskConical, Brain, Monitor, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { RefreshCw, BookOpen, FlaskConical, Brain, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import { srmFetch } from '../lib/srm-fetch';
 import type { ServiceUsageResponse, ServiceUsageStudent } from '@/app/api/admin/srm/service-usage/route';
 import StudentHistoryModal from './StudentHistoryModal';
@@ -18,7 +18,7 @@ function formatDuration(minutes: number): string {
   return `${h}h ${m}분`;
 }
 
-type SortKey = 'name' | 'coachRoom' | 'studyHall' | 'vocab' | 'testCenter';
+type SortKey = 'name' | 'coachRoom' | 'studyHall' | 'vocab';
 type SortDir = 'asc' | 'desc';
 type StatusTab = 'active' | 'paused';
 
@@ -28,7 +28,6 @@ function getSortValue(s: ServiceUsageStudent, key: SortKey): number | string {
     case 'coachRoom': return s.coachRoom?.sessionCount ?? -1;
     case 'studyHall': return s.studyHall?.totalProblems ?? -1;
     case 'vocab': return s.vocab?.gradedCount ?? -1;
-    case 'testCenter': return s.testCenter?.totalProblems ?? -1;
   }
 }
 
@@ -39,6 +38,14 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
     : <ChevronDown size={11} className="text-gray-600" />;
 }
 
+function WeekBadge() {
+  return (
+    <span className="inline-block text-[9px] px-1 py-0.5 rounded bg-amber-50 text-amber-500 border border-amber-200 leading-none mr-1 align-middle">
+      7일없음
+    </span>
+  );
+}
+
 function cellBg(hasSchedule: boolean, hasActivity: boolean): string {
   if (!hasSchedule) return '';
   return hasActivity
@@ -47,50 +54,56 @@ function cellBg(hasSchedule: boolean, hasActivity: boolean): string {
 }
 
 function ActivityCell({
-  value, suffix, hasSchedule,
+  value, suffix, hasSchedule, noWeekSchedule = false,
 }: {
   value: number | null;
   suffix: string;
   hasSchedule: boolean;
+  noWeekSchedule?: boolean;
 }) {
   const bg = cellBg(hasSchedule, value !== null && value > 0);
-  if (value === null || value === 0) {
-    return (
-      <span className={`inline-block px-1.5 py-0.5 ${bg}`}>
-        <span className={hasSchedule ? 'text-red-400 font-medium' : 'text-gray-300'}>-</span>
-      </span>
-    );
-  }
   return (
-    <span className={`inline-block px-1.5 py-0.5 ${bg}`}>
-      <span className="font-medium text-gray-800">
-        {value}
-        <span className="text-gray-400 font-normal text-[11px] ml-0.5">{suffix}</span>
-      </span>
+    <span className="inline-flex items-center justify-end gap-0.5">
+      {noWeekSchedule && <WeekBadge />}
+      {(value === null || value === 0) ? (
+        <span className={`inline-block px-1.5 py-0.5 ${bg}`}>
+          <span className={hasSchedule ? 'text-red-400 font-medium' : 'text-gray-300'}>-</span>
+        </span>
+      ) : (
+        <span className={`inline-block px-1.5 py-0.5 ${bg}`}>
+          <span className="font-medium text-gray-800">
+            {value}
+            <span className="text-gray-400 font-normal text-[11px] ml-0.5">{suffix}</span>
+          </span>
+        </span>
+      )}
     </span>
   );
 }
 
 function CoachRoomCell({
-  result, hasSchedule,
+  result, hasSchedule, noWeekSchedule = false,
 }: {
   result: ServiceUsageStudent['coachRoom'];
   hasSchedule: boolean;
+  noWeekSchedule?: boolean;
 }) {
   const bg = cellBg(hasSchedule, result !== null);
-  if (!result) {
-    return (
-      <span className={`inline-block px-1.5 py-0.5 ${bg}`}>
-        <span className={hasSchedule ? 'text-red-400 font-medium' : 'text-gray-300'}>-</span>
-      </span>
-    );
-  }
   return (
-    <span className={`inline-block px-1.5 py-0.5 ${bg} font-medium text-gray-800 tabular-nums`}>
-      {result.sessionCount}
-      <span className="text-gray-400 font-normal text-[11px] ml-0.5">세션</span>
-      {result.durationMinutes > 0 && (
-        <span className="text-gray-500 text-[11px] ml-1">({formatDuration(result.durationMinutes)})</span>
+    <span className="inline-flex items-center justify-end gap-0.5">
+      {noWeekSchedule && <WeekBadge />}
+      {!result ? (
+        <span className={`inline-block px-1.5 py-0.5 ${bg}`}>
+          <span className={hasSchedule ? 'text-red-400 font-medium' : 'text-gray-300'}>-</span>
+        </span>
+      ) : (
+        <span className={`inline-block px-1.5 py-0.5 ${bg} font-medium text-gray-800 tabular-nums`}>
+          {result.sessionCount}
+          <span className="text-gray-400 font-normal text-[11px] ml-0.5">세션</span>
+          {result.durationMinutes > 0 && (
+            <span className="text-gray-500 text-[11px] ml-1">({formatDuration(result.durationMinutes)})</span>
+          )}
+        </span>
       )}
     </span>
   );
@@ -300,12 +313,6 @@ export default function ServicePage() {
                     icon={<Brain size={11} />}
                     sortKey={sortKey} sortDir={sortDir} onSort={handleSort}
                   />
-                  <SortableHeader
-                    col="testCenter"
-                    label="테스트센터"
-                    icon={<Monitor size={11} />}
-                    sortKey={sortKey} sortDir={sortDir} onSort={handleSort}
-                  />
                 </tr>
               </thead>
               <tbody>
@@ -325,13 +332,14 @@ export default function ServicePage() {
                       </button>
                     </td>
                     <td className="py-2.5 px-3 text-right">
-                      <CoachRoomCell result={s.coachRoom} hasSchedule={s.schedule.coachRoom} />
+                      <CoachRoomCell result={s.coachRoom} hasSchedule={s.schedule.coachRoom} noWeekSchedule={!s.weekSchedule.coachRoom} />
                     </td>
                     <td className="py-2.5 px-3 text-right">
                       <ActivityCell
                         value={s.studyHall?.totalProblems ?? null}
                         suffix="문제"
                         hasSchedule={s.schedule.studyHall}
+                        noWeekSchedule={!s.weekSchedule.studyHall}
                       />
                     </td>
                     <td className="py-2.5 px-3 text-right">
@@ -339,13 +347,7 @@ export default function ServicePage() {
                         value={s.vocab?.gradedCount ?? null}
                         suffix="단어"
                         hasSchedule={s.schedule.vocab}
-                      />
-                    </td>
-                    <td className="py-2.5 px-3 text-right">
-                      <ActivityCell
-                        value={s.testCenter?.totalProblems ?? null}
-                        suffix="문제"
-                        hasSchedule={false}
+                        noWeekSchedule={!s.weekSchedule.vocab}
                       />
                     </td>
                   </tr>
@@ -363,9 +365,6 @@ export default function ServicePage() {
                   </td>
                   <td className="py-2 px-3 text-right text-xs font-semibold text-gray-700">
                     {sortedStudents.reduce((sum, s) => sum + (s.vocab?.gradedCount ?? 0), 0)}단어
-                  </td>
-                  <td className="py-2 px-3 text-right text-xs font-semibold text-gray-700">
-                    {sortedStudents.reduce((sum, s) => sum + (s.testCenter?.totalProblems ?? 0), 0)}문제
                   </td>
                 </tr>
               </tfoot>

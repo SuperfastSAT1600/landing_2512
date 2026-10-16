@@ -14,6 +14,11 @@ export interface ServiceUsageStudent {
     studyHall: boolean;
     vocab: boolean;
   };
+  weekSchedule: {
+    coachRoom: boolean;
+    studyHall: boolean;
+    vocab: boolean;
+  };
   coachRoom: { sessionCount: number; durationMinutes: number } | null;
   studyHall: { totalProblems: number } | null;
   vocab: { gradedCount: number } | null;
@@ -29,6 +34,13 @@ export interface ServiceUsageResponse {
 function kstToday(): string {
   return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(new Date());
 }
+
+function addKstDays(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+const defaultWeekSchedule = { coachRoom: false, studyHall: false, vocab: false };
 
 
 // ── Cache helpers ─────────────────────────────────────────────────────────────
@@ -50,6 +62,7 @@ function cacheRowToStudent(row: CacheRow): ServiceUsageStudent {
     sfv2ProfileId: row.sfv2_profile_id,
     tutoringStatus: row.tutoring_status,
     schedule: row.schedule,
+    weekSchedule: { ...defaultWeekSchedule },
     coachRoom: row.coach_room,
     studyHall: row.study_hall,
     vocab: row.vocab,
@@ -120,6 +133,7 @@ async function fetchLiveForProfiles(
       sfv2ProfileId: pid,
       tutoringStatus: user.status,
       schedule: sched,
+      weekSchedule: { ...defaultWeekSchedule },
       coachRoom: cr,
       studyHall: sh ? { totalProblems: sh.totalProblems } : null,
       vocab: vc ? { gradedCount: vc.gradedCount } : null,
@@ -172,6 +186,7 @@ export async function GET(req: NextRequest) {
         sfv2ProfileId: null,
         tutoringStatus: u.status,
         schedule: { coachRoom: false, studyHall: false, vocab: false },
+        weekSchedule: { ...defaultWeekSchedule },
         coachRoom: null, studyHall: null, vocab: null, testCenter: null,
       }));
 
@@ -221,7 +236,20 @@ export async function GET(req: NextRequest) {
       return a.name.localeCompare(b.name, 'ko');
     });
 
-    return NextResponse.json({ date, students: allStudents, fromCache } satisfies ServiceUsageResponse);
+    // 7일 스케줄: 선택 날짜부터 +6일 범위, 항상 실시간 조회
+    const weekEnd = kstDayRange(addKstDays(date, 6)).end;
+    const weekScheduleMap = profileIds.length
+      ? await fetchScheduleBatch(profileIds, start, weekEnd)
+      : new Map<string, { coachRoom: boolean; studyHall: boolean; vocab: boolean }>();
+
+    const studentsWithWeek = allStudents.map(s => ({
+      ...s,
+      weekSchedule: s.sfv2ProfileId
+        ? (weekScheduleMap.get(s.sfv2ProfileId) ?? { ...defaultWeekSchedule })
+        : { ...defaultWeekSchedule },
+    }));
+
+    return NextResponse.json({ date, students: studentsWithWeek, fromCache } satisfies ServiceUsageResponse);
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'error' }, { status: 500 });
   }
