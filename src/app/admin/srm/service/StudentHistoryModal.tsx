@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { X, BookOpen, FlaskConical, Brain, Monitor } from 'lucide-react';
 import { srmFetch } from '../lib/srm-fetch';
+import { cellBg, emptyLabel } from './cell-style';
 import type { StudentDailyHistoryResponse, StudentDayRecord } from '@/app/api/admin/srm/student-daily-history/route';
 
 function formatDuration(minutes: number): string {
@@ -13,10 +14,6 @@ function formatDuration(minutes: number): string {
   return `${h}h ${m}분`;
 }
 
-function cellBg(hasSchedule: boolean, hasActivity: boolean) {
-  if (!hasSchedule) return '';
-  return hasActivity ? 'bg-emerald-50' : 'bg-red-50';
-}
 
 function DayRow({ day }: { day: StudentDayRecord }) {
   const hasAnyActivity =
@@ -40,7 +37,7 @@ function DayRow({ day }: { day: StudentDayRecord }) {
               )}
             </span>
           ) : (
-            <span className={day.schedule.coachRoom ? 'text-red-400' : 'text-gray-300'}>-</span>
+            <span className={emptyLabel(day.schedule.coachRoom).className}>{emptyLabel(day.schedule.coachRoom).text}</span>
           )}
         </span>
       </td>
@@ -51,7 +48,7 @@ function DayRow({ day }: { day: StudentDayRecord }) {
           {(day.studyHall?.totalProblems ?? 0) > 0 ? (
             <span className="font-medium text-gray-800">{day.studyHall!.totalProblems}<span className="text-gray-400 font-normal ml-0.5">문제</span></span>
           ) : (
-            <span className={day.schedule.studyHall ? 'text-red-400' : 'text-gray-300'}>-</span>
+            <span className={emptyLabel(day.schedule.studyHall).className}>{emptyLabel(day.schedule.studyHall).text}</span>
           )}
         </span>
       </td>
@@ -62,7 +59,7 @@ function DayRow({ day }: { day: StudentDayRecord }) {
           {(day.vocab?.gradedCount ?? 0) > 0 ? (
             <span className="font-medium text-gray-800">{day.vocab!.gradedCount}<span className="text-gray-400 font-normal ml-0.5">단어</span></span>
           ) : (
-            <span className={day.schedule.vocab ? 'text-red-400' : 'text-gray-300'}>-</span>
+            <span className={emptyLabel(day.schedule.vocab).className}>{emptyLabel(day.schedule.vocab).text}</span>
           )}
         </span>
       </td>
