@@ -5,6 +5,7 @@ import { RefreshCw, BookOpen, FlaskConical, Brain, Monitor, ChevronUp, ChevronDo
 import { srmFetch } from '../lib/srm-fetch';
 import type { ServiceUsageResponse, ServiceUsageStudent } from '@/app/api/admin/srm/service-usage/route';
 import StudentHistoryModal from './StudentHistoryModal';
+import { cellBg, emptyLabel } from './cell-style';
 
 function toKstDateString(date: Date): string {
   return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(date);
@@ -39,11 +40,9 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
     : <ChevronDown size={11} className="text-gray-600" />;
 }
 
-function cellBg(hasSchedule: boolean, hasActivity: boolean): string {
-  if (!hasSchedule) return '';
-  return hasActivity
-    ? 'bg-emerald-50 rounded'
-    : 'bg-red-50 rounded';
+function EmptyMark({ hasSchedule }: { hasSchedule: boolean }) {
+  const { text, className } = emptyLabel(hasSchedule);
+  return <span className={className}>{text}</span>;
 }
 
 function ActivityCell({
@@ -57,7 +56,7 @@ function ActivityCell({
   if (value === null || value === 0) {
     return (
       <span className={`inline-block px-1.5 py-0.5 ${bg}`}>
-        <span className={hasSchedule ? 'text-red-400 font-medium' : 'text-gray-300'}>-</span>
+        <EmptyMark hasSchedule={hasSchedule} />
       </span>
     );
   }
@@ -81,7 +80,7 @@ function CoachRoomCell({
   if (!result) {
     return (
       <span className={`inline-block px-1.5 py-0.5 ${bg}`}>
-        <span className={hasSchedule ? 'text-red-400 font-medium' : 'text-gray-300'}>-</span>
+        <EmptyMark hasSchedule={hasSchedule} />
       </span>
     );
   }
@@ -220,6 +219,10 @@ export default function ServicePage() {
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded bg-red-100 border border-red-300 inline-block" />
           스케줄 있음 + 미접속
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded bg-gray-100 border border-gray-300 inline-block" />
+          해당 날짜 스케줄 없음
         </span>
       </div>
 
