@@ -151,6 +151,17 @@ describe('GET/POST /api/crm/renewal-targets — 주차 이월 (carry-over)', () 
     expect(lastBuilder.is).not.toHaveBeenCalled();
   });
 
+  it('추가 시 중복 가드는 이월된 행을 열린 대상으로 세지 않는다 — 후보 목록과 같은 기준', async () => {
+    const guard = makeBuilder({ data: [], error: null });
+    mockFrom
+      .mockReturnValueOnce(guard)
+      .mockReturnValueOnce(makeBuilder({ data: { ...baseTarget }, error: null }));
+    const { POST } = await import('../route');
+    const res = await POST(makeReq('POST', { student_id: 's-1' }));
+    expect(guard.is).toHaveBeenCalledWith('carried_to_week', null);
+    expect(res.status).toBe(201);
+  });
+
   it('이번 주차에 이미 종결된 행이 있어 UNIQUE 에 걸리면 500 이 아니라 409 다', async () => {
     // 409 가드는 열린 행만 본다 — 4·5 행이 있으면 가드를 통과해 23505 가 난다.
     mockFrom.mockReturnValueOnce(makeBuilder({ data: [], error: null }));
