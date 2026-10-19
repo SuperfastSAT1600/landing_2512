@@ -64,7 +64,9 @@ export async function POST(request: NextRequest) {
     .from('renewal_targets')
     .select('id')
     .eq('student_id', studentId)
-    .in('stage', RENEWAL_OPEN_STAGES);
+    .in('stage', RENEWAL_OPEN_STAGES)
+    // 이월된 행은 다음 주차로 넘어가 종결됐다 — scope=open·후보 목록과 같은 기준
+    .is('carried_to_week', null);
 
   if (existingError) {
     console.error('[renewal-targets POST] existing check', existingError);
