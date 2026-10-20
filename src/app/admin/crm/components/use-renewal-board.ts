@@ -11,6 +11,7 @@ import type { RenewalTarget, RenewalWeeklyStat, Student } from '@/types/crm';
 import { classifyTutoringEntries, type TutoringEntry } from './TutoringStudentRow';
 import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
 import { apiErrorMessage } from '@/lib/api-error';
+import type { EnrolledRef } from './renewal-hidden-candidates';
 
 /** 보드가 보고 있는 범위. open = 코호트 무관 진행 중 전체(일상 운영 화면). */
 export type RenewalScope = { kind: 'open' } | { kind: 'week'; weekStart: string };
@@ -71,9 +72,10 @@ export function useRenewalBoard(adminKey: string, scope: RenewalScope) {
   // 그것만으로 걸러내면 지난 주차에 진행 중인 학생이 후보로 다시 뜬다(추가 시 서버가 409).
   const [openTargets, setOpenTargets] = useState<RenewalTarget[]>([]);
   const [entries, setEntries] = useState<TutoringEntry<Student>[]>([]);
-  // SRM에서는 튜터링 중인데 CRM lead_status가 enrolled가 아니어서 학생 소스에 없는 인원.
-  // '튜터링 중' 탭에서도 안 보이는 학생들이므로 목록에 끼워 넣지 않고 건수만 드러낸다.
-  const [missingFromEnrolled, setMissingFromEnrolled] = useState(0);
+  // CRM 수강(enrolled) 학생 — 후보 목록(SRM 결제 계정 기준)에 없는 학생을 찾아 이유와 함께 드러낸다.
+  const [enrolled, setEnrolled] = useState<EnrolledRef[]>([]);
+  // 후보 소스에 들어간 SRM 계정 — 같은 계정을 쓰는 CRM 중복 행 판별용
+  const [listedProfileIds, setListedProfileIds] = useState<string[]>([]);
   const [weekly, setWeekly] = useState<RenewalWeeklyStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [candidatesLoading, setCandidatesLoading] = useState(true);
@@ -127,16 +129,11 @@ export function useRenewalBoard(adminKey: string, scope: RenewalScope) {
           getJson('/api/admin/srm/tutoring-users', adminKey),
         ]);
         if (cancelled) return;
-        const enrolled: Student[] = studentsJson.data ?? [];
+        const enrolledRows: (Student & { sfv2_profile_id?: string | null })[] = studentsJson.data ?? [];
         const linked: TutoringUser[] = tutoringJson.linked ?? [];
-        setEntries(classifyTutoringEntries(enrolled, linked));
-
-        const enrolledIds = new Set(enrolled.map((s) => s.id));
-        setMissingFromEnrolled(
-          linked.filter(
-            (u) => u.status !== 'ended' && u.status !== 'unclassified' && u.crmStudentId && !enrolledIds.has(u.crmStudentId)
-          ).length
-        );
+        setEntries(classifyTutoringEntries(enrolledRows, linked));
+        setListedProfileIds(linked.map((u) => u.sfv2ProfileId));
+        setEnrolled(enrolledRows.map((s) => ({ id: s.id, name: s.name, sfv2_profile_id: s.sfv2_profile_id ?? null })));
         setCandidatesError(null);
       } catch (e) {
         if (!cancelled) {
@@ -156,7 +153,8 @@ export function useRenewalBoard(adminKey: string, scope: RenewalScope) {
     setTargets,
     openTargets,
     entries,
-    missingFromEnrolled,
+    enrolled,
+    listedProfileIds,
     weekly,
     loading,
     candidatesLoading,
