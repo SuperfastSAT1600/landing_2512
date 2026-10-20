@@ -7,6 +7,9 @@ export const MATH_DOMAINS = new Set(['algebra', 'advanced_math', 'problem_solvin
 export interface TcSectionScore {
   rwRaw: number; rwTotal: number; rwScaled: number | null;
   mathRaw: number; mathTotal: number; mathScaled: number | null;
+  /** 모듈을 다 풀지 않았어도 푼 문항 정답률로 낸 참고용 점수(없으면 그 과목을 풀지 않은 것) */
+  rwEstimate: number | null;
+  mathEstimate: number | null;
   total: number | null; // RW+Math scaled (둘 다 있을 때만, 아니면 있는 쪽)
 }
 
@@ -73,11 +76,13 @@ export function tcSectionScore(item: TcItem): TcSectionScore {
     if (expected != null && n < expected) return null;
     return scaleSectionScore(c, t, key);
   };
+  const estimate = (key: 'rw' | 'math'): number | null => (raw[key].t ? scaleSectionScore(raw[key].c, raw[key].t, key) : null);
   const rwScaled = scaled('rw');
   const mathScaled = scaled('math');
   return {
     rwRaw: raw.rw.c, rwTotal: raw.rw.t, rwScaled,
     mathRaw: raw.math.c, mathTotal: raw.math.t, mathScaled,
+    rwEstimate: estimate('rw'), mathEstimate: estimate('math'),
     total: rwScaled != null && mathScaled != null ? rwScaled + mathScaled : (rwScaled ?? mathScaled),
   };
 }

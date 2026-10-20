@@ -1,10 +1,15 @@
 import { z } from 'zod';
+import type { LessonTimes } from '@/types/coach-prep';
 
 // 코치 준비 응답 요청 — 검증과 순수 헬퍼. 입력·표시 시간은 모두 KST 기준이다.
 
 const KST_OFFSET_MS = 9 * 60 * 60_000;
 const isoDateTime = z.iso.datetime({ offset: true });
 const isFuture = (iso: string) => Date.parse(iso) > Date.now();
+const sameInstant = (a: string | null | undefined, b: string | null | undefined) =>
+  a == null || b == null ? a == b : Date.parse(a) === Date.parse(b);
+const isOrderWrong = (first: string | null | undefined, second: string | null | undefined) =>
+  !!first && !!second && Date.parse(second) <= Date.parse(first);
 
 export const MAX_COACHES_PER_REQUEST = 5;
 
@@ -22,17 +27,28 @@ export const RespondSchema = z
     token: z.string().min(16),
     action: z.enum(['accept', 'decline']),
     first_lesson_at: isoDateTime.optional(),
+    second_lesson_at: isoDateTime.optional(),
+    option2_first_lesson_at: isoDateTime.optional(),
+    option2_second_lesson_at: isoDateTime.optional(),
     reason: z.string().max(500, '사유는 500자 이하로 입력해 주세요.').optional(),
   })
   .superRefine((v, ctx) => {
-    if (v.action === 'accept') {
-      if (!v.first_lesson_at) {
-        ctx.addIssue({ code: 'custom', path: ['first_lesson_at'], message: '첫 수업 일시를 입력해 주세요.' });
-      } else if (!isFuture(v.first_lesson_at)) {
-        ctx.addIssue({ code: 'custom', path: ['first_lesson_at'], message: '첫 수업 일시는 현재보다 이후여야 합니다.' });
-      }
-    } else if (v.first_lesson_at) {
-      ctx.addIssue({ code: 'custom', path: ['first_lesson_at'], message: '수업이 어려운 경우 첫 수업 일시를 보낼 수 없습니다.' });
+    const fail = (path: string, message: string) => ctx.addIssue({ code: 'custom', path: [path], message });
+    const times = [v.first_lesson_at, v.second_lesson_at, v.option2_first_lesson_at, v.option2_second_lesson_at];
+    if (v.action === 'decline') {
+      if (times.some(Boolean)) fail('first_lesson_at', '수업이 어려운 경우 수업 일시를 보낼 수 없습니다.');
+      return;
+    }
+    if (!v.first_lesson_at) fail('first_lesson_at', '옵션 1의 첫 수업 일시를 입력해 주세요.');
+    if (!v.second_lesson_at) fail('second_lesson_at', '옵션 1의 두 번째 수업 일시를 입력해 주세요.');
+    if (!!v.option2_first_lesson_at !== !!v.option2_second_lesson_at) {
+      fail('option2_first_lesson_at', '옵션 2는 첫 수업과 두 번째 수업을 모두 입력하거나 모두 비워 주세요.');
+    }
+    if (times.some((t) => t && !isFuture(t))) fail('first_lesson_at', '수업 일시는 현재보다 이후여야 합니다.');
+    if (isOrderWrong(v.first_lesson_at, v.second_lesson_at)) fail('second_lesson_at', '옵션 1의 두 번째 수업은 첫 수업보다 늦어야 합니다.');
+    if (isOrderWrong(v.option2_first_lesson_at, v.option2_second_lesson_at)) fail('option2_second_lesson_at', '옵션 2의 두 번째 수업은 첫 수업보다 늦어야 합니다.');
+    if (v.option2_first_lesson_at && sameInstant(v.first_lesson_at, v.option2_first_lesson_at) && sameInstant(v.second_lesson_at, v.option2_second_lesson_at)) {
+      fail('option2_first_lesson_at', '옵션 1과 옵션 2가 같은 일정입니다.');
     }
   });
 
@@ -47,11 +63,12 @@ export function isClosed(deadlineAt: string, now: Date = new Date()): boolean {
   return now.getTime() > Date.parse(deadlineAt);
 }
 
+const WEEKDAYS_KO = ['일', '월', '화', '수', '목', '금', '토'];
 const pad = (n: number) => String(n).padStart(2, '0');
 
 function kstParts(date: Date) {
   const k = new Date(date.getTime() + KST_OFFSET_MS);
-  return { y: k.getUTCFullYear(), mo: pad(k.getUTCMonth() + 1), d: pad(k.getUTCDate()), h: pad(k.getUTCHours()), mi: pad(k.getUTCMinutes()) };
+  return { y: k.getUTCFullYear(), mo: pad(k.getUTCMonth() + 1), d: pad(k.getUTCDate()), wd: WEEKDAYS_KO[k.getUTCDay()], h: pad(k.getUTCHours()), mi: pad(k.getUTCMinutes()) };
 }
 
 /** `<input type="datetime-local">` 값(KST) -> `+09:00` ISO. 형식이 틀리면 null. */
@@ -70,23 +87,43 @@ export function defaultDeadlineInput(now: Date = new Date()): string {
   return isoToKstInput(new Date(now.getTime() + 24 * 60 * 60_000).toISOString());
 }
 
-/** "10/21 09:00" (KST) */
+/** "10/21(수) 09:00" (KST) — 요일을 함께 보여 날짜를 잘못 읽는 일을 줄인다 */
 export function formatKst(iso: string): string {
   const p = kstParts(new Date(iso));
-  return `${p.mo}/${p.d} ${p.h}:${p.mi}`;
+  return `${p.mo}/${p.d}(${p.wd}) ${p.h}:${p.mi}`;
 }
 
-/** 저장된 응답과 같은 내용인지(첫 수업 일시는 표기가 달라도 같은 시각이면 같다). */
+/** `datetime-local` 값(KST) -> "10/26(월)". 형식이 틀리면 빈 문자열. */
+export function kstInputDayLabel(value: string): string {
+  const iso = kstInputToIso(value);
+  if (!iso || Number.isNaN(Date.parse(iso))) return '';
+  const p = kstParts(new Date(iso));
+  return `${p.mo}/${p.d}(${p.wd})`;
+}
+
+export interface LessonOption { label: string; first: string; second: string }
+
+/** 옵션 1(필수)·옵션 2(선택)를 값이 있는 것만 순서대로 돌려준다. */
+export function lessonOptions(t: LessonTimes): LessonOption[] {
+  const out: LessonOption[] = [];
+  if (t.first_lesson_at && t.second_lesson_at) out.push({ label: '옵션 1', first: t.first_lesson_at, second: t.second_lesson_at });
+  if (t.option2_first_lesson_at && t.option2_second_lesson_at) out.push({ label: '옵션 2', first: t.option2_first_lesson_at, second: t.option2_second_lesson_at });
+  return out;
+}
+
+export const EMPTY_LESSON_TIMES: LessonTimes = {
+  first_lesson_at: null, second_lesson_at: null, option2_first_lesson_at: null, option2_second_lesson_at: null,
+};
+
+/** 저장된 응답과 같은 내용인지(수업 일시는 표기가 달라도 같은 시각이면 같다). */
 export function isSameResponse(
-  saved: { status: string; first_lesson_at: string | null; decline_reason: string | null },
+  saved: LessonTimes & { status: string; decline_reason: string | null },
   status: string,
-  firstLessonAt: string | null,
+  times: LessonTimes,
   declineReason: string | null,
 ): boolean {
-  const sameTime = saved.first_lesson_at === null || firstLessonAt === null
-    ? saved.first_lesson_at === firstLessonAt
-    : Date.parse(saved.first_lesson_at) === Date.parse(firstLessonAt);
-  return saved.status === status && sameTime && (saved.decline_reason ?? null) === declineReason;
+  const keys = Object.keys(EMPTY_LESSON_TIMES) as (keyof LessonTimes)[];
+  return saved.status === status && keys.every((k) => sameInstant(saved[k], times[k])) && (saved.decline_reason ?? null) === declineReason;
 }
 
 /** 마감까지 남은 시간 표기 (밀리초 입력). */
@@ -109,5 +146,5 @@ export function buildLinkMessage(
   deadlineAt: string,
 ): string {
   const lines = items.map((i) => `${i.coachName}: ${origin}/coach-prep/${studentId}?t=${i.token}`);
-  return [`학생 자료를 확인하시고 ${formatKst(deadlineAt)}(KST)까지 수업 가능 여부와 첫 수업 일정을 남겨 주세요.`, '', ...lines].join('\n');
+  return [`학생 자료를 확인하시고 ${formatKst(deadlineAt)}(KST)까지 수업 가능 여부와 희망하시는 첫 수업·두 번째 수업 일정(옵션 1, 2)을 남겨 주세요.`, '', ...lines].join('\n');
 }

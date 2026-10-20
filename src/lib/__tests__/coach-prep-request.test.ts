@@ -10,6 +10,9 @@ import {
   buildLinkMessage,
   formatRemaining,
   isSameResponse,
+  formatKst,
+  kstInputDayLabel,
+  lessonOptions,
 } from '../coach-prep-request';
 
 const FUTURE = '2099-01-01T10:00:00+09:00';
@@ -34,22 +37,77 @@ describe('CreateRequestsSchema', () => {
 
 describe('RespondSchema', () => {
   const token = 'x'.repeat(32);
+  const F1 = '2099-01-01T10:00:00+09:00';
+  const S1 = '2099-01-03T10:00:00+09:00';
+  const F2 = '2099-01-02T10:00:00+09:00';
+  const S2 = '2099-01-04T10:00:00+09:00';
+  const opt1 = { first_lesson_at: F1, second_lesson_at: S1 };
+  const ok = (body: object) => RespondSchema.safeParse({ token, ...body }).success;
 
-  it('REQ-001: 수락은 미래의 첫 수업 일시가 필요하다', () => {
-    expect(RespondSchema.safeParse({ token, action: 'accept', first_lesson_at: FUTURE }).success).toBe(true);
-    expect(RespondSchema.safeParse({ token, action: 'accept' }).success).toBe(false);
-    expect(RespondSchema.safeParse({ token, action: 'accept', first_lesson_at: PAST }).success).toBe(false);
+  it('REQ-002: 수락은 옵션 1의 첫 수업·두 번째 수업이 모두 필요하다', () => {
+    expect(ok({ action: 'accept', ...opt1 })).toBe(true);
+    expect(ok({ action: 'accept' })).toBe(false);
+    expect(ok({ action: 'accept', first_lesson_at: F1 })).toBe(false);
+    expect(ok({ action: 'accept', second_lesson_at: S1 })).toBe(false);
   });
 
-  it('REQ-001: 거절은 첫 수업 일시 없이 사유(500자 이하)만 받는다', () => {
-    expect(RespondSchema.safeParse({ token, action: 'decline', reason: '일정이 안 맞아요' }).success).toBe(true);
-    expect(RespondSchema.safeParse({ token, action: 'decline' }).success).toBe(true);
-    expect(RespondSchema.safeParse({ token, action: 'decline', first_lesson_at: FUTURE }).success).toBe(false);
-    expect(RespondSchema.safeParse({ token, action: 'decline', reason: 'a'.repeat(501) }).success).toBe(false);
+  it('REQ-002: 옵션 2는 선택이고, 넣으려면 첫 수업·두 번째 수업을 모두 넣는다', () => {
+    expect(ok({ action: 'accept', ...opt1, option2_first_lesson_at: F2, option2_second_lesson_at: S2 })).toBe(true);
+    expect(ok({ action: 'accept', ...opt1, option2_first_lesson_at: F2 })).toBe(false);
+    expect(ok({ action: 'accept', ...opt1, option2_second_lesson_at: S2 })).toBe(false);
   });
 
-  it('REQ-001: 알 수 없는 action은 거부한다', () => {
-    expect(RespondSchema.safeParse({ token, action: 'maybe' }).success).toBe(false);
+  it('REQ-002: 두 번째 수업은 첫 수업보다 늦어야 한다(옵션 1·2 각각)', () => {
+    expect(ok({ action: 'accept', first_lesson_at: S1, second_lesson_at: F1 })).toBe(false);
+    expect(ok({ action: 'accept', first_lesson_at: F1, second_lesson_at: F1 })).toBe(false);
+    expect(ok({ action: 'accept', ...opt1, option2_first_lesson_at: S2, option2_second_lesson_at: F2 })).toBe(false);
+  });
+
+  it('REQ-002: 과거 일시는 거부한다', () => {
+    expect(ok({ action: 'accept', first_lesson_at: PAST, second_lesson_at: S1 })).toBe(false);
+    expect(ok({ action: 'accept', ...opt1, option2_first_lesson_at: PAST, option2_second_lesson_at: S2 })).toBe(false);
+  });
+
+  it('REQ-002: 옵션 1과 같은 조합을 옵션 2로 또 넣으면 거부한다(표기가 달라도 같은 시각이면 같다)', () => {
+    expect(ok({ action: 'accept', ...opt1, option2_first_lesson_at: F1, option2_second_lesson_at: S1 })).toBe(false);
+    expect(ok({ action: 'accept', ...opt1, option2_first_lesson_at: '2099-01-01T01:00:00Z', option2_second_lesson_at: '2099-01-03T01:00:00Z' })).toBe(false);
+    expect(ok({ action: 'accept', ...opt1, option2_first_lesson_at: F1, option2_second_lesson_at: S2 })).toBe(true);
+  });
+
+  it('REQ-002: 거절은 수업 일시 없이 사유(500자 이하)만 받는다', () => {
+    expect(ok({ action: 'decline', reason: '일정이 안 맞아요' })).toBe(true);
+    expect(ok({ action: 'decline' })).toBe(true);
+    expect(ok({ action: 'decline', first_lesson_at: F1 })).toBe(false);
+    expect(ok({ action: 'decline', option2_first_lesson_at: F2, option2_second_lesson_at: S2 })).toBe(false);
+    expect(ok({ action: 'decline', reason: 'a'.repeat(501) })).toBe(false);
+  });
+
+  it('REQ-002: 알 수 없는 action은 거부한다', () => {
+    expect(ok({ action: 'maybe' })).toBe(false);
+  });
+});
+
+describe('요일·날짜 표기', () => {
+  it('REQ-005: formatKst는 KST 날짜에 요일을 붙인다', () => {
+    expect(formatKst('2026-10-26T09:00:00+09:00')).toBe('10/26(월) 09:00');
+    expect(formatKst('2026-10-25T20:00:00Z')).toBe('10/26(월) 05:00'); // UTC 일요일 밤은 KST 월요일 새벽
+  });
+
+  it('REQ-005: kstInputDayLabel은 입력값의 날짜와 요일을 돌려준다', () => {
+    expect(kstInputDayLabel('2026-10-26T09:00')).toBe('10/26(월)');
+    expect(kstInputDayLabel('2026-10-31T23:30')).toBe('10/31(토)');
+    expect(kstInputDayLabel('')).toBe('');
+  });
+});
+
+describe('lessonOptions', () => {
+  const t = (over = {}) => ({ first_lesson_at: null, second_lesson_at: null, option2_first_lesson_at: null, option2_second_lesson_at: null, ...over });
+
+  it('REQ-003: 값이 있는 옵션만 순서대로 돌려준다', () => {
+    expect(lessonOptions(t())).toEqual([]);
+    expect(lessonOptions(t({ first_lesson_at: 'a', second_lesson_at: 'b' }))).toEqual([{ label: '옵션 1', first: 'a', second: 'b' }]);
+    expect(lessonOptions(t({ first_lesson_at: 'a', second_lesson_at: 'b', option2_first_lesson_at: 'c', option2_second_lesson_at: 'd' })).map((o) => o.label))
+      .toEqual(['옵션 1', '옵션 2']);
   });
 });
 
@@ -98,7 +156,7 @@ describe('buildLinkMessage', () => {
     ], '2026-10-21T09:00:00+09:00');
     expect(msg).toContain('김혜지: https://x.com/coach-prep/stu-1?t=tok1');
     expect(msg).toContain('유승준: https://x.com/coach-prep/stu-1?t=tok2');
-    expect(msg).toContain('10/21');
+    expect(msg).toContain('10/21(수)');
     expect(msg).toContain('09:00');
   });
 });
@@ -119,20 +177,26 @@ describe('formatRemaining', () => {
 });
 
 describe('isSameResponse', () => {
-  const saved = { status: 'accepted', first_lesson_at: '2099-01-01T01:00:00+00:00', decline_reason: null };
+  const times = (over = {}) => ({ first_lesson_at: null, second_lesson_at: null, option2_first_lesson_at: null, option2_second_lesson_at: null, ...over });
+  const saved = {
+    status: 'accepted', decline_reason: null,
+    ...times({ first_lesson_at: '2099-01-01T01:00:00+00:00', second_lesson_at: '2099-01-03T01:00:00+00:00' }),
+  };
+  const same = times({ first_lesson_at: '2099-01-01T10:00:00+09:00', second_lesson_at: '2099-01-03T10:00:00+09:00' });
 
-  it('REQ-004: 같은 시각이면 표기(+00:00 / +09:00)가 달라도 같은 응답', () => {
-    expect(isSameResponse(saved, 'accepted', '2099-01-01T10:00:00+09:00', null)).toBe(true);
+  it('REQ-003: 같은 시각이면 표기(+00:00 / +09:00)가 달라도 같은 응답', () => {
+    expect(isSameResponse(saved, 'accepted', same, null)).toBe(true);
   });
 
-  it('REQ-004: 상태·시각·사유 중 하나라도 다르면 다른 응답', () => {
-    expect(isSameResponse(saved, 'declined', null, null)).toBe(false);
-    expect(isSameResponse(saved, 'accepted', '2099-01-02T10:00:00+09:00', null)).toBe(false);
-    expect(isSameResponse({ status: 'declined', first_lesson_at: null, decline_reason: '일정' }, 'declined', null, '다른 사유')).toBe(false);
+  it('REQ-003: 상태·옵션 1·옵션 2·사유 중 하나라도 다르면 다른 응답', () => {
+    expect(isSameResponse(saved, 'declined', times(), null)).toBe(false);
+    expect(isSameResponse(saved, 'accepted', { ...same, second_lesson_at: '2099-01-04T10:00:00+09:00' }, null)).toBe(false);
+    expect(isSameResponse(saved, 'accepted', { ...same, option2_first_lesson_at: '2099-01-02T10:00:00+09:00', option2_second_lesson_at: '2099-01-05T10:00:00+09:00' }, null)).toBe(false);
+    expect(isSameResponse({ ...saved, status: 'declined', decline_reason: '일정', ...times() }, 'declined', times(), '다른 사유')).toBe(false);
   });
 
-  it('REQ-004: 거절을 같은 사유로 다시 보내면 같은 응답, 처음 응답(pending)은 항상 다르다', () => {
-    expect(isSameResponse({ status: 'declined', first_lesson_at: null, decline_reason: '일정' }, 'declined', null, '일정')).toBe(true);
-    expect(isSameResponse({ status: 'pending', first_lesson_at: null, decline_reason: null }, 'declined', null, null)).toBe(false);
+  it('REQ-003: 거절을 같은 사유로 다시 보내면 같은 응답, 처음 응답(pending)은 항상 다르다', () => {
+    expect(isSameResponse({ status: 'declined', decline_reason: '일정', ...times() }, 'declined', times(), '일정')).toBe(true);
+    expect(isSameResponse({ status: 'pending', decline_reason: null, ...times() }, 'declined', times(), null)).toBe(false);
   });
 });

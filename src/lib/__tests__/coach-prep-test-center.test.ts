@@ -105,4 +105,48 @@ describe('buildTcSessions', () => {
     expect(s.domains).toEqual([]);
     expect(s.accuracy).toBe(50);
   });
+
+  it('REQ-001: 모듈을 다 풀지 않은 과목도 예상 점수를 보여주고 일부 응시로 표시한다', () => {
+    const partial = tc({
+      lessons: [{ section: 'rw', score: 19, total: 27 }],
+      totalScore: 19,
+      totalProblems: 27,
+      expectedModules: { rw: 2, math: 2 },
+    });
+    const [s] = buildTcSessions([day('2026-10-03', partial)]);
+    expect(s.rwScore).not.toBeNull();
+    expect(s.rwPartial).toBe(true);
+    expect(s.mathScore).toBeNull();
+    expect(s.mathPartial).toBe(false);
+    expect(s.totalScore).toBeNull();
+    expect(s.headline).toEqual({ value: s.rwScore, label: 'RW 일부 모듈 응시 · 예상' });
+  });
+
+  it('REQ-001: 두 과목 모두 일부만 풀었으면 예상 합계를 일부 응시로 보여준다', () => {
+    const both = tc({
+      lessons: [{ section: 'rw', score: 20, total: 27 }, { section: 'math', score: 15, total: 22 }],
+      totalScore: 35,
+      totalProblems: 49,
+      expectedModules: { rw: 2, math: 2 },
+    });
+    const [s] = buildTcSessions([day('2026-10-04', both)]);
+    expect(s.headline?.value).toBe(s.rwScore! + s.mathScore!);
+    expect(s.headline?.label).toBe('일부 모듈 응시 · 예상');
+    expect(s.totalScore).toBeNull();
+  });
+
+  it('REQ-001: 완결 회차는 라벨 없는 정식 합계가 headline', () => {
+    const [s] = buildTcSessions([day('2026-10-01', fullExam)]);
+    expect(s.headline).toEqual({ value: 1600, label: null });
+    expect(s.rwPartial || s.mathPartial).toBe(false);
+  });
+
+  it('REQ-001: 한 과목만 끝까지 푼 회차는 그 과목만 응시로 표시한다', () => {
+    const rwOnly = tc({
+      lessons: [{ section: 'rw', score: 20, total: 27 }, { section: 'rw', score: 20, total: 27 }],
+      totalScore: 40, totalProblems: 54, expectedModules: { rw: 2, math: 2 },
+    });
+    const [s] = buildTcSessions([day('2026-10-02', rwOnly)]);
+    expect(s.headline).toEqual({ value: s.rwScore, label: 'RW만 응시 · 예상' });
+  });
 });

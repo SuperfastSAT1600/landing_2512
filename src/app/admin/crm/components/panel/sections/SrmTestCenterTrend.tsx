@@ -16,6 +16,26 @@ const pct = (score: number, total: number) => (total ? Math.round((score / total
 
 interface TcSession { date: string; title: string; score: number; total: number; p: number; sec: TcSectionScore }
 
+const partialMark = <span className="ml-0.5 text-[9px] font-medium text-amber-600">일부</span>;
+
+// 정식 점수가 없는 과목(모듈 일부만 응시)은 푼 문항 기준 참고 점수에 "일부"를 붙여 보여준다
+function ScoreLine({ sec }: { sec: TcSectionScore }) {
+  const rw = sec.rwScaled ?? sec.rwEstimate;
+  const math = sec.mathScaled ?? sec.mathEstimate;
+  const partial = (sec.rwScaled == null && rw != null) || (sec.mathScaled == null && math != null);
+  const headline = rw != null && math != null ? rw + math : (rw ?? math);
+  return (
+    <div className="flex items-center gap-2.5 mt-1 pl-12">
+      <span className="text-sm font-bold text-gray-900 tabular-nums">
+        {headline}<span className="text-[9px] font-medium text-gray-400 ml-0.5">예상</span>
+        {partial && partialMark}
+      </span>
+      {rw != null && <span className="text-xs font-semibold text-blue-700 tabular-nums">RW {rw}{sec.rwScaled == null && partialMark}</span>}
+      {math != null && <span className="text-xs font-semibold text-emerald-700 tabular-nums">Math {math}{sec.mathScaled == null && partialMark}</span>}
+    </div>
+  );
+}
+
 // 테스트센터 회차별 점수(SAT 총점·과목별 예상) + 연습 vs 실전 정답률 추이
 export function SrmTestCenterTrend({ report }: { report: LearningReport }) {
   const sessions: TcSession[] = [];
@@ -65,19 +85,7 @@ export function SrmTestCenterTrend({ report }: { report: LearningReport }) {
               <span className="text-gray-600 truncate flex-1">{s.title}</span>
               <span className="tabular-nums text-gray-500 shrink-0">{s.score}/{s.total} · {s.p}%</span>
             </div>
-            {s.sec.total != null && (
-              <div className="flex items-center gap-2.5 mt-1 pl-12">
-                <span className="text-sm font-bold text-gray-900 tabular-nums">
-                  {s.sec.total}<span className="text-[9px] font-medium text-gray-400 ml-0.5">예상</span>
-                </span>
-                {s.sec.rwScaled != null && (
-                  <span className="text-xs font-semibold text-blue-700 tabular-nums">RW {s.sec.rwScaled}</span>
-                )}
-                {s.sec.mathScaled != null && (
-                  <span className="text-xs font-semibold text-emerald-700 tabular-nums">Math {s.sec.mathScaled}</span>
-                )}
-              </div>
-            )}
+            {(s.sec.rwEstimate != null || s.sec.mathEstimate != null) && <ScoreLine sec={s.sec} />}
           </div>
         ))}
         {sessions.length > recent.length && (
@@ -86,7 +94,7 @@ export function SrmTestCenterTrend({ report }: { report: LearningReport }) {
       </div>
 
       <p className="text-[10px] text-gray-400 leading-relaxed">
-        · SAT 점수는 SRM 리포트와 같은 환산표로 계산한 <span className="font-medium">예상치</span>(공식 커브 아님). 과목 모듈을 다 풀어야 그 과목 점수가 나옵니다.
+        · SAT 점수는 SRM 리포트와 같은 환산표로 계산한 <span className="font-medium">예상치</span>(공식 커브 아님). 모듈을 다 풀지 않은 과목은 푼 문항 기준 참고 점수(“일부” 표시)입니다.
       </p>
     </div>
   );

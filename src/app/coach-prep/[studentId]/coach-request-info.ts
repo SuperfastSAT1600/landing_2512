@@ -16,6 +16,9 @@ export async function loadCoachRequestInfo(studentId: string, token: string | un
       deadline_at: req.deadline_at,
       status: req.status,
       first_lesson_at: req.first_lesson_at,
+      second_lesson_at: req.second_lesson_at,
+      option2_first_lesson_at: req.option2_first_lesson_at,
+      option2_second_lesson_at: req.option2_second_lesson_at,
       decline_reason: req.decline_reason,
     };
   } catch (e) {

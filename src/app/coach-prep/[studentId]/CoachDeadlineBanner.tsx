@@ -3,11 +3,14 @@
 import { useEffect } from 'react';
 import { Clock } from 'lucide-react';
 import type { CoachRequestInfo } from '@/types/coach-prep';
-import { formatKst, formatRemaining } from '@/lib/coach-prep-request';
+import { formatKst, lessonOptions, formatRemaining } from '@/lib/coach-prep-request';
 import { useNow } from './useNow';
 
 function statusText(info: CoachRequestInfo): string {
-  if (info.status === 'accepted') return `수락함${info.first_lesson_at ? ` · 첫 수업 ${formatKst(info.first_lesson_at)}` : ''}`;
+  if (info.status === 'accepted') {
+    const first = lessonOptions(info)[0];
+    return `수락함${first ? ` · 옵션 1 첫 수업 ${formatKst(first.first)}` : ''}`;
+  }
   if (info.status === 'declined') return '수업 어렵다고 응답함';
   return '아직 응답 전입니다';
 }

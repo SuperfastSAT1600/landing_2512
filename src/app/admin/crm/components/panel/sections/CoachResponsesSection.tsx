@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import type { CoachPrepRequestView } from '@/types/coach-prep';
-import { formatKst, isClosed } from '@/lib/coach-prep-request';
+import { formatKst, isClosed, lessonOptions } from '@/lib/coach-prep-request';
 import { SectionCard } from './SectionCard';
 
 interface Props {
@@ -76,8 +76,14 @@ export function CoachResponsesSection({ studentId, adminKey, version }: Props) {
                 )}
               </span>
             </div>
+            {lessonOptions(r).map((o) => (
+              <p key={o.label} className="mt-1 text-[11px] tabular-nums text-gray-500">
+                <span className="mr-1 font-semibold text-violet-700">{o.label}</span>
+                첫 수업 <span className="font-semibold text-gray-800">{formatKst(o.first)}</span>
+                {' · '}두 번째 수업 <span className="font-semibold text-gray-800">{formatKst(o.second)}</span>
+              </p>
+            ))}
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-gray-500 tabular-nums">
-              {r.first_lesson_at && <span>첫 수업 <span className="font-semibold text-gray-800">{formatKst(r.first_lesson_at)}</span></span>}
               {r.decline_reason && <span>사유: {r.decline_reason}</span>}
               <span>마감 {formatKst(r.deadline_at)}</span>
               <span>{r.first_opened_at ? `열람 ${formatKst(r.first_opened_at)}` : '아직 열람 전'}</span>
