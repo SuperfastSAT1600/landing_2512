@@ -11,7 +11,7 @@ const EXCLUDED_STUDENTS = new Set(['박윤재']);
  *
  * 재원 학생 전체를 코치룸 잔여 시간 버킷별로 분류하고,
  * 각 버킷 안에서 수업/스터디홀/보캡 있다/없다 조합으로 서브그룹화.
- * 윈도우 내 스케줄을 새로 입력한 학생은 🔔 표시.
+ * 윈도우 내 스터디홀/보캡을 새로 입력한 학생은 🔔, 코치룸을 새로 입력한 학생은 🆕 표시.
  */
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     console.log(`[cron/schedule-input-status] window: [${windowStart.toISOString()}, ${windowEnd.toISOString()}]`);
 
     const [rawEntries, allActiveMap, scheduleStatus, coachRoomUserIds, windowCoachUserIds] = await Promise.all([
-      fetchNewScheduled(windowStart, windowEnd),
+      fetchStudyHallVocab(windowStart, windowEnd),
       fetchAllActiveStudentsMap(),
       fetchFutureScheduleStatus(windowEnd),
       fetchFutureCoachRoomUserIds(windowEnd),
@@ -34,11 +34,12 @@ export async function GET(request: NextRequest) {
 
     const { studyHallUsers, vocabUsers, lastDateByUser } = scheduleStatus;
 
-    // 윈도우 내 스케줄을 새로 입력한 학생 이름 집합 (수업/스터디홀/보캡 모두 포함)
-    const recentlyScheduledNames = new Set<string>(rawEntries.map(e => e.studentName));
+    // 윈도우 내 스케줄을 새로 입력한 학생 이름 집합 (스터디홀/보캡 vs 코치룸 구분)
+    const recentStudyHallVocabNames = new Set<string>(rawEntries.map(e => e.studentName));
+    const recentCoachRoomNames = new Set<string>();
     for (const userId of windowCoachUserIds) {
       const name = allActiveMap.get(userId);
-      if (name) recentlyScheduledNames.add(name);
+      if (name) recentCoachRoomNames.add(name);
     }
 
     // 종료 임박: 미래 스터디홀/보캡이 있으나 48h 이내에 끝나는 학생
@@ -69,15 +70,16 @@ export async function GET(request: NextRequest) {
     const remainingMap = await fetchRemainingHoursMap(studentsNeedingAttention.map(s => s.userId));
     const hoursBuckets = buildHoursBuckets(studentsNeedingAttention, allActiveMap, remainingMap);
 
-    console.log(`[cron/schedule-input-status] ending-soon=${endingSoon.length} | needs-attention=${studentsNeedingAttention.length} | recently-scheduled=${recentlyScheduledNames.size}`);
+    console.log(`[cron/schedule-input-status] ending-soon=${endingSoon.length} | needs-attention=${studentsNeedingAttention.length} | recently-scheduled(sh/vocab)=${recentStudyHallVocabNames.size} | recently-scheduled(coach)=${recentCoachRoomNames.size}`);
 
-    await notifyScheduleInputStatus({ endingSoon, hoursBuckets, recentlyScheduledNames, windowLabel });
+    await notifyScheduleInputStatus({ endingSoon, hoursBuckets, recentStudyHallVocabNames, recentCoachRoomNames, windowLabel });
 
     return NextResponse.json({
       ok: true,
       endingSoon: endingSoon.length,
       studentsNeedingAttention: studentsNeedingAttention.length,
-      recentlyScheduled: recentlyScheduledNames.size,
+      recentlyScheduledStudyHallVocab: recentStudyHallVocabNames.size,
+      recentlyScheduledCoachRoom: recentCoachRoomNames.size,
       window: { start: windowStart.toISOString(), end: windowEnd.toISOString() },
     });
   } catch (error) {
@@ -114,7 +116,7 @@ export function getWindow(): { windowStart: Date; windowEnd: Date; windowLabel: 
 
 interface ScheduleEntry {
   studentName: string;
-  activityType: 'Study Hall' | 'Vocab' | 'Test Center';
+  activityType: 'Study Hall' | 'Vocab';
   scheduledTimeISO: string;
 }
 
@@ -286,14 +288,6 @@ async function fetchRemainingHoursMap(userIds: string[]): Promise<Map<string, nu
 
 // ─── 윈도우 내 신규 스케줄 입력자 이름 추출 ─────────────────────────────────────
 
-async function fetchNewScheduled(windowStart: Date, windowEnd: Date): Promise<ScheduleEntry[]> {
-  const [shVocab, testCenter] = await Promise.all([
-    fetchStudyHallVocab(windowStart, windowEnd),
-    fetchTestCenter(windowStart, windowEnd),
-  ]);
-  return [...shVocab, ...testCenter];
-}
-
 async function fetchStudyHallVocab(windowStart: Date, windowEnd: Date): Promise<ScheduleEntry[]> {
   const PAGE_SIZE = 1000;
   const allEvents: { id: string; category: string; starts_at: string }[] = [];
@@ -346,38 +340,6 @@ async function fetchStudyHallVocab(windowStart: Date, windowEnd: Date): Promise<
     });
   }
   return entries;
-}
-
-async function fetchTestCenter(windowStart: Date, windowEnd: Date): Promise<ScheduleEntry[]> {
-  const PAGE_SIZE = 1000;
-  const allSessions: { user_id: string; started_at: string }[] = [];
-
-  for (let offset = 0; ; offset += PAGE_SIZE) {
-    const { data: page, error } = await supabaseSFv2
-      .from('test_center_session')
-      .select('user_id, started_at')
-      .gte('started_at', windowStart.toISOString())
-      .lt('started_at', windowEnd.toISOString())
-      .range(offset, offset + PAGE_SIZE - 1);
-
-    if (error) { console.error('[schedule-input-status] test_center_session error:', error.message); break; }
-    if (!page?.length) break;
-    allSessions.push(...page);
-    if (page.length < PAGE_SIZE) break;
-  }
-
-  if (!allSessions.length) return [];
-
-  const userIds = [...new Set(allSessions.map(s => s.user_id))];
-  const nameMap = await fetchStudentNames(userIds);
-
-  return allSessions
-    .map(s => ({
-      studentName: nameMap.get(s.user_id) ?? '',
-      activityType: 'Test Center' as const,
-      scheduledTimeISO: s.started_at,
-    }))
-    .filter(e => e.studentName);
 }
 
 // ─── 미래 스터디홀/보캡 현황 (스터디홀/보캡 분리 추적) ─────────────────────────
