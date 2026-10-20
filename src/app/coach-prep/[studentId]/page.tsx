@@ -4,6 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { CoachPrepView } from './CoachPrepView';
 import type { WeeklySlot, ConsultationEntry } from '@/types/crm';
 import type { DayItem } from '@/types/srm-portal';
+import { buildTcSessions, type TcSession } from '@/lib/coach-prep-test-center';
+import { buildAvailability, type AvailabilitySlot, type AvailabilitySummary } from '@/lib/student-availability';
 
 interface Props {
   params: Promise<{ studentId: string }>;
@@ -56,32 +58,6 @@ export interface SrmSkill {
   sh_total: number;
   tc_accuracy: number | null;
   tc_total: number;
-}
-
-export interface TcSession {
-  date: string;
-  title: string;
-  score: number;
-  total: number;
-  accuracy: number;
-}
-
-function computeTcSessions(days: { date: string; items: DayItem[] }[]): TcSession[] {
-  const sessions: TcSession[] = [];
-  for (const day of days) {
-    for (const item of day.items) {
-      if (item.type === 'test_center' && item.totalProblems > 0) {
-        sessions.push({
-          date: day.date,
-          title: item.curriculumTitle ?? '모의고사',
-          score: item.totalScore,
-          total: item.totalProblems,
-          accuracy: Math.round((item.totalScore / item.totalProblems) * 100),
-        });
-      }
-    }
-  }
-  return sessions.sort((a, b) => a.date.localeCompare(b.date));
 }
 
 function computeSkills(days: { items: DayItem[] }[]): SrmSkill[] {
@@ -191,14 +167,33 @@ export default async function CoachPrepPage({ params }: Props) {
         try {
           const { buildSrmReport } = await import('@/lib/build-srm-report');
           const report = await buildSrmReport(student.sfv2_profile_id!, { skipNarratives: true });
-          return { skills: computeSkills(report.days), tcSessions: computeTcSessions(report.days) };
+          return { skills: computeSkills(report.days), tcSessions: buildTcSessions(report.days) };
         } catch {
           return { skills: null, tcSessions: [] };
         }
       })()
     : Promise.resolve({ skills: null, tcSessions: [] });
 
-  const [{ data: diagResult }, { data: briefCache }, srmData] = await Promise.all([
+  // 학생이 SFv2에 입력한 코치룸 가능 시간 — 실패해도 페이지는 계속 렌더
+  const availabilityPromise: Promise<AvailabilitySummary | null> = student.sfv2_profile_id
+    ? (async () => {
+        try {
+          const { supabaseSFv2 } = await import('@/lib/supabase-sfv2');
+          const { data, error } = await supabaseSFv2
+            .from('scheduled_availability_slots')
+            .select('weekday, start_minute_local, end_minute_local, tz, effective_from, effective_until, notes')
+            .eq('owner_id', student.sfv2_profile_id)
+            .order('weekday', { ascending: true });
+          if (error) throw new Error(error.message);
+          return buildAvailability((data ?? []) as AvailabilitySlot[]);
+        } catch (e) {
+          console.error('[coach-prep] availability query failed:', e);
+          return null;
+        }
+      })()
+    : Promise.resolve(null);
+
+  const [{ data: diagResult }, { data: briefCache }, srmData, availability] = await Promise.all([
     supabaseAdmin
       .from('diagnostic_test_results')
       .select('submitted_at, previous_rw_score, previous_math_score, total_time_seconds, edited_insights')
@@ -208,6 +203,7 @@ export default async function CoachPrepPage({ params }: Props) {
       .maybeSingle(),
     briefQuery,
     srmPromise,
+    availabilityPromise,
   ]);
 
   // 캐시에서 SRM 브리핑 파싱 (서버 사이드 — auth 불필요)
@@ -257,6 +253,7 @@ export default async function CoachPrepPage({ params }: Props) {
     exam_scores: (examScoresRaw ?? []) as ExamScoreRow[],
     srm_skills: srmData.skills,
     srm_tc_sessions: srmData.tcSessions,
+    availability: availability && availability.blocks.length > 0 ? availability : null,
     srm_brief: srmBrief,
     sfv2_profile_id: student.sfv2_profile_id ?? null,
     diagnostic_result_id: student.diagnostic_result_id ?? null,
