@@ -7,7 +7,8 @@ import { loadCoachRequestInfo } from '../coach-request-info';
 
 const req = (over: Record<string, unknown> = {}) => ({
   id: 'r-1', student_id: 'stu-1', coach_slug: 'kim', coach_name: '김혜지', token: 'tok',
-  deadline_at: '2099-01-01T00:00:00Z', status: 'pending', first_lesson_at: null, decline_reason: null,
+  deadline_at: '2099-01-01T00:00:00Z', status: 'pending', first_lesson_at: null, second_lesson_at: null,
+  option2_first_lesson_at: null, option2_second_lesson_at: null, decline_reason: null,
   first_opened_at: null, responded_at: null, selected_at: null, created_at: '2026-10-20T00:00:00Z', ...over,
 });
 
@@ -30,11 +31,12 @@ describe('loadCoachRequestInfo', () => {
   });
 
   it('유효하면 본인 요청 정보만 돌려준다 (다른 코치·선택 정보는 없음)', async () => {
-    db.findByToken.mockResolvedValue(req({ status: 'accepted', first_lesson_at: '2099-02-01T00:00:00Z' }));
+    db.findByToken.mockResolvedValue(req({ status: 'accepted', first_lesson_at: '2099-02-01T00:00:00Z', second_lesson_at: '2099-02-03T00:00:00Z' }));
     const info = await loadCoachRequestInfo('stu-1', 'tok');
     expect(info).toEqual({
       token: 'tok', coach_name: '김혜지', deadline_at: '2099-01-01T00:00:00Z',
-      status: 'accepted', first_lesson_at: '2099-02-01T00:00:00Z', decline_reason: null,
+      status: 'accepted', first_lesson_at: '2099-02-01T00:00:00Z', second_lesson_at: '2099-02-03T00:00:00Z',
+      option2_first_lesson_at: null, option2_second_lesson_at: null, decline_reason: null,
     });
   });
 

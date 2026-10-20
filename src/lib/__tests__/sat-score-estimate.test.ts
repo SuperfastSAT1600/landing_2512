@@ -55,3 +55,20 @@ describe('tcSectionScore — 레슨 섹션 기준', () => {
     expect(r.mathScaled).toBeNull();
   });
 });
+
+describe('tcSectionScore — 일부 모듈만 푼 참고 점수', () => {
+  it('REQ-001: 모듈이 모자라 정식 점수가 없어도 푼 문항 정답률로 estimate를 낸다', () => {
+    const r = tcSectionScore(tc([{ section: 'rw', score: 26, total: 27 }], { rw: 2, math: 2 }));
+    expect(r.rwScaled).toBeNull();
+    expect(r.rwEstimate).toBe(780); // 26/27 정답률을 RW 54문항 척도로 환산
+    expect(r.mathEstimate).toBeNull(); // 풀지 않은 과목은 없음
+  });
+
+  it('REQ-001: 모듈을 다 풀었으면 estimate는 정식 점수와 같다', () => {
+    const r = tcSectionScore(tc([
+      { section: 'rw', score: 26, total: 27 }, { section: 'rw', score: 24, total: 27 },
+    ], { rw: 2, math: 0 }));
+    expect(r.rwEstimate).toBe(r.rwScaled);
+  });
+});
+

@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { buildCoachResponseText, notifyCoachResponseToSlack, COACH_RESPONSE_CHANNEL } from '../slack-coach-response';
 
+const lessons = {
+  first_lesson_at: '2026-10-26T14:30:00+09:00',
+  second_lesson_at: '2026-10-28T14:30:00+09:00',
+  option2_first_lesson_at: null,
+  option2_second_lesson_at: null,
+};
+
 const base = {
   studentName: '홍길동',
   coachName: '김혜지',
@@ -8,13 +15,26 @@ const base = {
 };
 
 describe('buildCoachResponseText', () => {
-  it('REQ-005: 수락이면 학생·코치·첫 수업 일시(KST)·마감을 담는다', () => {
-    const text = buildCoachResponseText({ ...base, action: 'accept', firstLessonAt: '2026-10-25T14:30:00+09:00' });
+  it('REQ-003: 수락이면 학생·코치·옵션 1의 첫/두 번째 수업(요일 포함, KST)·마감을 담는다', () => {
+    const text = buildCoachResponseText({ ...base, action: 'accept', lessons });
     expect(text).toContain('수락');
     expect(text).toContain('홍길동');
     expect(text).toContain('김혜지');
-    expect(text).toContain('10/25 14:30');
-    expect(text).toContain('10/21 09:00');
+    expect(text).toContain('옵션 1');
+    expect(text).toContain('첫 수업 10/26(월) 14:30');
+    expect(text).toContain('두 번째 수업 10/28(수) 14:30');
+    expect(text).toContain('10/21(수) 09:00');
+    expect(text).not.toContain('옵션 2');
+  });
+
+  it('REQ-003: 옵션 2가 있으면 함께 담는다', () => {
+    const text = buildCoachResponseText({
+      ...base, action: 'accept',
+      lessons: { ...lessons, option2_first_lesson_at: '2026-10-27T10:00:00+09:00', option2_second_lesson_at: '2026-10-29T10:00:00+09:00' },
+    });
+    expect(text).toContain('옵션 2');
+    expect(text).toContain('첫 수업 10/27(화) 10:00');
+    expect(text).toContain('두 번째 수업 10/29(목) 10:00');
   });
 
   it('REQ-005: 거절이면 사유를 담고 첫 수업 줄은 없다', () => {
@@ -45,7 +65,7 @@ describe('notifyCoachResponseToSlack', () => {
   });
 
   it('REQ-005: C0C9B0DEGDN 채널로 한 번 보낸다', async () => {
-    await notifyCoachResponseToSlack({ ...base, action: 'accept', firstLessonAt: '2026-10-25T14:30:00+09:00' });
+    await notifyCoachResponseToSlack({ ...base, action: 'accept', lessons });
     expect(COACH_RESPONSE_CHANNEL).toBe('C0C9B0DEGDN');
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];

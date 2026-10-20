@@ -2,7 +2,8 @@
  * 코치 준비 응답(수업 수락/거절) 슬랙 알림.
  * 상담 메모 알림(slack-memo)과 채널이 달라 별도 모듈로 둔다. 전송 실패는 삼켜서 응답 저장에 영향을 주지 않는다.
  */
-import { formatKst } from '@/lib/coach-prep-request';
+import { formatKst, lessonOptions } from '@/lib/coach-prep-request';
+import type { LessonTimes } from '@/types/coach-prep';
 
 export const COACH_RESPONSE_CHANNEL = 'C0C9B0DEGDN';
 
@@ -10,7 +11,7 @@ export interface CoachResponseNotice {
   studentName: string;
   coachName: string;
   action: 'accept' | 'decline';
-  firstLessonAt?: string | null;
+  lessons?: LessonTimes | null;
   reason?: string | null;
   deadlineAt: string;
 }
@@ -18,8 +19,10 @@ export interface CoachResponseNotice {
 export function buildCoachResponseText(n: CoachResponseNotice): string {
   const head = n.action === 'accept' ? '✅ *코치 수업 수락*' : '🙅 *코치 수업 어려움*';
   const lines = [`${head}`, `*학생:* ${n.studentName}  |  *코치:* ${n.coachName}`];
-  if (n.action === 'accept' && n.firstLessonAt) {
-    lines.push(`*첫 수업:* ${formatKst(n.firstLessonAt)} (KST)`);
+  if (n.action === 'accept' && n.lessons) {
+    for (const o of lessonOptions(n.lessons)) {
+      lines.push(`*${o.label}:* 첫 수업 ${formatKst(o.first)} / 두 번째 수업 ${formatKst(o.second)} (KST)`);
+    }
   }
   if (n.action === 'decline') {
     lines.push(`*사유:* ${n.reason?.trim() || '사유 없음'}`);

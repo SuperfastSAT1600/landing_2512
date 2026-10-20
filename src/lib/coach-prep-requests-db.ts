@@ -1,10 +1,10 @@
-// coach_prep_requests DB 접근 — 라우트가 얇게 유지되도록 쿼리만 모았다. (supabase/migrations/157_coach_prep_requests.sql)
+// coach_prep_requests DB 접근 — 라우트가 얇게 유지되도록 쿼리만 모았다. (supabase/migrations/157_coach_prep_requests.sql, 158_coach_prep_lesson_options.sql)
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { generateRequestToken } from '@/lib/coach-prep-request';
-import type { CoachPrepRequestRow, CoachPrepRequestView, CoachPrepStatus } from '@/types/coach-prep';
+import type { CoachPrepRequestRow, CoachPrepRequestView, CoachPrepStatus, LessonTimes } from '@/types/coach-prep';
 
 const COLS =
-  'id, student_id, coach_slug, token, deadline_at, status, first_lesson_at, decline_reason, first_opened_at, responded_at, selected_at, created_at';
+  'id, student_id, coach_slug, token, deadline_at, status, first_lesson_at, second_lesson_at, option2_first_lesson_at, option2_second_lesson_at, decline_reason, first_opened_at, responded_at, selected_at, created_at';
 
 export interface CoachRef { slug: string; name: string }
 
@@ -86,9 +86,8 @@ export async function markOpenedByToken(token: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-export interface ResponsePatch {
+export interface ResponsePatch extends LessonTimes {
   status: Exclude<CoachPrepStatus, 'pending'>;
-  first_lesson_at: string | null;
   decline_reason: string | null;
 }
 

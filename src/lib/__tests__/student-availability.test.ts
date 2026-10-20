@@ -96,3 +96,46 @@ describe('buildAvailability', () => {
     expect(blocks[0].lines[0].notes).toBe('시험 주간 제외');
   });
 });
+
+describe('buildAvailability — 요일에 맞는 날짜', () => {
+  it('REQ-005: 오늘 이후 가장 가까운 해당 요일의 날짜를 KST·학생 현지로 낸다', () => {
+    // 학생 현지 월(10/19) 16:30 EDT = KST 화(10/20) 05:30
+    const { blocks } = buildAvailability([slot({})], TODAY);
+    expect(blocks[0].lines[0]).toMatchObject({ weekdayKst: 1, dateKst: '2026-10-20', weekdayLocal: 0, dateLocal: '2026-10-19' });
+  });
+
+  it('REQ-005: 일요일 저녁(LA)은 KST 월요일로 넘어가며 현지 날짜는 하루 앞선다', () => {
+    const { blocks } = buildAvailability([
+      slot({ weekday: 6, effective_from: '2026-10-12', tz: 'America/Los_Angeles', start_minute_local: 20 * 60, end_minute_local: 22 * 60 }),
+    ], TODAY);
+    expect(blocks[0].lines[0]).toMatchObject({ weekdayKst: 0, dateKst: '2026-10-19', weekdayLocal: 6, dateLocal: '2026-10-18' });
+  });
+
+  it('REQ-005: 시작일이 미래면 그날 이후 첫 해당 요일부터 센다', () => {
+    const { blocks } = buildAvailability([slot({ effective_from: '2026-11-02', effective_until: null })], TODAY);
+    expect(blocks[0].lines[0]).toMatchObject({ dateKst: '2026-11-03', dateLocal: '2026-11-02' });
+  });
+
+  it('REQ-005: 유효 기간은 학생 현지 달력 — 마지막 유효일의 슬롯이 KST로는 다음 날이어도 만료로 보지 않는다', () => {
+    // 현지 월 10/19 16:30 EDT = KST 화 10/20 05:30
+    const { blocks } = buildAvailability([slot({ effective_from: '2026-10-19', effective_until: '2026-10-19' })], TODAY);
+    expect(blocks[0].lines[0]).toMatchObject({ dateKst: '2026-10-20', dateLocal: '2026-10-19' });
+  });
+
+  it('REQ-005: 유효 시작일 이전의 현지 날짜는 쓰지 않는다', () => {
+    // KST 10/20이어도 현지 날짜(10/19)가 시작일(10/20)보다 앞이면 다음 주로 넘긴다
+    const { blocks } = buildAvailability([slot({ effective_from: '2026-10-20', effective_until: null })], TODAY);
+    expect(blocks[0].lines[0]).toMatchObject({ dateKst: '2026-10-27', dateLocal: '2026-10-26' });
+  });
+
+  it('REQ-005: 유효 기간 안에 해당 현지 요일이 없으면 날짜는 null', () => {
+    const { blocks } = buildAvailability([slot({ effective_from: '2026-10-20', effective_until: '2026-10-25' })], TODAY);
+    expect(blocks[0].lines[0]).toMatchObject({ dateKst: null, dateLocal: null });
+  });
+
+  it('REQ-005: DST로 나뉜 뒤 구간은 그 구간 시작 이후의 날짜를 쓴다', () => {
+    const { blocks } = buildAvailability([slot({ effective_until: '2026-11-30' })], TODAY);
+    expect(blocks[1].lines[0]).toMatchObject({ weekdayKst: 1, dateKst: '2026-11-03' });
+  });
+});
+

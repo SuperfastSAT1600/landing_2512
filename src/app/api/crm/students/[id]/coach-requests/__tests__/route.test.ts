@@ -25,7 +25,8 @@ function req(method: string, body?: unknown, key: string | null = 'admin-key') {
 
 const view = (slug: string, name: string) => ({
   id: `r-${slug}`, student_id: 'stu-1', coach_slug: slug, coach_name: name, token: `tok-${slug}`,
-  deadline_at: FUTURE, status: 'pending', first_lesson_at: null, decline_reason: null,
+  deadline_at: FUTURE, status: 'pending', first_lesson_at: null, second_lesson_at: null,
+  option2_first_lesson_at: null, option2_second_lesson_at: null, decline_reason: null,
   first_opened_at: null, responded_at: null, selected_at: null, created_at: '2026-10-20T00:00:00Z',
 });
 

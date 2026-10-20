@@ -18,6 +18,9 @@ export interface AvailabilityLine {
   weekdayLocal: number;
   startLocal: string;
   endLocal: string;
+  /** 오늘(KST) 이후 가장 가까운 해당 요일의 날짜(YYYY-MM-DD). 유효 기간 안에 없으면 null */
+  dateKst: string | null;
+  dateLocal: string | null;
   notes: string | null;
 }
 
@@ -129,17 +132,35 @@ function tzLabel(tz: string, effFrom: string | null, today: Date): string {
 
 interface Converted extends AvailabilityLine { tz: string; abbr: string; from: string | null; until: string | null }
 
+const weekdayOf = (ms: number) => mod(new Date(ms).getUTCDay() + 6, 7); // 0 = 월요일
+
+// 유효 기간(from/until)은 학생 현지 달력이다. 현지 날짜 공간에서 센 뒤 KST로 옮긴다.
+// 오늘(KST) 이후이면서 유효 시작일 이후인 첫 해당 요일의 현지 날짜를 찾고, 유효 종료일을 넘으면 null.
+function nextDatesMs(today: Date, from: string | null, until: string | null, weekdayLocal: number, dayShift: number) {
+  const todayKst = dayMs(isoDay(today.getTime() + KST_OFFSET_MIN * 60_000));
+  const start = Math.max(todayKst - dayShift * DAY_MS, from ? dayMs(from) : -Infinity);
+  const local = start + mod(weekdayLocal - weekdayOf(start), 7) * DAY_MS;
+  if (until && local > dayMs(until)) return null;
+  return { local, kst: local + dayShift * DAY_MS };
+}
+
 function convert(slot: AvailabilitySlot, today: Date): Converted[] {
   const tz = resolveTz(slot.tz);
   return splitByDst(tz, slot.effective_from, slot.effective_until, today).map((seg) => {
     const startKst = slot.start_minute_local + seg.diff;
     const endKst = slot.end_minute_local + seg.diff;
+    const dayShift = Math.floor(startKst / DAY_MIN);
+    const weekdayKst = mod(slot.weekday + dayShift, 7);
+    const weekdayLocal = mod(slot.weekday, 7);
+    const dates = nextDatesMs(today, seg.from, seg.until, weekdayLocal, dayShift);
     return {
       tz, abbr: seg.abbr, from: seg.from, until: seg.until,
-      weekdayKst: mod(slot.weekday + Math.floor(startKst / DAY_MIN), 7),
+      weekdayKst,
+      dateKst: dates ? isoDay(dates.kst) : null,
+      dateLocal: dates ? isoDay(dates.local) : null,
       start: hhmm(mod(startKst, DAY_MIN)),
       end: hhmm(mod(endKst, DAY_MIN)),
-      weekdayLocal: mod(slot.weekday, 7),
+      weekdayLocal,
       startLocal: hhmm(slot.start_minute_local),
       endLocal: hhmm(slot.end_minute_local),
       notes: slot.notes,

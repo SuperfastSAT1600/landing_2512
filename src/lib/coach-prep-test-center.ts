@@ -41,7 +41,12 @@ export interface TcSession {
   accuracy: number;
   rwScore: number | null;
   mathScore: number | null;
+  /** true면 rwScore/mathScore가 모듈을 다 풀지 않은 상태의 참고 점수 */
+  rwPartial: boolean;
+  mathPartial: boolean;
   totalScore: number | null;
+  /** 카드 맨 위에 크게 보여줄 점수. label이 있으면 정식 합계가 아니라는 뜻 */
+  headline: { value: number; label: string | null } | null;
   domains: TcDomainStat[];
 }
 
@@ -85,21 +90,37 @@ function buildDomains(skills: NonNullable<TcItem['skills']>): TcDomainStat[] {
   return domains.sort((a, b) => a.accuracy - b.accuracy);
 }
 
+function headlineOf(rw: number | null, math: number | null, rwPartial: boolean, mathPartial: boolean, total: number | null) {
+  if (rw != null && math != null) {
+    return rwPartial || mathPartial ? { value: rw + math, label: '일부 모듈 응시 · 예상' } : { value: total ?? rw + math, label: null };
+  }
+  if (rw != null) return { value: rw, label: rwPartial ? 'RW 일부 모듈 응시 · 예상' : 'RW만 응시 · 예상' };
+  if (math != null) return { value: math, label: mathPartial ? 'Math 일부 모듈 응시 · 예상' : 'Math만 응시 · 예상' };
+  return null;
+}
+
 export function buildTcSessions(days: { date: string; items: DayItem[] }[]): TcSession[] {
   const sessions: TcSession[] = [];
   for (const day of days) {
     for (const item of day.items) {
       if (item.type !== 'test_center' || item.totalProblems <= 0) continue;
       const sec = tcSectionScore(item);
+      const rwScore = sec.rwScaled ?? sec.rwEstimate;
+      const mathScore = sec.mathScaled ?? sec.mathEstimate;
+      const rwPartial = sec.rwScaled == null && sec.rwEstimate != null;
+      const mathPartial = sec.mathScaled == null && sec.mathEstimate != null;
       sessions.push({
         date: day.date,
         title: item.curriculumTitle ?? '모의고사',
         score: item.totalScore,
         total: item.totalProblems,
         accuracy: pct(item.totalScore, item.totalProblems),
-        rwScore: sec.rwScaled,
-        mathScore: sec.mathScaled,
-        totalScore: sec.total,
+        rwScore,
+        mathScore,
+        rwPartial,
+        mathPartial,
+        totalScore: rwPartial || mathPartial ? null : sec.total,
+        headline: headlineOf(rwScore, mathScore, rwPartial, mathPartial, sec.total),
         domains: buildDomains(item.skills ?? []),
       });
     }
