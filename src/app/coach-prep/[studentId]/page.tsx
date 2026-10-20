@@ -5,10 +5,12 @@ import { CoachPrepView } from './CoachPrepView';
 import type { WeeklySlot, ConsultationEntry } from '@/types/crm';
 import type { DayItem } from '@/types/srm-portal';
 import { buildTcSessions, type TcSession } from '@/lib/coach-prep-test-center';
+import { loadCoachRequestInfo } from './coach-request-info';
 import { buildAvailability, type AvailabilitySlot, type AvailabilitySummary } from '@/lib/student-availability';
 
 interface Props {
   params: Promise<{ studentId: string }>;
+  searchParams: Promise<{ t?: string | string[] }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -20,6 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .maybeSingle();
   const name = (data as { name?: string } | null)?.name ?? '학생';
   return {
+    robots: { index: false, follow: false },
     title: `${name}학생 수업 준비 자료 · SuperfastSAT`,
     openGraph: { title: `${name}학생 수업 준비 자료` },
   };
@@ -107,8 +110,9 @@ function computeSkills(days: { items: DayItem[] }[]): SrmSkill[] {
   });
 }
 
-export default async function CoachPrepPage({ params }: Props) {
+export default async function CoachPrepPage({ params, searchParams }: Props) {
   const { studentId } = await params;
+  const { t } = await searchParams;
 
   // 1단계: 학생 + 시험 점수 병렬 조회
   const [{ data: raw, error }, { data: examScoresRaw }] = await Promise.all([
@@ -193,7 +197,7 @@ export default async function CoachPrepPage({ params }: Props) {
       })()
     : Promise.resolve(null);
 
-  const [{ data: diagResult }, { data: briefCache }, srmData, availability] = await Promise.all([
+  const [{ data: diagResult }, { data: briefCache }, srmData, availability, coachRequest] = await Promise.all([
     supabaseAdmin
       .from('diagnostic_test_results')
       .select('submitted_at, previous_rw_score, previous_math_score, total_time_seconds, edited_insights')
@@ -204,6 +208,7 @@ export default async function CoachPrepPage({ params }: Props) {
     briefQuery,
     srmPromise,
     availabilityPromise,
+    loadCoachRequestInfo(studentId, Array.isArray(t) ? t[0] : t),
   ]);
 
   // 캐시에서 SRM 브리핑 파싱 (서버 사이드 — auth 불필요)
@@ -254,6 +259,7 @@ export default async function CoachPrepPage({ params }: Props) {
     srm_skills: srmData.skills,
     srm_tc_sessions: srmData.tcSessions,
     availability: availability && availability.blocks.length > 0 ? availability : null,
+    coach_request: coachRequest,
     srm_brief: srmBrief,
     sfv2_profile_id: student.sfv2_profile_id ?? null,
     diagnostic_result_id: student.diagnostic_result_id ?? null,

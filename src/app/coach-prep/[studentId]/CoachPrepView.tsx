@@ -5,6 +5,9 @@ import type { WeeklySlot } from '@/types/crm';
 import type { TcSession } from '@/lib/coach-prep-test-center';
 import { TestCenterSection } from './TestCenterSection';
 import { AvailabilitySchedule } from './AvailabilitySchedule';
+import { CoachDeadlineBanner } from './CoachDeadlineBanner';
+import { CoachResponseForm } from './CoachResponseForm';
+import type { CoachRequestInfo } from '@/types/coach-prep';
 import type { AvailabilitySummary } from '@/lib/student-availability';
 
 // 서버 파일(API route, page.tsx)에서 import하면 서버 전용 모듈이 클라이언트 번들에 포함됨 — 인라인 정의
@@ -69,6 +72,7 @@ type ExtendedData = CoachViewData & {
   srm_skills: SrmSkill[] | null;
   srm_tc_sessions: TcSession[];
   availability: AvailabilitySummary | null;
+  coach_request: CoachRequestInfo | null;
   srm_brief: SrmBriefData | null;
   sfv2_profile_id: string | null;
   diagnostic_result_id: string | null;
@@ -472,6 +476,9 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
 
+        {/* 응답 마감 (코치별 링크로 들어온 경우) */}
+        {data.coach_request && <CoachDeadlineBanner info={data.coach_request} />}
+
         {/* Header */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">코치 준비 자료</p>
@@ -654,6 +661,9 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
                 <p className="text-sm text-gray-400">코치 메모 없음</p>
               )}
             </SectionCard>
+
+            {/* 수업 가능 여부 응답 */}
+            {data.coach_request && <CoachResponseForm info={data.coach_request} />}
           </>
         )}
       </div>
