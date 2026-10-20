@@ -2,6 +2,10 @@
 
 import { useState } from 'react';
 import type { WeeklySlot } from '@/types/crm';
+import type { TcSession } from '@/lib/coach-prep-test-center';
+import { TestCenterSection } from './TestCenterSection';
+import { AvailabilitySchedule } from './AvailabilitySchedule';
+import type { AvailabilitySummary } from '@/lib/student-availability';
 
 // 서버 파일(API route, page.tsx)에서 import하면 서버 전용 모듈이 클라이언트 번들에 포함됨 — 인라인 정의
 interface DiagnosticData {
@@ -59,12 +63,12 @@ export interface SrmSkill {
 }
 
 type ExamScore = { exam_month: string; rw_score: number | null; math_score: number | null; note: string | null };
-type TcSession = { date: string; title: string; score: number; total: number; accuracy: number };
 
 type ExtendedData = CoachViewData & {
   exam_scores: ExamScore[];
   srm_skills: SrmSkill[] | null;
   srm_tc_sessions: TcSession[];
+  availability: AvailabilitySummary | null;
   srm_brief: SrmBriefData | null;
   sfv2_profile_id: string | null;
   diagnostic_result_id: string | null;
@@ -223,34 +227,7 @@ function ExamScoresSection({ scores, tcSessions }: { scores: ExamScore[]; tcSess
       {hasTcSessions && (
         <div className={hasRealScores ? 'border-t border-gray-200 pt-4' : ''}>
           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">SRM 모의고사</p>
-          <div className="space-y-3">
-            {tcSessions.map((s, i) => {
-              const prev = i > 0 ? tcSessions[i - 1] : null;
-              const delta = prev != null ? s.accuracy - prev.accuracy : null;
-              return (
-                <div key={`${s.date}-${i}`} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-gray-400 font-mono shrink-0">{s.date}</span>
-                      <span className="text-gray-600 truncate max-w-[120px]">{s.title}</span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-gray-500">{s.score}/{s.total}</span>
-                      <span className="text-gray-900 font-bold font-mono">{s.accuracy}%</span>
-                      {delta != null && (
-                        <span className={`font-semibold ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-red-500' : 'text-gray-400'}`}>
-                          {delta > 0 ? `+${delta}` : delta}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-400 rounded-full" style={{ width: `${s.accuracy}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <TestCenterSection sessions={tcSessions} />
         </div>
       )}
     </div>
@@ -633,7 +610,9 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
                   <p className="text-sm font-medium text-gray-800">{formatDate(data.ot_datetime)}</p>
                 </div>
               )}
-              {activeDays.length > 0 ? (
+              {data.availability ? (
+                <AvailabilitySchedule availability={data.availability} />
+              ) : activeDays.length > 0 ? (
                 <div className="space-y-2">
                   <p className="text-xs text-gray-400 mb-3">타임존: {data.parent_timezone ?? 'UTC'}</p>
                   {activeDays.map((day) => (
