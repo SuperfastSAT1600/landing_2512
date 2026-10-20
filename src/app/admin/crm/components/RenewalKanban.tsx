@@ -12,6 +12,7 @@ import type { RenewalTarget, Student } from '@/types/crm';
 import { getWeekLabel } from '@/lib/week-definitions';
 import { RenewalCandidateAdd } from './RenewalCandidateAdd';
 import { getRenewalCandidates } from './renewal-candidate-source';
+import { findHiddenCandidates } from './renewal-hidden-candidates';
 import { RenewalStatsStrip } from './RenewalStatsStrip';
 import { RenewalWeeklyStats } from './RenewalWeeklyStats';
 import { defaultRenewalScope, useRenewalBoard, type RenewalScope } from './use-renewal-board';
@@ -65,6 +66,14 @@ export function RenewalKanban({
     [entries, board.openTargets]
   );
 
+  // 후보에 없는 학생과 이유 — 진행 중 · SRM 미연결 · SRM 결제 미등록
+  const hidden = useMemo(
+    () => findHiddenCandidates({
+      entries, listedProfileIds: board.listedProfileIds, openTargets: board.openTargets, enrolled: board.enrolled,
+    }),
+    [entries, board.listedProfileIds, board.openTargets, board.enrolled]
+  );
+
   const targetsByStage = useMemo(() => groupTargetsByStage(targets), [targets]);
   const weekOptions = useMemo(() => buildWeekOptions(weekly, nowMs), [weekly, nowMs]);
 
@@ -108,7 +117,7 @@ export function RenewalKanban({
           onAdd={mutations.handleAdd}
           onClose={() => setCandidatesOpen(false)}
           pendingStudentId={mutations.pendingStudentId}
-          missingFromEnrolled={board.missingFromEnrolled}
+          hidden={hidden}
           onSelectStudent={onSelectStudentById}
         />
       )}

@@ -23,6 +23,8 @@ import {
   type CandidateFilters,
 } from './renewal-candidate-filters';
 import { countStudents, dedupeByStudent, expandSubjectRows } from './renewal-candidate-rows';
+import { HiddenSearchMatches, RenewalHiddenCandidates } from './RenewalHiddenCandidates';
+import { matchHidden, type HiddenCandidate } from './renewal-hidden-candidates';
 
 interface RenewalCandidateAddProps {
   /** 이미 선별·정렬된 후보 (열린 타깃 제외, 급한 순). */
@@ -33,8 +35,8 @@ interface RenewalCandidateAddProps {
   onClose: () => void;
   /** 추가 요청이 진행 중인 학생 id — 중복 클릭 방지. */
   pendingStudentId: string | null;
-  /** SRM 튜터링 중이지만 CRM lead_status가 enrolled가 아니라 목록에 없는 인원. */
-  missingFromEnrolled: number;
+  /** 후보 목록에 없는 학생과 이유 (진행 중 · SRM 미연결 · SRM 결제 미등록). */
+  hidden: HiddenCandidate[];
   onSelectStudent?: (studentId: string) => void;
 }
 
@@ -45,7 +47,7 @@ export function RenewalCandidateAdd({
   onAdd,
   onClose,
   pendingStudentId,
-  missingFromEnrolled,
+  hidden,
   onSelectStudent,
 }: RenewalCandidateAddProps) {
   const [subTab, setSubTab] = useState<TutoringSubTab>('all');
@@ -76,6 +78,9 @@ export function RenewalCandidateAdd({
     [rows, effectiveFilters]
   );
 
+  // 검색한 학생이 후보에 없을 때 빈 목록 문구 대신 이유를 보여 준다
+  const hasHiddenMatch = searchQuery.trim() !== '' && matchHidden(hidden, searchQuery).length > 0;
+
   function resetFilters() {
     setFilters(null);
     setSubTab('all');
@@ -103,12 +108,8 @@ export function RenewalCandidateAdd({
       </div>
 
       <div className="p-4 space-y-3">
-        {missingFromEnrolled > 0 && (
-          <p className="rounded-md bg-amber-50 border border-amber-100 px-3 py-2 text-[11px] text-amber-700">
-            SRM에서 튜터링 중이지만 CRM 리드 상태가 &lsquo;수강(enrolled)&rsquo;이 아닌 학생{' '}
-            <b className="font-semibold">{missingFromEnrolled}명</b>은 이 목록에 없습니다 —
-            &lsquo;튜터링 중&rsquo; 탭과 같은 기준입니다. 해당 학생의 리드 상태를 정리하면 여기에 나타납니다.
-          </p>
+        {!loading && !error && (
+          <RenewalHiddenCandidates hidden={hidden} searchQuery={searchQuery} onSelectStudent={onSelectStudent} />
         )}
 
         {loading ? (
@@ -142,9 +143,13 @@ export function RenewalCandidateAdd({
               />
 
               {visible.length === 0 ? (
-                <p className="py-10 text-center text-xs text-gray-400">
-                  조건에 맞는 학생이 없습니다. 좌측 필터를 확인해 주세요.
-                </p>
+                hasHiddenMatch ? (
+                  <HiddenSearchMatches hidden={hidden} searchQuery={searchQuery} onSelectStudent={onSelectStudent} />
+                ) : (
+                  <p className="py-10 text-center text-xs text-gray-400">
+                    조건에 맞는 학생이 없습니다. 좌측 필터를 확인해 주세요.
+                  </p>
+                )
               ) : (
                 <>
                   <p className="text-[11px] text-gray-400">
