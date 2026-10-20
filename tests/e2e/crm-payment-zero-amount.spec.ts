@@ -79,6 +79,8 @@ async function setup(page: Page) {
     return json(route, { data: [student] });
   });
   await page.route('**/api/crm/students/*', (route) => json(route, { data: student }));
+  // 학생 패널의 '코치 응답 현황' 조회 — 위 students** 목록 응답에 걸리면 패널이 깨진다
+  await page.route('**/api/crm/students/*/coach-requests', (route) => json(route, { data: { requests: [] } }));
 }
 
 /** 학생 패널을 열고 결제 히스토리 섹션을 펼친다. */
