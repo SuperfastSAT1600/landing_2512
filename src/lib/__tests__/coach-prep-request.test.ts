@@ -9,6 +9,7 @@ import {
   defaultDeadlineInput,
   buildLinkMessage,
   formatRemaining,
+  deadlineProgress,
   isSameResponse,
   formatKst,
   kstInputDayLabel,
@@ -198,5 +199,28 @@ describe('isSameResponse', () => {
   it('REQ-003: 거절을 같은 사유로 다시 보내면 같은 응답, 처음 응답(pending)은 항상 다르다', () => {
     expect(isSameResponse({ status: 'declined', decline_reason: '일정', ...times() }, 'declined', times(), '일정')).toBe(true);
     expect(isSameResponse({ status: 'pending', decline_reason: null, ...times() }, 'declined', times(), null)).toBe(false);
+  });
+});
+
+// REQ-002
+describe('deadlineProgress', () => {
+  const start = Date.parse('2026-10-20T00:00:00Z');
+  const end = Date.parse('2026-10-21T00:00:00Z');
+  const at = (ms: number) => deadlineProgress('2026-10-20T00:00:00Z', '2026-10-21T00:00:00Z', ms);
+
+  it('생성부터 마감까지 지난 비율을 돌려준다', () => {
+    expect(at(start)).toBe(0);
+    expect(at(start + (end - start) / 4)).toBeCloseTo(0.25);
+    expect(at(end)).toBe(1);
+  });
+
+  it('범위를 벗어나면 0과 1로 자른다', () => {
+    expect(at(start - 1000)).toBe(0);
+    expect(at(end + 1000)).toBe(1);
+  });
+
+  it('기간이 0 이하이면 마감 전 0, 마감 후 1', () => {
+    expect(deadlineProgress('2026-10-21T00:00:00Z', '2026-10-20T00:00:00Z', start - 1)).toBe(0);
+    expect(deadlineProgress('2026-10-21T00:00:00Z', '2026-10-20T00:00:00Z', end + 1)).toBe(1);
   });
 });

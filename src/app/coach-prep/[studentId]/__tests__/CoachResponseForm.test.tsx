@@ -4,7 +4,7 @@ import { CoachResponseForm } from '../CoachResponseForm';
 import type { CoachRequestInfo } from '@/types/coach-prep';
 
 const info = (over: Partial<CoachRequestInfo> = {}): CoachRequestInfo => ({
-  token: 't'.repeat(32), coach_name: '김혜지', deadline_at: '2099-01-01T00:00:00Z', status: 'pending',
+  token: 't'.repeat(32), coach_name: '김혜지', deadline_at: '2099-01-01T00:00:00Z', created_at: '2026-10-20T00:00:00Z', status: 'pending',
   first_lesson_at: null, second_lesson_at: null, option2_first_lesson_at: null, option2_second_lesson_at: null,
   decline_reason: null, ...over,
 });

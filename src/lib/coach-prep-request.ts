@@ -126,6 +126,14 @@ export function isSameResponse(
   return saved.status === status && keys.every((k) => sameInstant(saved[k], times[k])) && (saved.decline_reason ?? null) === declineReason;
 }
 
+/** 링크 생성부터 마감까지 중 지난 비율(0~1) */
+export function deadlineProgress(createdAt: string, deadlineAt: string, nowMs: number): number {
+  const start = Date.parse(createdAt);
+  const end = Date.parse(deadlineAt);
+  if (end <= start) return nowMs >= end ? 1 : 0;
+  return Math.min(1, Math.max(0, (nowMs - start) / (end - start)));
+}
+
 /** 마감까지 남은 시간 표기 (밀리초 입력). */
 export function formatRemaining(ms: number): string {
   if (ms <= 0) return '마감';
