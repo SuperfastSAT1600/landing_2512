@@ -95,11 +95,9 @@ export function getWindow(): { windowStart: Date; windowEnd: Date; windowLabel: 
   const now = new Date();
 
   const nowKST = new Date(now.getTime() + KST_MS);
-  const ydKST = new Date(nowKST);
-  ydKST.setDate(nowKST.getDate() - 1);
-  ydKST.setHours(0, 0, 0, 0);
+  const ydKSTMidnightUTC = Date.UTC(nowKST.getUTCFullYear(), nowKST.getUTCMonth(), nowKST.getUTCDate() - 1);
 
-  const windowStart = new Date(ydKST.getTime() - KST_MS);
+  const windowStart = new Date(ydKSTMidnightUTC - KST_MS);
   const windowEnd = now;
 
   const fmt = (d: Date) =>
