@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import Hero from './components/Hero';
 import FeaturesSection from './components/FeaturesSection';
@@ -11,7 +12,17 @@ import { buildOrganizationSchema } from '@/lib/organization-schema';
 
 export const revalidate = 3600;
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://superfastsat.com';
+// 루트 레이아웃의 canonical './' 은 홈('/')에서 Next.js 가 '/index' 로 해석한다.
+// 그러면 사이트맵의 '/' 와 canonical '/index' 가 엇갈려 홈 색인이 흔들리므로,
+// 홈은 canonical·og:url 을 '/' 로 직접 선언한다(metadataBase 기준 절대 URL로 나감).
+export const metadata: Metadata = {
+    alternates: { canonical: '/' },
+    openGraph: { url: '/' },
+};
+
+// 이 앱은 tutoring.superfastsat.com 전용 배포다. 환경변수가 없을 때 구조화 데이터가
+// 다른 배포(superfastsat.com)를 가리키지 않도록 기본값도 이 도메인으로 둔다.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://tutoring.superfastsat.com';
 
 const faqSchema = {
     '@context': 'https://schema.org',
