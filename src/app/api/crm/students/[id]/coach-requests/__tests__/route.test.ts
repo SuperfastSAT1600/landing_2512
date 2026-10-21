@@ -9,6 +9,8 @@ const db = vi.hoisted(() => ({
   selectRequest: vi.fn(),
 }));
 vi.mock('@/lib/coach-prep-requests-db', () => db);
+const ctx = vi.hoisted(() => ({ loadStudentMessageContext: vi.fn() }));
+vi.mock('@/lib/coach-prep-student-context', () => ctx);
 
 process.env.ADMIN_SECRET_KEY = 'admin-key';
 
@@ -32,6 +34,7 @@ const view = (slug: string, name: string) => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  ctx.loadStudentMessageContext.mockResolvedValue(null);
   db.studentExists.mockResolvedValue(true);
 });
 
@@ -108,6 +111,25 @@ describe('GET /api/crm/students/[id]/coach-requests', () => {
     expect(res.status).toBe(200);
     expect((await res.json()).data.requests).toHaveLength(1);
     expect(db.listRequests).toHaveBeenCalledWith('stu-1');
+  });
+
+  it('학생 안내 메시지에 쓸 student_context도 함께 돌려준다', async () => {
+    db.listRequests.mockResolvedValue([view('a', '김혜지')]);
+    const context = { language: 'english', timezone: 'America/New_York', schedule_url: 'https://app.superfastsat.io/report/x' };
+    ctx.loadStudentMessageContext.mockResolvedValue(context);
+    const { GET } = await import('../route');
+    const json = await (await GET(req('GET'), { params })).json();
+    expect(json.data.student_context).toEqual(context);
+    expect(ctx.loadStudentMessageContext).toHaveBeenCalledWith('stu-1');
+  });
+
+  it('컨텍스트 조회가 던져도 요청 목록은 정상 응답하고 student_context는 null', async () => {
+    db.listRequests.mockResolvedValue([view('a', '김혜지')]);
+    ctx.loadStudentMessageContext.mockRejectedValue(new Error('down'));
+    const { GET } = await import('../route');
+    const res = await GET(req('GET'), { params });
+    expect(res.status).toBe(200);
+    expect((await res.json()).data.student_context).toBeNull();
   });
 });
 

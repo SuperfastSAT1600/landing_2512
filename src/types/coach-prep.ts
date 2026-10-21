@@ -40,3 +40,13 @@ export interface CoachRequestInfo extends LessonTimes {
   status: CoachPrepStatus;
   decline_reason: string | null;
 }
+
+/** 수락한 코치 일정을 학생에게 안내할 때 쓰는 학생 정보. 못 구한 값은 null. */
+export interface StudentMessageContext {
+  /** CRM students.preferred_language */
+  language: string | null;
+  /** 학생 시간대(IANA) */
+  timezone: string | null;
+  /** SFv2 schedule_access_link 기반 학생별 스케줄 등록 링크 */
+  schedule_url: string | null;
+}

@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
-import type { CoachPrepRequestView } from '@/types/coach-prep';
+import type { CoachPrepRequestView, StudentMessageContext } from '@/types/coach-prep';
 import { formatKst, isClosed, lessonOptions } from '@/lib/coach-prep-request';
+import { buildStudentMessage } from '@/lib/coach-prep-student-message';
 import { SectionCard } from './SectionCard';
 
 interface Props {
@@ -25,12 +26,17 @@ export function CoachResponsesSection({ studentId, adminKey, version }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [context, setContext] = useState<StudentMessageContext | null>(null);
+  const [messageFor, setMessageFor] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch(`/api/crm/students/${studentId}/coach-requests`, { headers: { 'x-admin-key': adminKey } });
       const json = await res.json();
-      if (res.ok) setRows(json.data.requests as CoachPrepRequestView[]);
+      if (res.ok) {
+        setRows(json.data.requests as CoachPrepRequestView[]);
+        setContext((json.data.student_context as StudentMessageContext | null | undefined) ?? null);
+      }
     } catch { /* 네트워크 오류는 다음 새로고침에서 복구 */ }
   }, [studentId, adminKey]);
 
@@ -49,10 +55,21 @@ export function CoachResponsesSection({ studentId, adminKey, version }: Props) {
     } finally { setBusy(null); }
   }
 
-  async function copyLink(r: CoachPrepRequestView) {
-    await navigator.clipboard.writeText(`${window.location.origin}/coach-prep/${studentId}?t=${r.token}`);
-    setCopied(r.id); setTimeout(() => setCopied(null), 1500);
+  async function copyText(id: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      setError('복사하지 못했습니다. 브라우저의 클립보드 권한을 확인해 주세요.');
+      return;
+    }
+    setCopied(id); setTimeout(() => setCopied(null), 1500);
   }
+
+  // 학생 채팅방에 붙여 넣을 안내 — 코치가 가능하다고 한 시간을 학생 시간대로 바꾸고 스케줄 등록 안내를 붙인다
+  const messageOf = (r: CoachPrepRequestView) => buildStudentMessage({
+    coachName: r.coach_name, options: lessonOptions(r),
+    timezone: context?.timezone ?? null, language: context?.language ?? null, scheduleUrl: context?.schedule_url ?? null,
+  });
 
   if (rows.length === 0) return null;
   const answered = rows.filter((r) => r.status !== 'pending').length;
@@ -68,7 +85,7 @@ export function CoachResponsesSection({ studentId, adminKey, version }: Props) {
               <StatusChip r={r} />
               {r.selected_at && <span className="flex items-center gap-0.5 text-[11px] font-semibold text-violet-700"><Check size={11} />담당 선택</span>}
               <span className="ml-auto flex items-center gap-2">
-                <button onClick={() => copyLink(r)} className="text-[11px] text-gray-400 underline underline-offset-2">{copied === r.id ? '복사됨' : '링크 복사'}</button>
+                <button onClick={() => copyText(r.id, `${window.location.origin}/coach-prep/${studentId}?t=${r.token}`)} className="text-[11px] text-gray-400 underline underline-offset-2">{copied === r.id ? '복사됨' : '링크 복사'}</button>
                 {r.status === 'accepted' && !r.selected_at && (
                   <button onClick={() => select(r.id)} disabled={busy === r.id} className="rounded-md bg-violet-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-violet-700 disabled:bg-gray-300">
                     {busy === r.id ? '선택 중…' : '이 코치 선택'}
@@ -83,6 +100,23 @@ export function CoachResponsesSection({ studentId, adminKey, version }: Props) {
                 {' · '}두 번째 수업 <span className="font-semibold text-gray-800">{formatKst(o.second)}</span>
               </p>
             ))}
+            {r.status === 'accepted' && lessonOptions(r).length > 0 && (
+              <div className="mt-1.5">
+                <button onClick={() => setMessageFor(messageFor === r.id ? null : r.id)} className="text-[11px] font-semibold text-violet-700 underline underline-offset-2">
+                  {messageFor === r.id ? '학생 안내 메시지 닫기' : '학생 안내 메시지'}
+                </button>
+                {messageFor === r.id && (
+                  <div className="mt-1 space-y-1.5 rounded-md border border-violet-200 bg-violet-50/40 p-2">
+                    <pre data-testid="student-message" className="whitespace-pre-wrap break-words font-sans text-[12px] leading-relaxed text-gray-800">{messageOf(r)}</pre>
+                    {!context?.timezone && <p className="text-[11px] text-amber-600">학생 시간대를 찾지 못해 한국 시간(KST)으로 표기했습니다. 학생에게 보내기 전에 확인해 주세요.</p>}
+                    {!context?.schedule_url && <p className="text-[11px] text-amber-600">학생 스케줄 링크를 찾지 못해 링크 없이 안내문만 나옵니다.</p>}
+                    <button onClick={() => copyText(`msg-${r.id}`, messageOf(r))} className="rounded-md bg-violet-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-violet-700">
+                      {copied === `msg-${r.id}` ? '복사됨' : '메시지 복사'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-gray-500 tabular-nums">
               {r.decline_reason && <span>사유: {r.decline_reason}</span>}
               <span>마감 {formatKst(r.deadline_at)}</span>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { apiError, unauthorized } from '@/lib/api-response';
 import { CreateRequestsSchema } from '@/lib/coach-prep-request';
+import { loadStudentMessageContext } from '@/lib/coach-prep-student-context';
 import { findActiveCoaches, listRequests, studentExists, upsertRequests } from '@/lib/coach-prep-requests-db';
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -40,8 +41,15 @@ export async function GET(request: NextRequest, { params }: Ctx) {
   if (!isAuthenticated(request)) return unauthorized();
   const { id } = await params;
   try {
-    const requests = await listRequests(id);
-    return NextResponse.json({ data: { requests }, meta: { requestId: crypto.randomUUID() } });
+    const [requests, student_context] = await Promise.all([
+      listRequests(id),
+      // 안내 메시지용 부가 정보 — 못 구해도 응답 목록은 보여준다
+      loadStudentMessageContext(id).catch((e) => {
+        console.error('[coach-requests GET] student context failed:', e);
+        return null;
+      }),
+    ]);
+    return NextResponse.json({ data: { requests, student_context }, meta: { requestId: crypto.randomUUID() } });
   } catch (e) {
     console.error('[coach-requests GET]', e);
     return apiError('DB_ERROR', '조회 중 오류가 발생했습니다.', 500);
