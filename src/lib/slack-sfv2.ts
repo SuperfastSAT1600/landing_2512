@@ -32,9 +32,10 @@ export async function notifyScheduleInputStatus(params: {
   hoursBuckets: HoursBucket[];
   recentStudyHallVocabNames: Set<string>;
   recentCoachRoomNames: Set<string>;
+  scheduledMinutesByName: Map<string, { studyHall: number; vocab: number }>;
   windowLabel: string;
 }): Promise<void> {
-  const { endingSoon, hoursBuckets, recentStudyHallVocabNames, recentCoachRoomNames, windowLabel } = params;
+  const { endingSoon, hoursBuckets, recentStudyHallVocabNames, recentCoachRoomNames, scheduledMinutesByName, windowLabel } = params;
 
   const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000)
     .toISOString().slice(5, 16).replace('T', ' ');
@@ -45,7 +46,7 @@ export async function notifyScheduleInputStatus(params: {
     b.hasCoach.reduce((s2, e) => s2 + e.students.length, 0), 0);
 
   // ── 레전드 ──
-  const legendText = `📋 *스케줄 현황 브리핑* — ${nowKST} KST\n기간: ${windowLabel}\n\n🏫 수업(코치룸)　　📚 스터디홀　　📝 보캡　　🔔 스터디홀/보캡 신규 입력　　🆕 코치룸 신규 입력`;
+  const legendText = `📋 *스케줄 현황 브리핑* — ${nowKST} KST\n기간: ${windowLabel}\n\n🏫 수업(코치룸)　　📚 스터디홀　　📝 보캡　　🔔 스터디홀/보캡 신규 입력　　🆕 코치룸 신규 입력\n이름 옆 괄호 = 등록된 미래 일정 시간 (앞 숫자: 스터디홀 / 뒤 숫자: 보캡)`;
 
   // ── 종료 임박 ──
   let endingSoonText: string;
@@ -64,11 +65,21 @@ export async function notifyScheduleInputStatus(params: {
     return `📚${hasStudyHall ? '✓' : '✗'} 📝${hasVocab ? '✓' : '✗'}`;
   }
 
+  function formatHours(minutes: number): string {
+    return `${Number((minutes / 60).toFixed(1))}h`;
+  }
+
+  function scheduledHoursLabel(name: string): string {
+    const m = scheduledMinutesByName.get(name);
+    if (!m) return '';
+    return ` (${formatHours(m.studyHall)}/${formatHours(m.vocab)})`;
+  }
+
   function renderEntries(entries: import('@/app/api/cron/schedule-input-status/route').ScheduleStatusEntry[]): string[] {
     return entries.map(entry => {
       const names = entry.students.map(n => {
         const marks = `${recentStudyHallVocabNames.has(n) ? '🔔' : ''}${recentCoachRoomNames.has(n) ? '🆕' : ''}`;
-        return marks ? `${n} ${marks}` : n;
+        return `${n}${scheduledHoursLabel(n)}${marks ? ` ${marks}` : ''}`;
       }).join(', ');
       return `　　${subLabel(entry.hasStudyHall, entry.hasVocab)}　${names}`;
     });

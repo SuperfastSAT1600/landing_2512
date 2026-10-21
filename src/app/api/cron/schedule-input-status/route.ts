@@ -32,7 +32,15 @@ export async function GET(request: NextRequest) {
       fetchWindowCoachRoomUserIds(windowStart, windowEnd),
     ]);
 
-    const { studyHallUsers, vocabUsers, lastDateByUser } = scheduleStatus;
+    const { studyHallUsers, vocabUsers, lastDateByUser, studyHallMinutes, vocabMinutes } = scheduleStatus;
+
+    // 이름 → 등록된 미래 스터디홀/보캡 분(minutes)
+    const scheduledMinutesByName = new Map<string, { studyHall: number; vocab: number }>();
+    for (const [userId, name] of allActiveMap) {
+      const studyHall = studyHallMinutes.get(userId) ?? 0;
+      const vocab = vocabMinutes.get(userId) ?? 0;
+      if (studyHall || vocab) scheduledMinutesByName.set(name, { studyHall, vocab });
+    }
 
     // 윈도우 내 스케줄을 새로 입력한 학생 이름 집합 (스터디홀/보캡 vs 코치룸 구분)
     const recentStudyHallVocabNames = new Set<string>(rawEntries.map(e => e.studentName));
@@ -72,7 +80,7 @@ export async function GET(request: NextRequest) {
 
     console.log(`[cron/schedule-input-status] ending-soon=${endingSoon.length} | needs-attention=${studentsNeedingAttention.length} | recently-scheduled(sh/vocab)=${recentStudyHallVocabNames.size} | recently-scheduled(coach)=${recentCoachRoomNames.size}`);
 
-    await notifyScheduleInputStatus({ endingSoon, hoursBuckets, recentStudyHallVocabNames, recentCoachRoomNames, windowLabel });
+    await notifyScheduleInputStatus({ endingSoon, hoursBuckets, recentStudyHallVocabNames, recentCoachRoomNames, scheduledMinutesByName, windowLabel });
 
     return NextResponse.json({
       ok: true,
@@ -346,17 +354,21 @@ async function fetchFutureScheduleStatus(now: Date): Promise<{
   studyHallUsers: Set<string>;
   vocabUsers: Set<string>;
   lastDateByUser: Map<string, Date>;
+  studyHallMinutes: Map<string, number>;
+  vocabMinutes: Map<string, number>;
 }> {
   const studyHallUsers = new Set<string>();
   const vocabUsers = new Set<string>();
+  const studyHallMinutes = new Map<string, number>();
+  const vocabMinutes = new Map<string, number>();
   const lastDateByUser = new Map<string, Date>();
   const PAGE_SIZE = 1000;
 
-  const futureEvents: { id: string; category: string; starts_at: string }[] = [];
+  const futureEvents: { id: string; category: string; starts_at: string; ends_at: string | null }[] = [];
   for (let offset = 0; ; offset += PAGE_SIZE) {
     const { data: page, error } = await supabaseSFv2
       .from('scheduled_events')
-      .select('id, category, starts_at')
+      .select('id, category, starts_at, ends_at')
       .in('category', ['study_hall', 'vocab'])
       .neq('status', 'cancelled')
       .gte('starts_at', now.toISOString())
@@ -369,6 +381,10 @@ async function fetchFutureScheduleStatus(now: Date): Promise<{
   if (futureEvents.length) {
     const catById = new Map(futureEvents.map(e => [e.id, e.category]));
     const startsAtById = new Map(futureEvents.map(e => [e.id, new Date(e.starts_at)]));
+    const minutesById = new Map(futureEvents.map(e => [
+      e.id,
+      e.ends_at ? Math.round((new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime()) / 60000) : 0,
+    ]));
     const ids = futureEvents.map(e => e.id);
     for (let i = 0; i < ids.length; i += 100) {
       const { data } = await supabaseSFv2
@@ -378,8 +394,14 @@ async function fetchFutureScheduleStatus(now: Date): Promise<{
       for (const p of data ?? []) {
         if (!p.user_id) continue;
         const cat = catById.get(p.event_id);
-        if (cat === 'study_hall') studyHallUsers.add(p.user_id);
-        else if (cat === 'vocab') vocabUsers.add(p.user_id);
+        const minutes = minutesById.get(p.event_id) ?? 0;
+        if (cat === 'study_hall') {
+          studyHallUsers.add(p.user_id);
+          studyHallMinutes.set(p.user_id, (studyHallMinutes.get(p.user_id) ?? 0) + minutes);
+        } else if (cat === 'vocab') {
+          vocabUsers.add(p.user_id);
+          vocabMinutes.set(p.user_id, (vocabMinutes.get(p.user_id) ?? 0) + minutes);
+        }
         const t = startsAtById.get(p.event_id);
         if (t) {
           const cur = lastDateByUser.get(p.user_id);
@@ -406,7 +428,7 @@ async function fetchFutureScheduleStatus(now: Date): Promise<{
     if (page.length < PAGE_SIZE) break;
   }
 
-  return { studyHallUsers, vocabUsers, lastDateByUser };
+  return { studyHallUsers, vocabUsers, lastDateByUser, studyHallMinutes, vocabMinutes };
 }
 
 // ─── 미래 코치룸 예약 학생 ID 집합 ────────────────────────────────────────────
