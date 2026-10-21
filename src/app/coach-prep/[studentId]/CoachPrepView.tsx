@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import Image from 'next/image';
 import type { WeeklySlot } from '@/types/crm';
 import type { TcSession } from '@/lib/coach-prep-test-center';
 import { TestCenterSection } from './TestCenterSection';
 import { AvailabilitySchedule } from './AvailabilitySchedule';
-import { CoachDeadlineBanner } from './CoachDeadlineBanner';
+import { CoachDeadlineBar } from './CoachDeadlineBar';
+import { CoachPrepToc } from './CoachPrepToc';
+import { buildTocItems } from './coach-prep-toc';
 import { CoachResponseForm } from './CoachResponseForm';
 import type { CoachRequestInfo } from '@/types/coach-prep';
 import type { AvailabilitySummary } from '@/lib/student-availability';
@@ -134,9 +137,9 @@ function ScoreBar({ label, score, max = 800 }: { label: string; score: number | 
   );
 }
 
-function SectionCard({ title, children, accent }: { title: string; children: React.ReactNode; accent?: string }) {
+function SectionCard({ id, title, children, accent }: { id?: string; title: string; children: React.ReactNode; accent?: string }) {
   return (
-    <div className={`bg-white rounded-xl border shadow-sm p-5 ${accent ?? 'border-gray-200'}`}>
+    <div id={id} className={`scroll-mt-14 bg-white rounded-xl border shadow-sm p-5 ${accent ?? 'border-gray-200'}`}>
       <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">{title}</h2>
       {children}
     </div>
@@ -446,6 +449,15 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
     return acc;
   }, {});
 
+  const hasProfile = !!data.sfv2_profile_id;
+  const hasSkills = data.srm_skills !== null;
+  const hasDiagnostic = !!data.diagnostic;
+  const hasRequest = !!data.coach_request;
+  const tocItems = useMemo(
+    () => buildTocItems({ unlocked: allConfirmed, hasProfile, hasSkills, hasDiagnostic, hasRequest }),
+    [allConfirmed, hasProfile, hasSkills, hasDiagnostic, hasRequest],
+  );
+
   const activeDays = Object.keys(scheduleByDay).map(Number).sort();
 
   const scoreValue = (() => {
@@ -474,10 +486,11 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-5">
+      <div className={`max-w-2xl mx-auto px-4 pt-6 space-y-5 ${data.coach_request ? 'pb-28' : 'pb-8'}`}>
 
-        {/* 응답 마감 (코치별 링크로 들어온 경우) */}
-        {data.coach_request && <CoachDeadlineBanner info={data.coach_request} />}
+        <Image src="/logo-black.png" alt="SuperfastSAT" width={150} height={18} priority style={{ height: 'auto' }} />
+
+        <CoachPrepToc items={tocItems} />
 
         {/* Header */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
@@ -503,7 +516,7 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
         </div>
 
         {/* 수업 전 필수 확인 */}
-        <div className="bg-amber-50 rounded-xl border border-amber-200 p-5">
+        <div id="confirm" className="scroll-mt-14 bg-amber-50 rounded-xl border border-amber-200 p-5">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-amber-500">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -543,33 +556,33 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
         {allConfirmed && (
           <>
             {/* 테스트센터 점수 추이 */}
-            <SectionCard title="테스트센터 점수 추이" accent="border-violet-200">
+            <SectionCard id="test-center" title="테스트센터 점수 추이" accent="border-violet-200">
               <ExamScoresSection scores={data.exam_scores} tcSessions={data.srm_tc_sessions} />
             </SectionCard>
 
             {/* AI 현황 브리핑 */}
             {data.sfv2_profile_id && (
-              <SectionCard title="AI 현황 브리핑" accent="border-violet-200">
+              <SectionCard id="ai-brief" title="AI 현황 브리핑" accent="border-violet-200">
                 <SrmBriefCard brief={data.srm_brief} hasProfile={!!data.sfv2_profile_id} />
               </SectionCard>
             )}
 
             {/* 강점 / 취약 스킬 */}
             {data.sfv2_profile_id && data.srm_skills !== null && (
-              <SectionCard title="스킬 분석">
+              <SectionCard id="skills" title="스킬 분석">
                 <SkillsSection skills={data.srm_skills} />
               </SectionCard>
             )}
 
             {/* 진단테스트 결과 */}
             {data.diagnostic && (
-              <SectionCard title="진단테스트 결과">
+              <SectionCard id="diagnostic" title="진단테스트 결과">
                 <DiagnosticSection diagnostic={data.diagnostic} resultId={data.diagnostic_result_id} />
               </SectionCard>
             )}
 
             {/* 점수 현황 */}
-            <SectionCard title="점수 현황">
+            <SectionCard id="scores" title="점수 현황">
               <div className="space-y-4">
                 <div>
                   <p className="text-xs text-gray-400 mb-3">초기 / 진단 점수</p>
@@ -610,7 +623,7 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
             </SectionCard>
 
             {/* 수업 스케줄 */}
-            <SectionCard title="수업 스케줄">
+            <SectionCard id="schedule" title="수업 스케줄">
               {data.ot_datetime && (
                 <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
                   <p className="text-xs text-gray-400 mb-1">OT 일시</p>
@@ -641,7 +654,7 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
             </SectionCard>
 
             {/* 학습 이력 & 코치 메모 */}
-            <SectionCard title="학습 이력 & 코치 메모">
+            <SectionCard id="history" title="학습 이력 & 코치 메모">
               {data.coach_history_entries.length > 0 ? (
                 <div className="space-y-4">
                   {data.coach_history_entries.map((entry) => (
@@ -666,6 +679,9 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
             {data.coach_request && <CoachResponseForm info={data.coach_request} />}
           </>
         )}
+
+        {/* 응답 마감 (코치별 링크로 들어온 경우) — 화면 아래에 떠 있다 */}
+        {data.coach_request && <CoachDeadlineBar info={data.coach_request} unlocked={allConfirmed} />}
       </div>
     </div>
   );

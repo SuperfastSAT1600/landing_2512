@@ -35,6 +35,8 @@ export interface CoachRequestInfo extends LessonTimes {
   token: string;
   coach_name: string;
   deadline_at: string;
+  /** 링크를 만든 시각 — 마감까지의 진행 바 시작점 */
+  created_at: string;
   status: CoachPrepStatus;
   decline_reason: string | null;
 }

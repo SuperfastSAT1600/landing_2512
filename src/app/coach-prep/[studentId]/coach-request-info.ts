@@ -14,6 +14,7 @@ export async function loadCoachRequestInfo(studentId: string, token: string | un
       token: req.token,
       coach_name: req.coach_name,
       deadline_at: req.deadline_at,
+      created_at: req.created_at,
       status: req.status,
       first_lesson_at: req.first_lesson_at,
       second_lesson_at: req.second_lesson_at,

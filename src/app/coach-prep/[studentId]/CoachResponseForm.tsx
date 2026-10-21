@@ -120,7 +120,7 @@ export function CoachResponseForm({ info }: { info: CoachRequestInfo }) {
   }
 
   return (
-    <div id="coach-response" className="bg-white rounded-xl border border-violet-200 shadow-sm p-5 space-y-4 scroll-mt-4">
+    <div id="coach-response" className="bg-white rounded-xl border border-violet-200 shadow-sm p-5 space-y-4 scroll-mt-14">
       <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">수업 가능 여부 응답</h2>
 
       {closed ? (

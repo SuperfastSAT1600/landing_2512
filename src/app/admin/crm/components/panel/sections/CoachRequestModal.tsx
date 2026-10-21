@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X, BookOpen, Copy, Check } from 'lucide-react';
 import type { CoachPrepRequestView } from '@/types/coach-prep';
+import { studentCountsBySlug, type CoachStudentCount } from '@/lib/coach-roster-counts';
+import type { CoachRoster } from '@/lib/coach-roster';
 import { MAX_COACHES_PER_REQUEST, buildLinkMessage, defaultDeadlineInput, kstInputToIso } from '@/lib/coach-prep-request';
 
 interface CoachOption { slug: string; name: string; subjects: string[] }
@@ -17,10 +19,18 @@ interface Props {
 
 const linkFor = (studentId: string, token: string) => `${window.location.origin}/coach-prep/${studentId}?t=${token}`;
 
+function countLabel(counts: Map<string, CoachStudentCount> | null, slug: string): string {
+  if (!counts) return '학생 수 —';
+  const c = counts.get(slug) ?? { active: 0, onboarding: 0 };
+  return `재원 ${c.active} · 온보딩 ${c.onboarding}`;
+}
+
 // 코치를 고르고(최대 5명) 응답 마감을 정하면 코치별 개인 링크가 만들어진다
 export function CoachRequestModal({ studentId, studentName, adminKey, onClose, onCreated }: Props) {
   const [coaches, setCoaches] = useState<CoachOption[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // 담당 학생 수는 참고용 — 불러오지 못해도 코치 선택은 막지 않는다 (null = 로딩 중이거나 실패)
+  const [counts, setCounts] = useState<Map<string, CoachStudentCount> | null>(null);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
   const [deadline, setDeadline] = useState(() => defaultDeadlineInput());
@@ -37,6 +47,13 @@ export function CoachRequestModal({ studentId, studentName, adminKey, onClose, o
         setCoaches(j.coaches.filter((c) => c.isActive).map(({ slug, name, subjects }) => ({ slug, name, subjects })));
       })
       .catch(() => setLoadError('코치 목록을 불러오지 못했습니다.'));
+  }, [adminKey]);
+
+  useEffect(() => {
+    fetch('/api/crm/coach-roster', { headers: { 'x-admin-key': adminKey } })
+      .then((r) => r.json())
+      .then((j: { data?: CoachRoster }) => setCounts(j.data ? studentCountsBySlug(j.data) : null))
+      .catch(() => setCounts(null));
   }, [adminKey]);
 
   const shown = useMemo(() => coaches.filter((c) => c.name.includes(query.trim())), [coaches, query]);
@@ -119,6 +136,7 @@ export function CoachRequestModal({ studentId, studentName, adminKey, onClose, o
                       <input type="checkbox" checked={selected.includes(c.slug)} onChange={() => toggle(c.slug)} disabled={!selected.includes(c.slug) && selected.length >= MAX_COACHES_PER_REQUEST} />
                       <span className="text-gray-800">{c.name}</span>
                       {c.subjects.length > 0 && <span className="text-[11px] text-gray-400">{c.subjects.join(' · ')}</span>}
+                      <span className="ml-auto text-[11px] tabular-nums text-gray-500">{countLabel(counts, c.slug)}</span>
                     </label>
                   ))}
                   {shown.length === 0 && <p className="px-3 py-3 text-xs text-gray-400">{coaches.length === 0 ? '불러오는 중…' : '일치하는 코치가 없습니다.'}</p>}
