@@ -1,7 +1,7 @@
 import type { BriefingResponse, ContactLog, ContactsByStudent, StaffUser } from './types';
 
 export class ApiFailure extends Error {
-  constructor(public status: number, message: string) {
+  constructor(public status: number, message: string, public data?: { availableDates?: string[] }) {
     super(message);
   }
 }
@@ -9,7 +9,7 @@ export class ApiFailure extends Error {
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, { ...init, headers: { 'content-type': 'application/json', ...init?.headers } });
   const body = await res.json().catch(() => null);
-  if (!res.ok) throw new ApiFailure(res.status, body?.error?.message ?? '요청에 실패했습니다.');
+  if (!res.ok) throw new ApiFailure(res.status, body?.error?.message ?? '요청에 실패했습니다.', body?.data);
   return body.data as T;
 }
 

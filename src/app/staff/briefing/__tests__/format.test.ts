@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { daysSince, formatDelta, formatKstDateTime, formatKstMonthDay, formatRatio, lastContactLabel } from '../format';
+import { addDays, coachContactId, daysSince, formatDelta, formatKstDateTime, formatKstMonthDay, formatRatio, lastContactLabel } from '../format';
 
 const now = new Date('2026-10-22T03:00:00Z'); // 10/22 12:00 KST
 
@@ -20,6 +20,15 @@ describe('staff briefing format', () => {
   it('KST 날짜·시각 표기', () => {
     expect(formatKstMonthDay('2026-10-21T16:00:00Z')).toBe('10/22');
     expect(formatKstDateTime('2026-10-21T16:05:00Z')).toBe('10/22 01:05');
+  });
+
+  it('날짜 이동은 월·연 경계를 넘는다', () => {
+    expect(addDays('2026-10-31', 1)).toBe('2026-11-01');
+    expect(addDays('2026-01-01', -1)).toBe('2025-12-31');
+  });
+
+  it('코치 연락 기록 id는 학생 id와 겹치지 않는 접두사', () => {
+    expect(coachContactId('ben')).toBe('coach:ben');
   });
 
   it('비율과 변동치', () => {
