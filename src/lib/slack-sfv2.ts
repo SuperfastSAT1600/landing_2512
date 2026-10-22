@@ -3,7 +3,7 @@
  * 채널: #006_학습현황_출석률 (C0BNF23DQ5R)
  */
 
-import type { EndingSoon, HoursBucket } from '@/app/api/cron/schedule-input-status/route';
+import type { Briefing, BriefingEntry } from '@/app/api/cron/schedule-input-status/classify';
 
 const SCHEDULE_STATUS_CHANNEL = 'C0BNF23DQ5R';
 
@@ -27,97 +27,54 @@ async function post(channel: string, text: string, blocks: object[]): Promise<vo
   if (!data.ok) throw new Error(`Slack API error (${channel}): ${data.error}`);
 }
 
-export async function notifyScheduleInputStatus(params: {
-  endingSoon: EndingSoon[];
-  hoursBuckets: HoursBucket[];
-  recentStudyHallVocabNames: Set<string>;
-  recentCoachRoomNames: Set<string>;
-  scheduledMinutesByName: Map<string, { studyHall: number; vocab: number }>;
-  windowLabel: string;
-}): Promise<void> {
-  const { endingSoon, hoursBuckets, recentStudyHallVocabNames, recentCoachRoomNames, scheduledMinutesByName, windowLabel } = params;
+function formatHours(minutes: number): string {
+  return `${Number((minutes / 60).toFixed(1))}h`;
+}
 
-  const nowKST = new Date(Date.now() + 9 * 60 * 60 * 1000)
-    .toISOString().slice(5, 16).replace('T', ' ');
+function formatKSTDate(date: Date): string {
+  const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  return `${kst.getUTCMonth() + 1}/${kst.getUTCDate()}`;
+}
 
-  const totalNeedingAttention = hoursBuckets.reduce((s, b) =>
-    s +
-    b.noCoach.reduce((s2, e) => s2 + e.students.length, 0) +
-    b.hasCoach.reduce((s2, e) => s2 + e.students.length, 0), 0);
+function remainingLabel(e: BriefingEntry): string {
+  return `잔여 수업 ${Number(e.remainingHours.toFixed(1))}h`;
+}
 
-  // ── 레전드 ──
-  const legendText = `📋 *스케줄 현황 브리핑* — ${nowKST} KST\n기간: ${windowLabel}\n\n🏫 수업(코치룸)　　📚 스터디홀　　📝 보캡　　🔔 스터디홀/보캡 신규 입력　　🆕 코치룸 신규 입력\n이름 옆 괄호 = 등록된 미래 일정 시간 (앞 숫자: 스터디홀 / 뒤 숫자: 보캡)`;
+function endingSoonLine(e: BriefingEntry): string {
+  const last = e.lastDate ? `마지막 ${formatKSTDate(e.lastDate)}` : '';
+  return `• *${e.name}* (${formatHours(e.studyHallMinutes)}/${formatHours(e.vocabMinutes)}) — ${last} · ${remainingLabel(e)}`;
+}
 
-  // ── 종료 임박 ──
-  let endingSoonText: string;
-  if (endingSoon.length === 0) {
-    endingSoonText = '🟠 *종료 임박: 0명*';
-  } else {
-    const lines = [`🟠 *종료 임박: ${endingSoon.length}명* _(마지막 스터디홀/보캡이 내일까지인 학생)_`];
-    for (const s of endingSoon) {
-      lines.push(`• *${s.studentName}* — 마지막 일정 ${s.lastDate}`);
-    }
-    endingSoonText = lines.join('\n');
-  }
+function plainLine(e: BriefingEntry): string {
+  return `• *${e.name}*${e.isNew ? ' `new`' : ''} — ${remainingLabel(e)}`;
+}
 
-  // ── 잔여 시간별 현황 ──
-  function subLabel(hasStudyHall: boolean, hasVocab: boolean): string {
-    return `📚${hasStudyHall ? '✓' : '✗'} 📝${hasVocab ? '✓' : '✗'}`;
-  }
+function listSection(title: string, entries: BriefingEntry[], line: (e: BriefingEntry) => string): object {
+  const text = entries.length
+    ? [`${title} *${entries.length}명*`, ...entries.map(line)].join('\n')
+    : `${title} *0명*`;
+  return { type: 'section', text: { type: 'mrkdwn', text } };
+}
 
-  function formatHours(minutes: number): string {
-    return `${Number((minutes / 60).toFixed(1))}h`;
-  }
-
-  function scheduledHoursLabel(name: string): string {
-    const m = scheduledMinutesByName.get(name);
-    if (!m) return '';
-    return ` (${formatHours(m.studyHall)}/${formatHours(m.vocab)})`;
-  }
-
-  function renderEntries(entries: import('@/app/api/cron/schedule-input-status/route').ScheduleStatusEntry[]): string[] {
-    return entries.map(entry => {
-      const names = entry.students.map(n => {
-        const marks = `${recentStudyHallVocabNames.has(n) ? '🔔' : ''}${recentCoachRoomNames.has(n) ? '🆕' : ''}`;
-        return `${n}${scheduledHoursLabel(n)}${marks ? ` ${marks}` : ''}`;
-      }).join(', ');
-      return `　　${subLabel(entry.hasStudyHall, entry.hasVocab)}　${names}`;
-    });
-  }
+export async function notifyScheduleInputStatus(briefing: Briefing, now: Date): Promise<void> {
+  const nowKST = new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(5, 16).replace('T', ' ');
+  const legendText = [
+    `📋 *스터디홀/보캡 스케줄 현황 브리핑* — ${nowKST} KST`,
+    '발송 시각 이후의 스터디홀/보캡 일정만 집계합니다 (코치룸 제외). 각 목록은 잔여 수업 시간이 적은 순입니다.',
+    '`new` = 코치룸 1회차 수업을 아직 받지 않은 학생',
+    '종료 임박 목록의 괄호 = 남은 일정 시간 (앞 숫자: 스터디홀 / 뒤 숫자: 보캡)',
+  ].join('\n');
 
   const blocks: object[] = [
     { type: 'section', text: { type: 'mrkdwn', text: legendText } },
     { type: 'divider' },
-    { type: 'section', text: { type: 'mrkdwn', text: endingSoonText } },
+    listSection('🟠 *스터디홀/보캡 스케줄 종료 임박* _(마지막 일정이 내일까지)_', briefing.endingSoon, endingSoonLine),
     { type: 'divider' },
+    listSection('🔴 *지금 스터디홀/보캡 스케줄 없음* _(예정된 일정 0건)_', briefing.noSchedule, plainLine),
+    { type: 'divider' },
+    listSection('⚪ *스터디홀/보캡 스케줄이 한 번도 없음*', briefing.neverScheduled, plainLine),
   ];
 
-  if (hoursBuckets.length === 0) {
-    blocks.push({ type: 'section', text: { type: 'mrkdwn', text: '✅ *모든 학생 스케줄 완비* — 조치 필요 없음' } });
-  } else {
-    blocks.push({ type: 'section', text: { type: 'mrkdwn', text: `*잔여 수업 시간별 현황 — 조치 필요 ${totalNeedingAttention}명*` } });
-
-    for (const bucket of hoursBuckets) {
-      const totalInBucket =
-        bucket.noCoach.reduce((s, e) => s + e.students.length, 0) +
-        bucket.hasCoach.reduce((s, e) => s + e.students.length, 0);
-      const lines = [`${bucket.emoji} *잔여 ${bucket.label} (${totalInBucket}명)*`];
-
-      if (bucket.noCoach.length > 0) {
-        const count = bucket.noCoach.reduce((s, e) => s + e.students.length, 0);
-        lines.push(`🏫✗ 코치룸 없음 (${count}명)`);
-        lines.push(...renderEntries(bucket.noCoach));
-      }
-      if (bucket.hasCoach.length > 0) {
-        const count = bucket.hasCoach.reduce((s, e) => s + e.students.length, 0);
-        lines.push(`🏫✓ 코치룸 있음 (${count}명)`);
-        lines.push(...renderEntries(bucket.hasCoach));
-      }
-
-      blocks.push({ type: 'section', text: { type: 'mrkdwn', text: lines.join('\n') } });
-    }
-  }
-
-  const fallbackText = `📋 스케줄 현황 — 조치 필요 ${totalNeedingAttention}명`;
+  const fallbackText = `📋 스터디홀/보캡 스케줄 현황 — 종료 임박 ${briefing.endingSoon.length} / 없음 ${briefing.noSchedule.length} / 한 번도 없음 ${briefing.neverScheduled.length}`;
   await post(SCHEDULE_STATUS_CHANNEL, fallbackText, blocks);
 }
