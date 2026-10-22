@@ -4,7 +4,8 @@
 export interface TestOption {
   id: string;
   text: string;
-  type: "correct" | "distractor";
+  /** 서버 전용. 클라이언트로 내려가는 응답에서는 제거된다(diagnosis-grading.ts). */
+  type?: "correct" | "distractor";
 }
 
 export type SATSection = 'Reading and Writing' | 'Math';

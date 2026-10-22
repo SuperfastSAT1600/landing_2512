@@ -61,7 +61,7 @@ export default function DiagnosticOverlay({ resultId }: Props) {
       .then((d: ReportData) => {
         setData(d);
         try {
-          const ai = generateAllInsights(d.sections, d.questionDetails, d.savedWords ?? [], d.timeLimitMinutes);
+          const ai = generateAllInsights(d.sections, d.questionDetails, d.savedWords ?? [], d.timeLimitMinutes, d.benchmarks);
           const merged = mergeInsights(ai, d.editedInsights);
           setInsights(merged);
           setEditedKeys(getEditedFieldKeys(d.editedInsights));
@@ -237,7 +237,9 @@ export default function DiagnosticOverlay({ resultId }: Props) {
               {/* 02 비교 성적 */}
               <section id="diag-section-02">
                 <SectionHeader number="02" title="비교 성적" titleEn="vs. Top 10%" subtitle="상위 10%와의 비교 성적" />
-                <ReportBenchmarkChart sections={data.sections} sectionBenchmarks={data.benchmarks.sections} />
+                {data.benchmarks.source !== 'insufficient' && (
+                  <ReportBenchmarkChart sections={data.sections} sectionBenchmarks={data.benchmarks.sections} />
+                )}
                 <div className="mt-5 space-y-3">
                   {data.sections.map(section => {
                     const insight = insights.sections[section.name];

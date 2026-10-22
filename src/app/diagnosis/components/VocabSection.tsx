@@ -3,19 +3,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { VocabQuestion } from '../data/diagnostic-test-2-vocab';
-import type { VocabAnswer } from '@/types/diagnosis';
+import type { SubmittedVocabAnswer } from '@/types/diagnosis';
 
 const SECONDS_PER_QUESTION = 10;
 
 interface VocabSectionProps {
   questions: VocabQuestion[];
-  onComplete: (answers: VocabAnswer[]) => void;
+  onComplete: (answers: SubmittedVocabAnswer[]) => void;
 }
 
 export function VocabSection({ questions, onComplete }: VocabSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(SECONDS_PER_QUESTION);
-  const [collectedAnswers, setCollectedAnswers] = useState<VocabAnswer[]>([]);
+  const [collectedAnswers, setCollectedAnswers] = useState<SubmittedVocabAnswer[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const questionStartRef = useRef(Date.now());
@@ -34,13 +34,9 @@ export function VocabSection({ questions, onComplete }: VocabSectionProps) {
       Math.floor((Date.now() - questionStartRef.current) / 1000),
       SECONDS_PER_QUESTION
     );
-    const correctOption = q.options.find(o => o.type === 'correct');
-    const isCorrect = chosenOptionId !== null && chosenOptionId === correctOption?.id;
-
-    const newAnswer: VocabAnswer = {
+    const newAnswer: SubmittedVocabAnswer = {
       wordId: q.id,
       selectedOptionId: chosenOptionId,
-      isCorrect,
       timeTaken,
     };
 

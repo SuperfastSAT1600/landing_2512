@@ -3,16 +3,16 @@
 import { useState, useEffect } from 'react';
 import { VocabSection } from '../components/VocabSection';
 import { DiagnosticTestView } from '../components/DiagnosticTestView';
-import { diagnosticTest2Vocab } from '../data/diagnostic-test-2-vocab';
+import type { VocabQuestion } from '../data/diagnostic-test-2-vocab';
 import type { DiagnosticTestData } from '../data/diagnostic-test-1';
-import type { VocabAnswer } from '@/types/diagnosis';
+import type { SubmittedVocabAnswer } from '@/types/diagnosis';
 
 type Phase = 'loading' | 'vocab' | 'test';
 
 export default function DiagnosisDevPage() {
   const [phase, setPhase] = useState<Phase>('loading');
-  const [testData, setTestData] = useState<DiagnosticTestData | null>(null);
-  const [vocabAnswers, setVocabAnswers] = useState<VocabAnswer[]>([]);
+  const [testData, setTestData] = useState<(DiagnosticTestData & { vocab?: VocabQuestion[] }) | null>(null);
+  const [vocabAnswers, setVocabAnswers] = useState<SubmittedVocabAnswer[]>([]);
 
   useEffect(() => {
     fetch('/api/diagnosis/test-content')
@@ -39,7 +39,7 @@ export default function DiagnosisDevPage() {
       <>
         <DevBanner label="단어 진단 파트" />
         <VocabSection
-          questions={diagnosticTest2Vocab}
+          questions={testData?.vocab ?? []}
           onComplete={(answers) => {
             setVocabAnswers(answers);
             setPhase('test');

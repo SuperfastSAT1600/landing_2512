@@ -5,9 +5,9 @@ import { setPixelAdvancedMatching } from '@/lib/pixel-matching';
 import { DiagnosticTestView } from './components/DiagnosticTestView';
 import { VocabSection } from './components/VocabSection';
 import { ApplicationForm } from './components/ApplicationForm';
-import { diagnosticTest2Vocab } from './data/diagnostic-test-2-vocab';
+import type { VocabQuestion } from './data/diagnostic-test-2-vocab';
 import type { DiagnosticTestData } from './data/diagnostic-test-1';
-import type { VocabAnswer } from '@/types/diagnosis';
+import type { SubmittedVocabAnswer } from '@/types/diagnosis';
 
 const CODE_LENGTH = 6;
 
@@ -62,8 +62,8 @@ export default function DiagnosisPage() {
   const [tokenId, setTokenId] = useState('');
   const [testVersionId, setTestVersionId] = useState<string | null>(null);
   const [testId, setTestId] = useState('diagnostic-test-1');
-  const [testData, setTestData] = useState<DiagnosticTestData | null>(null);
-  const [vocabAnswers, setVocabAnswers] = useState<VocabAnswer[]>([]);
+  const [testData, setTestData] = useState<(DiagnosticTestData & { vocab?: VocabQuestion[] }) | null>(null);
+  const [vocabAnswers, setVocabAnswers] = useState<SubmittedVocabAnswer[]>([]);
   const [studentEmail, setStudentEmail] = useState('');
   const [emailInput, setEmailInput] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -149,19 +149,19 @@ export default function DiagnosisPage() {
 
   const loadTestContentInBackground = useCallback(async () => {
     try {
-      const url = testVersionId
-        ? `/api/diagnosis/test-content?versionId=${testVersionId}`
-        : '/api/diagnosis/test-content';
+      const params = new URLSearchParams({ testId });
+      if (testVersionId) params.set('versionId', testVersionId);
+      const url = `/api/diagnosis/test-content?${params}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to load test');
       const data = await res.json();
       setTestData(data);
-      setPhase(prev => prev === 'test-loading' ? 'test-active' : prev);
+      setPhase(prev => prev === 'test-loading' ? (testId === 'diagnostic-test-2' ? 'vocab-active' : 'test-active') : prev);
     } catch {
       setEmailError('Failed to load test. Please try again.');
       setPhase('email-input');
     }
-  }, [testVersionId]);
+  }, [testVersionId, testId]);
 
   const handleEmailSubmit = () => {
     setEmailError('');
@@ -189,7 +189,8 @@ export default function DiagnosisPage() {
   const handlePreviousScoreDone = useCallback((status: PreviousScoreStatus) => {
     setPreviousScoreStatus(status);
     if (testId === 'diagnostic-test-2') {
-      setPhase('vocab-active');
+      // 단어 문항은 test-content 응답에 들어 있어서 로딩이 끝나야 시작할 수 있다
+      setPhase(testData ? 'vocab-active' : 'test-loading');
     } else {
       setPhase(testData ? 'test-active' : 'test-loading');
     }
@@ -388,10 +389,10 @@ export default function DiagnosisPage() {
   }
 
   // Vocab active phase (v2 only)
-  if (phase === 'vocab-active') {
+  if (phase === 'vocab-active' && testData) {
     return (
       <VocabSection
-        questions={diagnosticTest2Vocab}
+        questions={testData.vocab ?? []}
         onComplete={(answers) => {
           setVocabAnswers(answers);
           setPhase(testData ? 'test-active' : 'test-loading');

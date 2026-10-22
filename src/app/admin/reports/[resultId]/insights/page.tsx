@@ -88,7 +88,7 @@ export default function InsightsEditPage({ params }: PageProps) {
     fetchReport(resultId).then((data) => {
       if (!data) { setError('리포트를 불러올 수 없습니다.'); setLoading(false); return; }
       setStudentName(data.studentName);
-      const ai = generateAllInsights(data.sections, data.questionDetails, data.savedWords ?? [], data.timeLimitMinutes);
+      const ai = generateAllInsights(data.sections, data.questionDetails, data.savedWords ?? [], data.timeLimitMinutes, data.benchmarks);
       setAiInsights(ai);
 
       const edited: Partial<ReportInsights> = data.editedInsights ?? {};

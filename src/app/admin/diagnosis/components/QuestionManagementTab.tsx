@@ -13,6 +13,7 @@ interface TestVersion {
   set_number: number;
   version_number: number;
   is_current: boolean;
+  test_id?: string | null;
 }
 
 const DIFFICULTY_COLOR: Record<string, string> = {
@@ -21,11 +22,18 @@ const DIFFICULTY_COLOR: Record<string, string> = {
   Hard: 'text-red-400',
 };
 
-type SortKey = 'questionNumber' | 'accuracyRate' | 'completionRate' | 'avgConfidence' | 'avgTimeSeconds';
+const FORMATS = [
+  { id: 'diagnostic-test-1', label: '테스트 형식 1' },
+  { id: 'diagnostic-test-2', label: '테스트 형식 2' },
+];
+
+type SortKey = 'questionNumber' | 'accuracyRate' | 'accuracyOverall' | 'completionRate' | 'avgConfidence' | 'avgTimeSeconds';
 
 export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) {
   const [stats, setStats] = useState<QuestionStat[]>([]);
   const [totalResults, setTotalResults] = useState(0);
+  const [pooledResults, setPooledResults] = useState(0);
+  const [testId, setTestId] = useState(FORMATS[0].id);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedStat, setSelectedStat] = useState<QuestionStat | null>(null);
@@ -44,8 +52,17 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
   }, []);
 
   useEffect(() => {
-    fetchStats(selectedVersionId);
-  }, [selectedVersionId]);
+    if (selectedVersionId) fetchStats(selectedVersionId);
+  }, [selectedVersionId, testId]);
+
+  // 세트는 형식과 독립이지만, 형식을 바꾸면 그 형식에 속한 세트(없으면 현재 세트)를 기본으로 보여준다
+  const changeFormat = (next: string) => {
+    setTestId(next);
+    setFilterSection('');
+    setFilterDomain('');
+    const forFormat = versions.find((v) => v.test_id === next) ?? versions.find((v) => v.is_current);
+    if (forFormat) setSelectedVersionId(forFormat.id);
+  };
 
   const fetchVersions = async () => {
     try {
@@ -68,9 +85,9 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
     setLoading(true);
     setError('');
     try {
-      const url = versionId
-        ? `/api/admin/diagnosis/question-stats?versionId=${versionId}`
-        : '/api/admin/diagnosis/question-stats';
+      const params = new URLSearchParams({ testId });
+      if (versionId) params.set('versionId', versionId);
+      const url = `/api/admin/diagnosis/question-stats?${params}`;
       const response = await fetch(url, {
         headers: { 'x-admin-key': adminKey },
       });
@@ -78,6 +95,7 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
       const data = await response.json();
       setStats(data.stats ?? []);
       setTotalResults(data.totalResults ?? 0);
+      setPooledResults(data.pooledResults ?? 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
     } finally {
@@ -120,7 +138,8 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
       <div className="flex items-center justify-between">
         <p className="text-gray-400 text-sm">
           총 <span className="text-white font-semibold">{stats.length}</span>문항 ·{' '}
-          응시 <span className="text-white font-semibold">{totalResults}</span>건
+          이 조합 응시 <span className="text-white font-semibold">{totalResults}</span>건 ·{' '}
+          같은 형식 전체 <span className="text-white font-semibold">{pooledResults}</span>건 (문항 통계는 이 전체 기준)
         </p>
         <button
           onClick={() => fetchStats(selectedVersionId)}
@@ -132,6 +151,13 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
+        <select
+          value={testId}
+          onChange={(e) => changeFormat(e.target.value)}
+          className="px-3 py-1.5 bg-gray-700 border border-blue-500/50 rounded-lg text-sm text-white focus:outline-none"
+        >
+          {FORMATS.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+        </select>
         {/* Version filter */}
         {versions.length > 0 && (
           <select
@@ -203,6 +229,13 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
               </th>
               <th
                 className="text-right py-3 px-3 cursor-pointer hover:text-white whitespace-nowrap"
+                onClick={() => handleSort('accuracyOverall')}
+                title="미응답을 오답으로 본 정답률"
+              >
+                전체 기준 <SortIcon k="accuracyOverall" />
+              </th>
+              <th
+                className="text-right py-3 px-3 cursor-pointer hover:text-white whitespace-nowrap"
                 onClick={() => handleSort('completionRate')}
               >
                 응시율 <SortIcon k="completionRate" />
@@ -251,6 +284,9 @@ export function QuestionManagementTab({ adminKey }: QuestionManagementTabProps) 
                       {(stat.accuracyRate * 100).toFixed(1)}%
                     </span>
                   ) : <span className="text-gray-600">-</span>}
+                </td>
+                <td className="py-3 px-3 text-right text-gray-300">
+                  {stat.exposures > 0 ? `${(stat.accuracyOverall * 100).toFixed(1)}%` : '-'}
                 </td>
                 <td className="py-3 px-3 text-right">
                   <span className={

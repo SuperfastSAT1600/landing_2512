@@ -168,6 +168,8 @@ export const MOCK_REPORT_DATA: ReportData = {
   benchmarks: {
     sections: SECTION_BENCHMARKS,
     domains: DOMAIN_BENCHMARKS,
+    source: 'legacy',
+    sampleSize: 76,
   },
 
   editedInsights: null,
