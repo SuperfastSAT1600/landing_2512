@@ -91,6 +91,44 @@ export async function fetchHadLessonUserIds(now: Date): Promise<Set<string>> {
   return hadLesson;
 }
 
+// ─── 지금 이후 예약된 코치룸 시간 (학생별 분) ───────────────────────────────────
+
+export async function fetchFutureCoachRoomMinutes(now: Date): Promise<Map<string, number>> {
+  const events: { id: string; starts_at: string; ends_at: string | null }[] = [];
+  for (let offset = 0; ; offset += PAGE_SIZE) {
+    const { data: page, error } = await supabaseSFv2
+      .from('scheduled_events')
+      .select('id, starts_at, ends_at')
+      .eq('category', 'coach_room')
+      .neq('status', 'cancelled')
+      .gte('starts_at', now.toISOString())
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (error) throw new Error(`future coach_room events: ${error.message}`);
+    if (!page?.length) break;
+    events.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+
+  const minutesById = new Map(events.map(e => [
+    e.id,
+    e.ends_at ? Math.round((new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime()) / 60000) : 0,
+  ]));
+  const minutesByUser = new Map<string, number>();
+  const ids = events.map(e => e.id);
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data, error } = await supabaseSFv2
+      .from('scheduled_event_participants')
+      .select('event_id, user_id')
+      .in('event_id', ids.slice(i, i + 100));
+    if (error) throw new Error(`future coach_room participants: ${error.message}`);
+    for (const p of data ?? []) {
+      if (!p.user_id) continue;
+      minutesByUser.set(p.user_id, (minutesByUser.get(p.user_id) ?? 0) + (minutesById.get(p.event_id) ?? 0));
+    }
+  }
+  return minutesByUser;
+}
+
 // ─── 잔여 수업 시간 계산 (구매 − 환불 − 완료) ─────────────────────────────────
 
 export async function fetchRemainingHoursMap(userIds: string[]): Promise<Map<string, number>> {
