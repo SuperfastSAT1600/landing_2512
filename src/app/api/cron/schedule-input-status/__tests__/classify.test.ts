@@ -5,6 +5,7 @@ const now = new Date('2026-10-21T23:00:00Z');
 const hoursLater = (h: number) => new Date(now.getTime() + h * 3600 * 1000);
 
 const student = (over: Partial<StudentSchedule> & { name: string }): StudentSchedule => ({
+  userId: over.name,
   remainingHours: 10,
   everScheduled: true,
   isNew: false,

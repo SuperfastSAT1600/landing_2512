@@ -22,8 +22,8 @@ describe('buildCoachRatios', () => {
     expect(r).toEqual([{
       key: 'a', name: '가', studentCount: 2, scheduledHours: 3, remainingHours: 10, ratio: 30, deltaPp: null,
       students: [
-        { name: 's2', scheduledHours: 1, remainingHours: 4, ratio: 25 },
-        { name: 's1', scheduledHours: 2, remainingHours: 6, ratio: expect.closeTo(33.33, 1) },
+        { userId: 's2', name: 's2', scheduledHours: 1, remainingHours: 4, ratio: 25 },
+        { userId: 's1', name: 's1', scheduledHours: 2, remainingHours: 6, ratio: expect.closeTo(33.33, 1) },
       ],
     }]);
   });

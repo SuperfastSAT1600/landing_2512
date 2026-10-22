@@ -13,8 +13,9 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const isCoachOnboarding = pathname?.startsWith('/coach-onboarding');
   const isSsatMath = pathname?.startsWith('/ssat-math');
   const isOnboardingSession = pathname?.startsWith('/onboarding');
+  const isStaff = pathname?.startsWith('/staff/');
 
-  if (isPortal || isCoachPrep || isPartner || isEnrollment || isCoachOnboarding || isSsatMath || isOnboardingSession)
+  if (isPortal || isCoachPrep || isPartner || isEnrollment || isCoachOnboarding || isSsatMath || isOnboardingSession || isStaff)
     return <>{children}</>;
 
   return (

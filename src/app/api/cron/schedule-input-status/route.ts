@@ -2,9 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { notifyScheduleInputStatus } from '@/lib/slack-sfv2';
 import { buildCoachRoster } from '@/lib/coach-roster';
 import { fetchCoachRosterInput } from '@/lib/coach-roster-fetch';
-import { classifySchedules, type StudentSchedule } from './classify';
+import { classifySchedules, type Briefing, type StudentSchedule } from './classify';
+import { buildBriefingPayload } from './briefing-payload';
+import { saveBriefing } from './briefing-store';
 import { applyDelta, buildCoachRatios, type CoachRatio } from './coach-ratio';
-import { kstDate, loadSnapshot, saveSnapshot, yesterdayKstDate } from './coach-snapshots';
+import { kstDate, yesterdayKstDate } from '@/lib/kst-date';
+import { loadSnapshot, saveSnapshot } from './coach-snapshots';
 import { fetchAllActiveStudentsMap, fetchFutureCoachRoomMinutes, fetchHadLessonUserIds, fetchRemainingHoursMap, fetchScheduleSummary } from './fetchers';
 
 // 테스트 계정 — 알림 대상에서 제외
@@ -41,6 +44,7 @@ export async function GET(request: NextRequest) {
     const remainingMap = await fetchRemainingHoursMap([...new Set([...activeIds, ...rosterIds])]);
 
     const students: StudentSchedule[] = activeIds.map(userId => ({
+      userId,
       name: activeMap.get(userId)!,
       remainingHours: remainingMap.get(userId) ?? 0,
       everScheduled: summary.everScheduled.has(userId),
@@ -55,6 +59,7 @@ export async function GET(request: NextRequest) {
 
     const coachRatios = await withPreviousDay(buildCoachRatios(roster, coachRoomMinutes, remainingMap), now);
 
+    await storeBriefing(briefing, coachRatios, now);
     await notifyScheduleInputStatus(briefing, coachRatios, now);
 
     return NextResponse.json({
@@ -87,4 +92,13 @@ async function withPreviousDay(ratios: CoachRatio[], now: Date): Promise<CoachRa
     console.error('[cron/schedule-input-status] snapshot save failed:', error);
   }
   return result;
+}
+
+/** 직원 페이지용 일별 저장. 실패해도 슬랙 발송은 계속한다 (오류는 로그). */
+async function storeBriefing(briefing: Briefing, coachRatios: CoachRatio[], now: Date): Promise<void> {
+  try {
+    await saveBriefing(kstDate(now), buildBriefingPayload(briefing, coachRatios, now));
+  } catch (error) {
+    console.error('[cron/schedule-input-status] briefing store failed:', error);
+  }
 }
