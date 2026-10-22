@@ -39,8 +39,8 @@
 
 ### REQ-005: 브리핑 페이지 UI
 - **Priority**: Must
-- **Description**: `/staff/briefing?date=` — 로그인 화면, 날짜 이동, 네 섹션, 학생 행마다 연락 체크
-- **Acceptance Criteria**: 학생 행에 "마지막 연락 N일 전"과 [연락함] 버튼(메모 선택). 펼치면 전체 이력(날짜·시각·직원·메모). 그날 연락한 학생은 체크 표시. noindex
+- **Description**: `/staff/briefing` (주소 하나, 날짜는 화면 안에서 자유 선택) — 로그인 화면, 날짜 선택, 요약 타일, 네 섹션, 학생·코치 행마다 연락 체크
+- **Acceptance Criteria**: 학생·코치 행에 "마지막 연락 N일 전"과 [연락함] 버튼(메모 선택). 펼치면 전체 이력(날짜·시각·직원·메모). 그날 연락했으면 체크 표시. 코치 이름을 누르면 담당 학생 현황이 펼쳐진다. 코치 연락 기록은 student_contact_logs 에 `coach:<key>` id 로 저장. noindex
 - **Verification**: (BROWSER) 로그인 → 날짜 이동 → 연락함 클릭 → 체크·이력 반영
 
 ## Implementation Order

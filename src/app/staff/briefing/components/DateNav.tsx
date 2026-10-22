@@ -1,22 +1,22 @@
 'use client';
 
-export function DateNav({ date, availableDates, onChange }: { date: string; availableDates: string[]; onChange: (date: string) => void }) {
-  // availableDates는 최신순 — 앞 인덱스가 더 최근 날짜
-  const index = availableDates.indexOf(date);
-  const older = index >= 0 ? availableDates[index + 1] : undefined;
-  const newer = index > 0 ? availableDates[index - 1] : undefined;
+import { kstDate } from '@/lib/kst-date';
+import { addDays } from '../format';
 
+/** 날짜는 자유롭게 고른다. 저장된 브리핑이 없는 날은 화면에서 안내한다. */
+export function DateNav({ date, onChange }: { date: string; onChange: (date: string) => void }) {
+  const today = kstDate(new Date());
   return (
-    <div className="flex items-center gap-2">
-      <button type="button" disabled={!older} onClick={() => older && onChange(older)} aria-label="이전 날짜"
-        className="rounded border border-gray-300 px-2 py-1 text-sm disabled:opacity-30">◀</button>
-      <select value={date} onChange={e => onChange(e.target.value)} aria-label="날짜 선택"
-        className="rounded border border-gray-300 px-2 py-1 text-sm">
-        {!availableDates.includes(date) && <option value={date}>{date}</option>}
-        {availableDates.map(d => <option key={d} value={d}>{d}</option>)}
-      </select>
-      <button type="button" disabled={!newer} onClick={() => newer && onChange(newer)} aria-label="다음 날짜"
-        className="rounded border border-gray-300 px-2 py-1 text-sm disabled:opacity-30">▶</button>
+    <div className="flex items-center gap-1.5">
+      <button type="button" onClick={() => onChange(addDays(date, -1))} aria-label="이전 날짜"
+        className="rounded border border-gray-300 bg-white px-2 py-1 text-sm">◀</button>
+      <input type="date" value={date} onChange={e => e.target.value && onChange(e.target.value)} aria-label="날짜 선택"
+        className="rounded border border-gray-300 bg-white px-2 py-1 text-sm" />
+      <button type="button" onClick={() => onChange(addDays(date, 1))} aria-label="다음 날짜"
+        className="rounded border border-gray-300 bg-white px-2 py-1 text-sm">▶</button>
+      {date !== today && (
+        <button type="button" onClick={() => onChange(today)} className="rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-600">오늘</button>
+      )}
     </div>
   );
 }

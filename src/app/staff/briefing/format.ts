@@ -2,6 +2,14 @@ import { kstDate } from '@/lib/kst-date';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** 코치 연락 기록은 학생 연락 기록 테이블에 'coach:<코치 key>' 로 구분해 저장한다 */
+export const coachContactId = (coachKey: string): string => `coach:${coachKey}`;
+
+/** YYYY-MM-DD 에 일수를 더한다 (UTC 날짜 연산) */
+export function addDays(date: string, days: number): string {
+  return new Date(new Date(`${date}T00:00:00Z`).getTime() + days * DAY_MS).toISOString().slice(0, 10);
+}
+
 export function formatHours(hours: number): string {
   return `${Number(hours.toFixed(1))}h`;
 }
