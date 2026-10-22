@@ -1,6 +1,7 @@
 export const ENDING_SOON_MS = 2 * 24 * 60 * 60 * 1000;
 
 export interface StudentSchedule {
+  userId: string;
   name: string;
   remainingHours: number;
   everScheduled: boolean;
@@ -13,6 +14,7 @@ export interface StudentSchedule {
 }
 
 export interface BriefingEntry {
+  userId: string;
   name: string;
   remainingHours: number;
   isNew: boolean;
@@ -38,6 +40,7 @@ export function classifySchedules(students: StudentSchedule[], now: Date): Brief
 
   for (const s of students) {
     const entry: BriefingEntry = {
+      userId: s.userId,
       name: s.name,
       remainingHours: s.remainingHours,
       isNew: s.isNew,

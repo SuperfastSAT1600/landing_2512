@@ -1,6 +1,7 @@
 import type { CoachRoster } from '@/lib/coach-roster';
 
 export interface StudentRatio {
+  userId: string;
   name: string;
   scheduledHours: number;
   remainingHours: number;
@@ -53,7 +54,7 @@ export function buildCoachRatios(
     const perStudent = students.map((s): StudentRatio => {
       const scheduled = (scheduledMinutes.get(s.profileId) ?? 0) / 60;
       const remainingOfStudent = remainingHours.get(s.profileId) ?? 0;
-      return { name: s.name, scheduledHours: scheduled, remainingHours: remainingOfStudent, ratio: percent(scheduled, remainingOfStudent) };
+      return { userId: s.profileId, name: s.name, scheduledHours: scheduled, remainingHours: remainingOfStudent, ratio: percent(scheduled, remainingOfStudent) };
     }).sort(byRatioAscending);
     const scheduledHours = perStudent.reduce((sum, s) => sum + s.scheduledHours, 0);
     const remaining = perStudent.reduce((sum, s) => sum + s.remainingHours, 0);

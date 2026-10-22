@@ -1,16 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { CoachRatio, SnapshotValues } from './coach-ratio';
 
-const KST_MS = 9 * 60 * 60 * 1000;
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** KST 기준 날짜 (YYYY-MM-DD) */
-export function kstDate(date: Date): string {
-  return new Date(date.getTime() + KST_MS).toISOString().slice(0, 10);
-}
-
-export const yesterdayKstDate = (now: Date): string => kstDate(new Date(now.getTime() - DAY_MS));
-
 export async function loadSnapshot(snapshotDate: string): Promise<Map<string, SnapshotValues>> {
   const { data, error } = await supabaseAdmin
     .from('coach_schedule_snapshots')
