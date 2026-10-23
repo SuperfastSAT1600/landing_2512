@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 import type { StudentMessageContext } from '@/types/coach-prep';
+import type { AvailabilitySlot } from '@/lib/student-availability';
 
 // 학생별 스케줄 링크: SFv2 schedule_access_link의 토큰으로 만든 학생 페이지 주소
 export const SCHEDULE_LINK_BASE = 'https://app.superfastsat.io/report/';
@@ -57,4 +58,17 @@ export async function loadStudentMessageContext(studentId: string): Promise<Stud
     timezone: timezone ?? validTz(student.parent_timezone),
     schedule_url: scheduleUrl,
   };
+}
+
+// 학생이 SFv2에 입력한 코치룸 가능 시간 원본. SFv2 계정이 없거나 입력이 없으면 빈 배열(= 제한 없음)
+export async function loadAvailabilitySlots(studentId: string): Promise<AvailabilitySlot[]> {
+  const { data } = await supabaseAdmin.from('students').select('sfv2_profile_id').eq('id', studentId).maybeSingle();
+  const profileId = (data as { sfv2_profile_id: string | null } | null)?.sfv2_profile_id;
+  if (!profileId) return [];
+  const { data: slots, error } = await supabaseSFv2
+    .from('scheduled_availability_slots')
+    .select('weekday, start_minute_local, end_minute_local, tz, effective_from, effective_until, notes')
+    .eq('owner_id', profileId);
+  if (error) throw new Error(error.message);
+  return (slots ?? []) as AvailabilitySlot[];
 }

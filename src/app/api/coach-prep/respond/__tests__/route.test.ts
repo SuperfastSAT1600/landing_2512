@@ -6,10 +6,11 @@ const db = vi.hoisted(() => ({
   saveResponse: vi.fn(),
   getStudentName: vi.fn(),
 }));
+const ctx = vi.hoisted(() => ({ loadAvailabilitySlots: vi.fn() }));
 const slack = vi.hoisted(() => ({ notifyCoachResponseToSlack: vi.fn() }));
 vi.mock('@/lib/coach-prep-requests-db', () => db);
 vi.mock('@/lib/slack-coach-response', () => slack);
-vi.mock('@/lib/coach-prep-student-context', () => ({ loadStudentMessageContext: vi.fn().mockResolvedValue({ language: null, timezone: 'America/Los_Angeles', schedule_url: null }) }));
+vi.mock('@/lib/coach-prep-student-context', () => ({ loadAvailabilitySlots: ctx.loadAvailabilitySlots, loadStudentMessageContext: vi.fn().mockResolvedValue({ language: null, timezone: 'America/Los_Angeles', schedule_url: null }) }));
 
 const TOKEN = 'a'.repeat(32);
 const FUTURE = '2099-01-01T10:00:00+09:00';
@@ -38,6 +39,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   db.findByToken.mockResolvedValue(row());
   db.getStudentName.mockResolvedValue('홍길동');
+  ctx.loadAvailabilitySlots.mockResolvedValue([]);
   db.saveResponse.mockImplementation(async (_id: string, patch: Record<string, unknown>) => row({ ...patch }));
 });
 
@@ -72,6 +74,20 @@ describe('POST /api/coach-prep/respond', () => {
     const res = await POST(post({ token: TOKEN, action: 'accept', ...OPT1 }));
     expect(res.status).toBe(409);
     expect((await res.json()).error.code).toBe('DEADLINE_PASSED');
+    expect(db.saveResponse).not.toHaveBeenCalled();
+    expect(slack.notifyCoachResponseToSlack).not.toHaveBeenCalled();
+  });
+
+  it('학생 가능 시간 밖의 수업 일시는 422로 막고 저장·알림하지 않는다', async () => {
+    // FUTURE가 속하지 않는 요일/시간만 가능한 학생
+    ctx.loadAvailabilitySlots.mockResolvedValue([
+      { weekday: 0, start_minute_local: 0, end_minute_local: 1, tz: 'UTC', effective_from: null, effective_until: null, notes: null },
+    ]);
+    const { POST } = await import('../route');
+    const res = await POST(post({ token: TOKEN, action: 'accept', ...OPT1 }));
+
+    expect(res.status).toBe(422);
+    expect((await res.json()).error.code).toBe('OUTSIDE_AVAILABILITY');
     expect(db.saveResponse).not.toHaveBeenCalled();
     expect(slack.notifyCoachResponseToSlack).not.toHaveBeenCalled();
   });

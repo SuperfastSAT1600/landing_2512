@@ -46,7 +46,7 @@ const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${St
 const isoDay = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 const dayMs = (iso: string) => Date.parse(`${iso.slice(0, 10)}T00:00:00Z`);
 
-function resolveTz(tz: string | null): string {
+export function resolveTz(tz: string | null): string {
   const name = tz || FALLBACK_TZ;
   try {
     new Intl.DateTimeFormat('en-US', { timeZone: name });

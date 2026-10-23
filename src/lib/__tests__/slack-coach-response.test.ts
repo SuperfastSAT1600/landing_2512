@@ -70,10 +70,29 @@ describe('notifyCoachResponseToSlack', () => {
     else process.env.SLACK_BOT_TOKEN = origToken;
   });
 
-  it('REQ-005: C0C9B0DEGDN 채널로 한 번 보낸다', async () => {
+  it('수락이면 본문 뒤에 스레드로 한글·영어 선택 안내를 학생 시간대로 남긴다', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true, ts: '111.222' }) });
+    await notifyCoachResponseToSlack({ ...base, action: 'accept', lessons, studentTimezone: 'America/Los_Angeles' });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    const [, ko, en] = fetchMock.mock.calls.map(([, init]) => JSON.parse(init.body));
+    expect(ko.thread_ts).toBe('111.222');
+    expect(ko.text).toContain('하나를 선택');
+    expect(ko.text).toContain('옵션 1: 첫 수업 10/25(일) 오후 10:30');
+    expect(en.thread_ts).toBe('111.222');
+    expect(en.text).toContain('pick the one option');
+    expect(en.text).toContain('Option 1: 1st lesson Sun 10/25, 10:30 PM');
+  });
+
+  it('거절이면 스레드 안내 없이 본문만 보낸다', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true, ts: '1.2' }) });
+    await notifyCoachResponseToSlack({ ...base, action: 'decline' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('REQ-005: C0C9B0DEGDN 채널로 본문을 보낸다', async () => {
     await notifyCoachResponseToSlack({ ...base, action: 'accept', lessons });
     expect(COACH_RESPONSE_CHANNEL).toBe('C0C9B0DEGDN');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1); // ts가 없으면 스레드 안내는 생략
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://slack.com/api/chat.postMessage');
     expect(JSON.parse(init.body).channel).toBe('C0C9B0DEGDN');
