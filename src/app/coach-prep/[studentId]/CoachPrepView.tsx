@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Image from 'next/image';
 import type { WeeklySlot } from '@/types/crm';
 import type { TcSession } from '@/lib/coach-prep-test-center';
 import { TestCenterSection } from './TestCenterSection';
@@ -139,7 +138,7 @@ function ScoreBar({ label, score, max = 800 }: { label: string; score: number | 
 
 function SectionCard({ id, title, children, accent }: { id?: string; title: string; children: React.ReactNode; accent?: string }) {
   return (
-    <div id={id} className={`scroll-mt-14 bg-white rounded-xl border shadow-sm p-5 ${accent ?? 'border-gray-200'}`}>
+    <div id={id} className={`scroll-mt-24 bg-white rounded-xl border shadow-sm p-5 ${accent ?? 'border-gray-200'}`}>
       <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">{title}</h2>
       {children}
     </div>
@@ -486,9 +485,7 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-      <div className={`max-w-2xl mx-auto px-4 pt-6 space-y-5 ${data.coach_request ? 'pb-28' : 'pb-8'}`}>
-
-        <Image src="/logo-black.png" alt="SuperfastSAT" width={150} height={18} priority style={{ height: 'auto' }} />
+      <div className={`max-w-2xl mx-auto px-4 space-y-5 ${data.coach_request ? 'pb-28' : 'pb-8'}`}>
 
         <CoachPrepToc items={tocItems} />
 
@@ -516,7 +513,7 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
         </div>
 
         {/* 수업 전 필수 확인 */}
-        <div id="confirm" className="scroll-mt-14 bg-amber-50 rounded-xl border border-amber-200 p-5">
+        <div id="confirm" className="scroll-mt-24 bg-amber-50 rounded-xl border border-amber-200 p-5">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-amber-500">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

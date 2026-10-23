@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Lock } from 'lucide-react';
 import type { TocItem } from './coach-prep-toc';
 
@@ -21,7 +22,7 @@ export function CoachPrepToc({ items }: { items: TocItem[] }) {
         const first = items.find((i) => visible.has(i.id));
         if (first) setActive(first.id);
       },
-      { rootMargin: '-56px 0px -60% 0px' },
+      { rootMargin: '-96px 0px -60% 0px' },
     );
     targets.forEach((t) => observer.observe(t));
     return () => observer.disconnect();
@@ -33,7 +34,12 @@ export function CoachPrepToc({ items }: { items: TocItem[] }) {
   };
 
   return (
-    <nav aria-label="목차" className="sticky top-0 z-30 -mx-4 border-b border-gray-200 bg-gray-50/95 px-4 py-2 backdrop-blur">
+    <>
+    {/* 고정 바가 차지하는 높이만큼 본문을 밀어 내린다 */}
+    <div aria-hidden className="h-[84px]" />
+    <nav aria-label="목차" className="fixed inset-x-0 top-0 z-30 border-b border-gray-200 bg-gray-50/95 backdrop-blur">
+      <div className="mx-auto max-w-2xl px-4 pt-2 pb-2">
+      <Image src="/logo-black.png" alt="SuperfastSAT" width={110} height={13} priority style={{ height: 'auto' }} className="mb-1.5" />
       <ul className="flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
         {items.map((item) => (
           <li key={item.id} className="shrink-0">
@@ -56,6 +62,8 @@ export function CoachPrepToc({ items }: { items: TocItem[] }) {
           </li>
         ))}
       </ul>
+      </div>
     </nav>
+    </>
   );
 }
