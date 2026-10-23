@@ -3,6 +3,7 @@
  * 상담 메모 알림(slack-memo)과 채널이 달라 별도 모듈로 둔다. 전송 실패는 삼켜서 응답 저장에 영향을 주지 않는다.
  */
 import { formatKst, lessonOptions } from '@/lib/coach-prep-request';
+import { buildChoiceMessages } from '@/lib/coach-prep-student-message';
 import type { LessonTimes } from '@/types/coach-prep';
 
 export const COACH_RESPONSE_CHANNEL = 'C0C9B0DEGDN';
@@ -46,19 +47,32 @@ export function buildCoachResponseText(n: CoachResponseNotice): string {
   return lines.join('\n');
 }
 
+async function postMessage(token: string, payload: Record<string, unknown>): Promise<string | null> {
+  const res = await fetch('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify({ channel: COACH_RESPONSE_CHANNEL, ...payload }),
+    signal: AbortSignal.timeout(5000), // Slack이 멈춰도 코치 응답 요청이 같이 매달리지 않게
+  });
+  const body = (await res.json()) as { ok?: boolean; error?: string; ts?: string };
+  if (!body.ok) {
+    console.error('[slack-coach-response]', body.error);
+    return null;
+  }
+  return body.ts ?? null;
+}
+
 export async function notifyCoachResponseToSlack(notice: CoachResponseNotice): Promise<void> {
   const token = process.env.SLACK_BOT_TOKEN;
   if (!token) return;
 
   try {
-    const res = await fetch('https://slack.com/api/chat.postMessage', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify({ channel: COACH_RESPONSE_CHANNEL, text: buildCoachResponseText(notice) }),
-      signal: AbortSignal.timeout(5000), // Slack이 멈춰도 코치 응답 요청이 같이 매달리지 않게
-    });
-    const body = (await res.json()) as { ok?: boolean; error?: string };
-    if (!body.ok) console.error('[slack-coach-response]', body.error);
+    const ts = await postMessage(token, { text: buildCoachResponseText(notice) });
+    if (!ts || notice.action !== 'accept' || !notice.lessons) return;
+    // 담당자가 학생에게 그대로 붙여 넣을 선택 안내를 스레드에 한글·영어로 남긴다
+    const { ko, en } = buildChoiceMessages({ coachName: notice.coachName, options: lessonOptions(notice.lessons), timezone: notice.studentTimezone ?? null });
+    await postMessage(token, { thread_ts: ts, text: `*한글*\n${ko}` });
+    await postMessage(token, { thread_ts: ts, text: `*English*\n${en}` });
   } catch (e) {
     console.error('[slack-coach-response]', e);
   }

@@ -10,7 +10,7 @@ import { CoachPrepToc } from './CoachPrepToc';
 import { buildTocItems } from './coach-prep-toc';
 import { CoachResponseForm } from './CoachResponseForm';
 import type { CoachRequestInfo } from '@/types/coach-prep';
-import type { AvailabilitySummary } from '@/lib/student-availability';
+import type { AvailabilitySummary, AvailabilitySlot } from '@/lib/student-availability';
 
 // 서버 파일(API route, page.tsx)에서 import하면 서버 전용 모듈이 클라이언트 번들에 포함됨 — 인라인 정의
 interface DiagnosticData {
@@ -74,6 +74,7 @@ type ExtendedData = CoachViewData & {
   srm_skills: SrmSkill[] | null;
   srm_tc_sessions: TcSession[];
   availability: AvailabilitySummary | null;
+  availability_slots: AvailabilitySlot[];
   coach_request: CoachRequestInfo | null;
   srm_brief: SrmBriefData | null;
   sfv2_profile_id: string | null;
@@ -673,7 +674,7 @@ export function CoachPrepView({ data }: { data: ExtendedData }) {
             </SectionCard>
 
             {/* 수업 가능 여부 응답 */}
-            {data.coach_request && <CoachResponseForm info={data.coach_request} />}
+            {data.coach_request && <CoachResponseForm info={data.coach_request} slots={data.availability_slots} />}
           </>
         )}
 

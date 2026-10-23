@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import type { CoachRequestInfo, CoachPrepStatus, LessonTimes } from '@/types/coach-prep';
 import { formatKst, isoToKstInput, kstInputDayLabel, kstInputToIso, lessonOptions } from '@/lib/coach-prep-request';
+import { isWithinAvailability } from '@/lib/availability-window';
+import type { AvailabilitySlot } from '@/lib/student-availability';
 import { useNow } from './useNow';
 
 type Choice = 'accept' | 'decline';
@@ -39,7 +41,7 @@ function Summary({ saved }: { saved: Saved }) {
   );
 }
 
-function LessonInput({ label, value, min, onChange }: { label: string; value: string; min: string | undefined; onChange: (v: string) => void }) {
+function LessonInput({ label, value, min, outside, onChange }: { label: string; value: string; min: string | undefined; outside: boolean; onChange: (v: string) => void }) {
   const day = kstInputDayLabel(value);
   return (
     <label className="block space-y-1">
@@ -49,14 +51,16 @@ function LessonInput({ label, value, min, onChange }: { label: string; value: st
       </span>
       <input
         type="datetime-local" value={value} min={min} onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-violet-500 focus:outline-none"
+        aria-invalid={outside}
+        className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none ${outside ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-violet-500'}`}
       />
+      {outside && <span className="block text-[11px] font-medium text-red-600">학생이 가능하다고 입력한 시간이 아닙니다. 위 &lsquo;학생 입력 가능 시간&rsquo; 안에서 골라 주세요.</span>}
     </label>
   );
 }
 
 // 코치가 수업 수락 여부와 첫 수업 일시를 남기는 폼 (마감 전에는 수정 가능)
-export function CoachResponseForm({ info }: { info: CoachRequestInfo }) {
+export function CoachResponseForm({ info, slots }: { info: CoachRequestInfo; slots: AvailabilitySlot[] }) {
   const now = useNow();
   const initial: Saved | null = info.status === 'pending' ? null : info;
   const [saved, setSaved] = useState<Saved | null>(initial);
@@ -70,6 +74,7 @@ export function CoachResponseForm({ info }: { info: CoachRequestInfo }) {
   const [closedByServer, setClosedByServer] = useState(false);
 
   const closed = closedByServer || (now != null && now > Date.parse(info.deadline_at));
+  const outsideOf = (v: string) => { const iso = kstInputToIso(v); return !!iso && !isWithinAvailability(iso, slots); };
   const minInput = now != null ? isoToKstInput(new Date(now).toISOString()) : undefined;
 
   // 취소하면 저장된 값으로 되돌려, 다음 "수정하기"에 저장 안 된 입력이 남아 있지 않게 한다
@@ -91,6 +96,7 @@ export function CoachResponseForm({ info }: { info: CoachRequestInfo }) {
     const second2 = kstInputToIso(inputs.second2);
     if (choice === 'accept') {
       if (!first || !second) { setError('옵션 1의 첫 수업과 두 번째 수업 일시를 모두 입력해 주세요.'); return; }
+      if ([first, second, first2, second2].some((t) => t && !isWithinAvailability(t, slots))) { setError('학생이 가능하다고 입력한 시간 안에서만 수업 일정을 남길 수 있습니다.'); return; }
       if (Date.parse(second) <= Date.parse(first)) { setError('옵션 1의 두 번째 수업은 첫 수업보다 늦어야 합니다.'); return; }
       if (!!first2 !== !!second2) { setError('옵션 2는 첫 수업과 두 번째 수업을 모두 입력하거나 모두 비워 주세요.'); return; }
       if (first2 && second2 && Date.parse(second2) <= Date.parse(first2)) { setError('옵션 2의 두 번째 수업은 첫 수업보다 늦어야 합니다.'); return; }
@@ -156,13 +162,13 @@ export function CoachResponseForm({ info }: { info: CoachRequestInfo }) {
               <p className="text-[11px] text-gray-400">희망하시는 첫 수업·두 번째 수업 조합을 옵션으로 남겨 주세요. 시간은 한국 시간(KST) 기준입니다.</p>
               <fieldset className="space-y-2 rounded-lg border border-violet-100 bg-violet-50/30 p-3">
                 <legend className="px-1 text-xs font-bold text-violet-700">옵션 1 (필수)</legend>
-                <LessonInput label="첫 수업" value={inputs.first} min={minInput} onChange={setInput('first')} />
-                <LessonInput label="두 번째 수업" value={inputs.second} min={inputs.first || minInput} onChange={setInput('second')} />
+                <LessonInput label="첫 수업" value={inputs.first} outside={outsideOf(inputs.first)} min={minInput} onChange={setInput('first')} />
+                <LessonInput label="두 번째 수업" value={inputs.second} outside={outsideOf(inputs.second)} min={inputs.first || minInput} onChange={setInput('second')} />
               </fieldset>
               <fieldset className="space-y-2 rounded-lg border border-gray-200 p-3">
                 <legend className="px-1 text-xs font-bold text-gray-500">옵션 2 (선택)</legend>
-                <LessonInput label="첫 수업" value={inputs.first2} min={minInput} onChange={setInput('first2')} />
-                <LessonInput label="두 번째 수업" value={inputs.second2} min={inputs.first2 || minInput} onChange={setInput('second2')} />
+                <LessonInput label="첫 수업" value={inputs.first2} outside={outsideOf(inputs.first2)} min={minInput} onChange={setInput('first2')} />
+                <LessonInput label="두 번째 수업" value={inputs.second2} outside={outsideOf(inputs.second2)} min={inputs.first2 || minInput} onChange={setInput('second2')} />
               </fieldset>
             </div>
           )}

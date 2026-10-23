@@ -57,3 +57,24 @@ export function buildStudentMessage({ coachName, options, timezone, language, sc
   const prompt = lang === 'ko' ? SCHEDULE_PROMPT_KO : SCHEDULE_PROMPT_EN;
   return [[header, ...lines].join('\n'), scheduleUrl ? `${prompt}\n${scheduleUrl}` : prompt].join('\n\n');
 }
+
+// 코치 수락 슬랙 스레드용: 학생에게 코치가 가능한 수업 시간 중 하나를 고르게 하는 한글·영어 안내
+export function buildChoiceMessages(
+  { coachName, options, timezone }: Pick<MessageInput, 'coachName' | 'options' | 'timezone'>,
+): { ko: string; en: string } {
+  const tz = timezone ?? KST;
+  const list = (lang: Lang) => options.map((o) => {
+    const num = o.label.replace(/\D/g, '');
+    const [a, b] = [formatInTimeZone(o.first, tz, lang), formatInTimeZone(o.second, tz, lang)];
+    return lang === 'ko' ? `옵션 ${num}: 첫 수업 ${a} / 두 번째 수업 ${b}` : `Option ${num}: 1st lesson ${a} / 2nd lesson ${b}`;
+  });
+  const ko = [
+    `${coachName} 코치님이 아래 시간에 수업이 가능하다고 하셨어요! 이 중에서 편한 옵션 하나를 선택해서 알려주세요. (${timezone ? `현지 시간 ${timezone}` : '한국 시간(KST)'} 기준)`,
+    ...list('ko'),
+  ];
+  const en = [
+    `${coachName} is available at the times below. Please pick the one option that works best for you and let us know. (${timezone ? `your local time, ${timezone}` : 'Korea Standard Time (KST)'})`,
+    ...list('en'),
+  ];
+  return { ko: ko.join('\n'), en: en.join('\n') };
+}

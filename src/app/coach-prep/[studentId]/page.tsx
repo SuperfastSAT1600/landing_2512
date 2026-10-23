@@ -179,7 +179,7 @@ export default async function CoachPrepPage({ params, searchParams }: Props) {
     : Promise.resolve({ skills: null, tcSessions: [] });
 
   // 학생이 SFv2에 입력한 코치룸 가능 시간 — 실패해도 페이지는 계속 렌더
-  const availabilityPromise: Promise<AvailabilitySummary | null> = student.sfv2_profile_id
+  const availabilityPromise: Promise<{ summary: AvailabilitySummary; slots: AvailabilitySlot[] } | null> = student.sfv2_profile_id
     ? (async () => {
         try {
           const { supabaseSFv2 } = await import('@/lib/supabase-sfv2');
@@ -189,7 +189,8 @@ export default async function CoachPrepPage({ params, searchParams }: Props) {
             .eq('owner_id', student.sfv2_profile_id)
             .order('weekday', { ascending: true });
           if (error) throw new Error(error.message);
-          return buildAvailability((data ?? []) as AvailabilitySlot[]);
+          const slots = (data ?? []) as AvailabilitySlot[];
+          return { summary: buildAvailability(slots), slots };
         } catch (e) {
           console.error('[coach-prep] availability query failed:', e);
           return null;
@@ -258,7 +259,8 @@ export default async function CoachPrepPage({ params, searchParams }: Props) {
     exam_scores: (examScoresRaw ?? []) as ExamScoreRow[],
     srm_skills: srmData.skills,
     srm_tc_sessions: srmData.tcSessions,
-    availability: availability && availability.blocks.length > 0 ? availability : null,
+    availability: availability && availability.summary.blocks.length > 0 ? availability.summary : null,
+    availability_slots: availability?.slots ?? [],
     coach_request: coachRequest,
     srm_brief: srmBrief,
     sfv2_profile_id: student.sfv2_profile_id ?? null,

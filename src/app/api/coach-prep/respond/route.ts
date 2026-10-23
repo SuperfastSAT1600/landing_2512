@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { apiError } from '@/lib/api-response';
 import { EMPTY_LESSON_TIMES, RespondSchema, isClosed, isSameResponse } from '@/lib/coach-prep-request';
 import { findByToken, getStudentName, saveResponse } from '@/lib/coach-prep-requests-db';
-import { loadStudentMessageContext } from '@/lib/coach-prep-student-context';
+import { outsideAvailability } from '@/lib/availability-window';
+import { loadAvailabilitySlots, loadStudentMessageContext } from '@/lib/coach-prep-student-context';
 import { notifyCoachResponseToSlack } from '@/lib/slack-coach-response';
 
 // 코치 응답(수업 수락/어려움) — 코치별 토큰이 자격이다. 마감 전에는 수정할 수 있다.
@@ -31,6 +32,12 @@ export async function POST(request: NextRequest) {
           option2_second_lesson_at: parsed.data.option2_second_lesson_at ?? null,
         }
       : EMPTY_LESSON_TIMES;
+    if (accepted) {
+      const slots = await loadAvailabilitySlots(req.student_id);
+      if (outsideAvailability(Object.values(lessons), slots).length > 0) {
+        return apiError('OUTSIDE_AVAILABILITY', '학생이 가능하다고 입력한 시간 안에서만 수업 일정을 남길 수 있습니다.', 422);
+      }
+    }
     const declineReason = accepted ? null : reason?.trim() || null;
     const status = accepted ? 'accepted' : 'declined';
     const unchanged = isSameResponse(req, status, lessons, declineReason);
