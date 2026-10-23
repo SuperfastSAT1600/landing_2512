@@ -27,6 +27,12 @@ describe('buildCoachResponseText', () => {
     expect(text).not.toContain('옵션 2');
   });
 
+  it('학생 시간대가 있으면 현지 시각(DST 반영)을 함께 담는다', () => {
+    const text = buildCoachResponseText({ ...base, action: 'accept', lessons, studentTimezone: 'America/Los_Angeles' });
+    expect(text).toContain('학생 시간(America/Los_Angeles)');
+    expect(text).toContain('첫 수업 10/25(일) 22:30 PDT');
+  });
+
   it('REQ-003: 옵션 2가 있으면 함께 담는다', () => {
     const text = buildCoachResponseText({
       ...base, action: 'accept',

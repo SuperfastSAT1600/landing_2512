@@ -9,6 +9,7 @@ const db = vi.hoisted(() => ({
 const slack = vi.hoisted(() => ({ notifyCoachResponseToSlack: vi.fn() }));
 vi.mock('@/lib/coach-prep-requests-db', () => db);
 vi.mock('@/lib/slack-coach-response', () => slack);
+vi.mock('@/lib/coach-prep-student-context', () => ({ loadStudentMessageContext: vi.fn().mockResolvedValue({ language: null, timezone: 'America/Los_Angeles', schedule_url: null }) }));
 
 const TOKEN = 'a'.repeat(32);
 const FUTURE = '2099-01-01T10:00:00+09:00';
@@ -89,7 +90,7 @@ describe('POST /api/coach-prep/respond', () => {
     expect(slack.notifyCoachResponseToSlack).toHaveBeenCalledTimes(1);
     expect(slack.notifyCoachResponseToSlack).toHaveBeenCalledWith({
       studentName: '홍길동', coachName: '김혜지', action: 'accept',
-      lessons: { ...OPT1, option2_first_lesson_at: null, option2_second_lesson_at: null }, reason: null, deadlineAt: FUTURE,
+      lessons: { ...OPT1, option2_first_lesson_at: null, option2_second_lesson_at: null }, reason: null, deadlineAt: FUTURE, studentTimezone: 'America/Los_Angeles',
     });
   });
 
