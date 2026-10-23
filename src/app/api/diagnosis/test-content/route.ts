@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import diagnosticTest1 from '@/app/diagnosis/data/diagnostic-test-1';
 import diagnosticTest2 from '@/app/diagnosis/data/diagnostic-test-2';
+import { diagnosticTest2Vocab } from '@/app/diagnosis/data/diagnostic-test-2-vocab';
+import { sanitizeQuestionsForClient, sanitizeVocabForClient } from '@/lib/diagnosis-grading';
+import { fallbackQuestions } from '@/lib/diagnosis-test-source';
 
 /**
  * GET /api/diagnosis/test-content?versionId=<uuid>
  * Returns the full test data (questions, directions, etc.) for a given version.
  * Falls back to the hardcoded test when versionId is absent or not found in DB.
+ * Public endpoint: the answer key is stripped here; grading happens in /api/diagnosis/submit.
  * Public endpoint — no auth required (versionId is obtained from validated token).
  */
 const HARDCODED_TESTS: Record<string, typeof diagnosticTest1> = {
@@ -38,7 +42,8 @@ export async function GET(request: NextRequest) {
           timeLimit: data.time_limit_minutes,
           directions: data.directions,
           // DB version이 RW 문제 없으면 하드코딩 전체 세트로 폴백
-          questions: hasRW ? data.questions : fallbackTest.questions,
+          questions: sanitizeQuestionsForClient(hasRW ? data.questions : fallbackQuestions(testId)),
+          vocab: sanitizeVocabForClient(diagnosticTest2Vocab),
         }, { status: 200 });
       }
     } catch (err) {
@@ -53,6 +58,7 @@ export async function GET(request: NextRequest) {
     title: fallbackTest.title,
     timeLimit: fallbackTest.timeLimit,
     directions: fallbackTest.directions,
-    questions: fallbackTest.questions,
+    questions: sanitizeQuestionsForClient(fallbackTest.questions),
+    vocab: sanitizeVocabForClient(diagnosticTest2Vocab),
   }, { status: 200 });
 }

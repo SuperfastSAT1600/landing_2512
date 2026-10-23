@@ -5,14 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ConfidencePicker } from './ConfidencePicker';
 import { SelectableText } from './SelectableText';
 import type { TestQuestion } from '../data/diagnostic-test-1';
-import type { SavedWord, RWSequentialAnswer } from '@/types/diagnosis';
+import type { SavedWord, SubmittedRWAnswer } from '@/types/diagnosis';
 
 interface SequentialRevealQuestionProps {
   question: TestQuestion;
   questionNumber: number;
   savedWords: SavedWord[];
   onWordClick: (word: SavedWord, position: { top: number; left: number }) => void;
-  onAnswer: (answer: RWSequentialAnswer) => void;
+  onAnswer: (answer: SubmittedRWAnswer) => void;
 }
 
 export function SequentialRevealQuestion({
@@ -52,7 +52,6 @@ export function SequentialRevealQuestion({
     setConfidenceRecord({ [question.id]: level });
 
     const finalOptionId = chosenOptionId!;
-    const correctOption = options.find(o => o.type === 'correct');
 
     onAnswer({
       questionId: question.id,
@@ -60,7 +59,6 @@ export function SequentialRevealQuestion({
       optionsViewedCount,
       finalAnswer: finalOptionId,
       confidence: level,
-      isCorrect: finalOptionId === correctOption?.id,
     });
   };
 

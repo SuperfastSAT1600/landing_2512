@@ -1,4 +1,5 @@
-import { TestQuestion } from '@/app/diagnosis/data/diagnostic-test-1';
+import type { TestQuestion } from '@/app/diagnosis/data/diagnostic-test-1';
+import { aggregateKey, type QuestionAggregate } from './diagnosis-aggregate';
 
 export interface QuestionStat {
   questionId: string;
@@ -9,67 +10,40 @@ export interface QuestionStat {
   difficulty: string;
   question: string;
   passage: string | null | undefined;
-  options: { id: string; text: string; type: string }[];
+  options: { id: string; text: string; type?: string }[];
   correctAnswer: string;
+  /** 이 문항이 노출된 제출 수 (미응답 포함) */
+  exposures: number;
+  /** 응답한 제출 수 */
   totalAttempts: number;
   correctCount: number;
+  /** 응답한 학생 기준 정답률 */
   accuracyRate: number;
+  /** 미응답을 오답으로 본 정답률 */
+  accuracyOverall: number;
   completionRate: number;
   avgConfidence: number;
   avgTimeSeconds: number;
   answerDistribution: Record<string, number>;
 }
 
-interface RawResult {
-  answers: Record<string, string>;
-  confidence_levels: Record<string, number>;
-  question_times: Record<string, number>;
+function correctAnswerOf(q: TestQuestion): string {
+  return q.type === 'multiple-choice'
+    ? (q.options?.find((o) => o.type === 'correct')?.id ?? '')
+    : (q.answers?.[0] ?? '');
 }
 
+/**
+ * 한 세트의 문항별 통계. 집계(aggs)는 같은 형식의 모든 세트를 합산한 값이라,
+ * 여러 세트에서 반복 사용된 문항은 그 전체 표본으로 계산된다.
+ */
 export function buildQuestionStats(
-  results: RawResult[],
-  questions: TestQuestion[]
+  setQuestions: TestQuestion[],
+  aggs: Map<string, QuestionAggregate>,
+  format: string
 ): QuestionStat[] {
-  return questions.map((q, index) => {
-    const correctAnswer =
-      q.type === 'multiple-choice'
-        ? (q.options?.find((o) => o.type === 'correct')?.id ?? '')
-        : (q.answers?.[0] ?? '');
-
-    const answerDistribution: Record<string, number> = {};
-    let correctCount = 0;
-    let totalConfidence = 0;
-    let confidenceCount = 0;
-    let totalTime = 0;
-    let timeCount = 0;
-    let totalAttempts = 0;
-
-    for (const result of results) {
-      const studentAnswer = result.answers?.[q.id];
-      if (studentAnswer === undefined) continue;
-
-      totalAttempts++;
-      answerDistribution[studentAnswer] = (answerDistribution[studentAnswer] ?? 0) + 1;
-
-      const isCorrect =
-        q.type === 'multiple-choice'
-          ? studentAnswer === correctAnswer
-          : studentAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase();
-      if (isCorrect) correctCount++;
-
-      const confidence = result.confidence_levels?.[q.id];
-      if (confidence !== undefined) {
-        totalConfidence += confidence;
-        confidenceCount++;
-      }
-
-      const time = result.question_times?.[q.id];
-      if (time !== undefined) {
-        totalTime += time;
-        timeCount++;
-      }
-    }
-
+  return setQuestions.map((q, index) => {
+    const agg = aggs.get(aggregateKey(format, q.id));
     return {
       questionId: q.id,
       questionNumber: index + 1,
@@ -80,14 +54,16 @@ export function buildQuestionStats(
       question: q.question,
       passage: q.passage,
       options: q.options ?? [],
-      correctAnswer,
-      totalAttempts,
-      correctCount,
-      accuracyRate: totalAttempts > 0 ? correctCount / totalAttempts : 0,
-      completionRate: results.length > 0 ? totalAttempts / results.length : 0,
-      avgConfidence: confidenceCount > 0 ? totalConfidence / confidenceCount : 0,
-      avgTimeSeconds: timeCount > 0 ? totalTime / timeCount : 0,
-      answerDistribution,
+      correctAnswer: correctAnswerOf(q),
+      exposures: agg?.exposures ?? 0,
+      totalAttempts: agg?.answeredCount ?? 0,
+      correctCount: agg?.correctCount ?? 0,
+      accuracyRate: agg?.accuracyAnswered ?? 0,
+      accuracyOverall: agg?.accuracyOverall ?? 0,
+      completionRate: agg?.completionRate ?? 0,
+      avgConfidence: agg?.avgConfidence ?? 0,
+      avgTimeSeconds: agg?.avgTimeSeconds ?? 0,
+      answerDistribution: agg?.answerDistribution ?? {},
     };
   });
 }

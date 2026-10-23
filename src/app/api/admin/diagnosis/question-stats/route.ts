@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import { normalizeFormatId } from '@/lib/diagnosis-attempts';
+import { aggregateByQuestion } from '@/lib/diagnosis-aggregate';
 import { buildQuestionStats } from '@/lib/diagnosis-analysis';
-import type { TestQuestion } from '@/app/diagnosis/data/diagnostic-test-1';
+import { loadComboContext, loadFormatResults, toResultAttempts } from '@/lib/diagnosis-combo-data';
 
 /**
- * GET /api/admin/diagnosis/question-stats?versionId=<uuid>
- * Returns per-question statistics for a specific test version.
- * If versionId is omitted, uses the current version.
+ * GET /api/admin/diagnosis/question-stats?testId=<format>&versionId=<set uuid>
+ * 선택한 문제 세트의 문항별 통계. 문항은 세트 간에 반복 사용되므로
+ * 같은 테스트 형식의 모든 세트 제출을 문항 단위로 합산한 값이다.
+ * versionId를 생략하면 현재 세트를 쓴다.
  */
 export async function GET(request: NextRequest) {
   if (!isAuthenticated(request)) {
@@ -16,50 +18,30 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url);
+    const testIdParam = searchParams.get('testId');
     const versionId = searchParams.get('versionId');
-    const testId = searchParams.get('testId') ?? 'diagnostic-test-1';
 
-    // Resolve which version to use
-    let resolvedVersionId = versionId;
-    let questions: TestQuestion[];
-
-    if (resolvedVersionId) {
-      const { data: version, error } = await supabaseAdmin
-        .from('diagnostic_test_versions')
-        .select('questions')
-        .eq('id', resolvedVersionId)
-        .single();
-      if (error || !version) {
-        return NextResponse.json({ error: 'Version not found' }, { status: 404 });
-      }
-      questions = version.questions as TestQuestion[];
-    } else {
-      // Fall back to current version scoped to test format
-      const { data: current, error } = await supabaseAdmin
-        .from('diagnostic_test_versions')
-        .select('id, questions')
-        .eq('is_current', true)
-        .eq('test_id', testId)
-        .maybeSingle();
-      if (error || !current) {
-        return NextResponse.json({ stats: [], totalResults: 0 }, { status: 200 });
-      }
-      resolvedVersionId = current.id;
-      questions = current.questions as TestQuestion[];
+    const ctx = await loadComboContext();
+    const set = versionId
+      ? ctx.sets.get(versionId)
+      : [...ctx.sets.values()].find((s) => s.isCurrent && normalizeFormatId(s.testId) === normalizeFormatId(testIdParam));
+    // 형식을 명시하지 않으면 세트가 속한 형식을 따른다
+    const format = normalizeFormatId(testIdParam ?? set?.testId ?? null);
+    if (!set) {
+      return versionId
+        ? NextResponse.json({ error: 'Version not found' }, { status: 404 })
+        : NextResponse.json({ stats: [], totalResults: 0 }, { status: 200 });
     }
 
-    // Fetch results for this version (by test_version_id, or by legacy test_id for v1)
-    const { data, error: resultsError } = await supabaseAdmin
-      .from('diagnostic_test_results')
-      .select('answers, confidence_levels, question_times')
-      .eq('test_version_id', resolvedVersionId);
+    const results = await loadFormatResults(format);
+    const aggs = aggregateByQuestion(toResultAttempts(results, ctx));
+    const stats = buildQuestionStats(set.questions, aggs, format);
+    const comboResults = results.filter((r) => r.test_version_id === set.id).length;
 
-    if (resultsError) throw resultsError;
-
-    const results = data ?? [];
-    const stats = buildQuestionStats(results, questions);
-
-    return NextResponse.json({ stats, totalResults: results.length, versionId: resolvedVersionId }, { status: 200 });
+    return NextResponse.json(
+      { stats, totalResults: comboResults, pooledResults: results.length, versionId: set.id, testId: format },
+      { status: 200 }
+    );
   } catch (err) {
     console.error('Error computing question stats:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

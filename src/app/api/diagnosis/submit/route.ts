@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { SubmitTestRequest, SubmitTestResponse } from '@/types/diagnosis';
 import { notifyTestSubmission } from '@/lib/slack';
+import { gradeV2Submission } from '@/lib/diagnosis-grading';
+import { resolveSetQuestions } from '@/lib/diagnosis-test-source';
+import { diagnosticTest2Vocab } from '@/app/diagnosis/data/diagnostic-test-2-vocab';
 
 /**
  * POST /api/diagnosis/submit
@@ -35,9 +38,6 @@ export async function POST(request: NextRequest) {
 
     // For v2, merge vocab + rw sequential + math answers into the answers JSONB
     const isV2 = testId === 'diagnostic-test-2';
-    const storedAnswers = isV2
-      ? { __v2__: true, vocab: vocabAnswers ?? [], rw: rwSequentialData ?? [], math: answers, desmos_usage: desmosUsage ?? [] }
-      : { ...answers, desmos_usage: desmosUsage ?? [] };
 
     // Validate required fields (studentEmail is optional — student may skip)
     if (!studentName || !testId) {
@@ -46,6 +46,18 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // v2의 RW·단어 정오답은 클라이언트가 보낸 값을 버리고 서버가 채점한다
+    const graded = isV2
+      ? gradeV2Submission(
+          { rw: rwSequentialData ?? [], vocab: vocabAnswers ?? [] },
+          await resolveSetQuestions(testVersionId, testId),
+          diagnosticTest2Vocab
+        )
+      : null;
+    const storedAnswers = graded
+      ? { __v2__: true, vocab: graded.vocab, rw: graded.rw, math: answers, desmos_usage: desmosUsage ?? [] }
+      : { ...answers, desmos_usage: desmosUsage ?? [] };
 
     // Fetch token to get time_limit_minutes
     let timeLimitMinutes = 30;

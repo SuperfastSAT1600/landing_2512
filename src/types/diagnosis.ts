@@ -93,6 +93,10 @@ export interface RWSequentialAnswer {
   isCorrect: boolean;
 }
 
+/** 제출 시 클라이언트가 보내는 형태 — 정오답은 서버가 채점한다. */
+export type SubmittedVocabAnswer = Omit<VocabAnswer, 'isCorrect'>;
+export type SubmittedRWAnswer = Omit<RWSequentialAnswer, 'isCorrect'>;
+
 /**
  * Payload for test submission API request
  */
@@ -115,8 +119,8 @@ export interface SubmitTestRequest {
   previousRwScore?: number;
   previousMathScore?: number;
   // v2-only fields
-  vocabAnswers?: VocabAnswer[];
-  rwSequentialData?: RWSequentialAnswer[];
+  vocabAnswers?: SubmittedVocabAnswer[];
+  rwSequentialData?: SubmittedRWAnswer[];
   desmosUsage?: string[];
 }
 

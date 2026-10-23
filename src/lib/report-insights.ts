@@ -4,8 +4,21 @@
  * Benchmarks: Top 10% only (Global Average removed).
  */
 
-import { SECTION_BENCHMARKS, DOMAIN_BENCHMARKS } from './report-benchmarks';
+import {
+  SECTION_BENCHMARKS,
+  DOMAIN_BENCHMARKS,
+  type SectionBenchmarks,
+  type DomainBenchmark,
+} from './report-benchmarks';
 import { difficultyToLevel, getMedianLevel, getLevelDef } from './vocab-levels';
+
+/** 리포트가 비교에 쓰는 벤치마크. 조합(형식·세트)별로 달라진다. */
+export interface BenchmarkSet {
+  sections: Record<string, SectionBenchmarks>;
+  domains: Record<string, DomainBenchmark>;
+}
+
+const STATIC_BENCHMARKS: BenchmarkSet = { sections: SECTION_BENCHMARKS, domains: DOMAIN_BENCHMARKS };
 
 export interface SectionInsight {
   headline: string;
@@ -54,10 +67,18 @@ function pct(v: number) {
   return `${Math.round(v * 100)}%`;
 }
 
-export function generateSectionInsight(section: Section): SectionInsight {
-  const bench = SECTION_BENCHMARKS[section.name] ?? SECTION_BENCHMARKS['Diagnostic'];
+export function generateSectionInsight(section: Section, benchmarks: BenchmarkSet = STATIC_BENCHMARKS): SectionInsight {
+  const bench = benchmarks.sections[section.name] ?? benchmarks.sections['Diagnostic'];
   const accuracy = section.accuracy;
   const label = section.name === 'Reading and Writing' ? 'Reading & Writing' : section.name;
+  if (!bench) {
+    // 이 조합에는 비교할 학생이 충분하지 않아 상위 10% 기준을 만들 수 없다
+    return {
+      headline: `${label}: ${pct(accuracy)} accuracy`,
+      body: `The student answered ${pct(accuracy)} of ${label} questions correctly. A top-10% comparison is not shown yet because too few students have taken this question set.`,
+      tone: accuracy >= 0.7 ? 'strength' : accuracy >= 0.45 ? 'opportunity' : 'critical',
+    };
+  }
   const top10 = bench.top10.accuracy;
   const gap = top10 - accuracy;
 
@@ -96,11 +117,11 @@ export function generateSectionInsight(section: Section): SectionInsight {
   };
 }
 
-export function generateWeakDomainInsights(sections: Section[]): DomainInsight[] {
+export function generateWeakDomainInsights(sections: Section[], benchmarks: BenchmarkSet = STATIC_BENCHMARKS): DomainInsight[] {
   const allDomains = sections.flatMap((s) => s.domainBreakdown);
   return allDomains
     .map((d) => {
-      const bench = DOMAIN_BENCHMARKS[d.domain];
+      const bench = benchmarks.domains[d.domain];
       const delta = bench ? d.accuracy - bench.top10 : 0;
       let note = '';
       if (d.accuracy < 0.40) {
@@ -206,22 +227,19 @@ export function generateVocabInsight(savedWords: SavedWord[]): string | null {
   );
 }
 
-export function generateExecutiveSummary(sections: Section[]): string {
+export function generateExecutiveSummary(sections: Section[], benchmarks: BenchmarkSet = STATIC_BENCHMARKS): string {
   const totalCorrect = sections.reduce((a, s) => a + s.correctCount, 0);
   const totalQuestions = sections.reduce((a, s) => a + s.totalQuestions, 0);
   const overallAccuracy = totalQuestions > 0 ? totalCorrect / totalQuestions : 0;
 
-  const top10Bench = SECTION_BENCHMARKS['Diagnostic']?.top10.accuracy ?? 0.80;
+  const top10Bench = benchmarks.sections['Diagnostic']?.top10.accuracy;
+  if (top10Bench === undefined) {
+    return `The student answered ${pct(overallAccuracy)} of the questions correctly. A top-10% comparison is not shown yet because too few students have taken this question set; the domain breakdown below shows where to focus.`;
+  }
 
-  const strongSections = sections.filter((s) => {
-    const b = SECTION_BENCHMARKS[s.name] ?? SECTION_BENCHMARKS['Diagnostic'];
-    return s.accuracy >= b.top10.accuracy - 0.10;
-  });
-
-  const weakSections = sections.filter((s) => {
-    const b = SECTION_BENCHMARKS[s.name] ?? SECTION_BENCHMARKS['Diagnostic'];
-    return s.accuracy < b.top10.accuracy - 0.25;
-  });
+  const sectionTop10 = (name: string) => (benchmarks.sections[name] ?? benchmarks.sections['Diagnostic']).top10.accuracy;
+  const strongSections = sections.filter((s) => s.accuracy >= sectionTop10(s.name) - 0.10);
+  const weakSections = sections.filter((s) => s.accuracy < sectionTop10(s.name) - 0.25);
 
   if (overallAccuracy >= top10Bench) {
     return `Elite-tier performance at ${pct(overallAccuracy)} overall accuracy — the student is performing at or above the top-10% threshold${strongSections.length === sections.length ? ' across all sections' : ` with particular strength in ${strongSections.map((s) => s.name === 'Reading and Writing' ? 'R&W' : s.name).join(' and ')}`}. Consistency and test-day strategy will be the final differentiator.`;
@@ -239,10 +257,14 @@ export function generateExecutiveSummary(sections: Section[]): string {
   return `The diagnostic reveals significant foundational gaps at ${pct(overallAccuracy)} overall accuracy. This result provides a clear roadmap: with consistent, structured preparation targeting the identified weak domains, substantial score improvement is achievable. Early and focused intervention will be most effective.`;
 }
 
-export function generateKeyRecommendations(sections: Section[], savedWords: SavedWord[]): string[] {
+export function generateKeyRecommendations(
+  sections: Section[],
+  savedWords: SavedWord[],
+  benchmarks: BenchmarkSet = STATIC_BENCHMARKS,
+): string[] {
   const recs: string[] = [];
 
-  const weakDomains = generateWeakDomainInsights(sections);
+  const weakDomains = generateWeakDomainInsights(sections, benchmarks);
   const criticalDomains = weakDomains.filter((d) => d.delta < -0.20);
   const opportunityDomains = weakDomains.filter((d) => d.delta >= -0.20 && d.delta < 0);
 
@@ -280,18 +302,19 @@ export function generateAllInsights(
   questionDetails: QuestionDetail[],
   savedWords: SavedWord[],
   timeLimitMinutes?: number,
+  benchmarks: BenchmarkSet = STATIC_BENCHMARKS,
 ): ReportInsights {
   const sectionInsights: Record<string, SectionInsight> = {};
   for (const section of sections) {
-    sectionInsights[section.name] = generateSectionInsight(section);
+    sectionInsights[section.name] = generateSectionInsight(section, benchmarks);
   }
 
   return {
-    executiveSummary: generateExecutiveSummary(sections),
+    executiveSummary: generateExecutiveSummary(sections, benchmarks),
     sections: sectionInsights,
-    topWeakDomains: generateWeakDomainInsights(sections),
+    topWeakDomains: generateWeakDomainInsights(sections, benchmarks),
     behavioral: generateBehavioralInsight(questionDetails, timeLimitMinutes),
     vocabulary: generateVocabInsight(savedWords),
-    keyRecommendations: generateKeyRecommendations(sections, savedWords),
+    keyRecommendations: generateKeyRecommendations(sections, savedWords, benchmarks),
   };
 }

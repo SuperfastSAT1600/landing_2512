@@ -66,6 +66,7 @@ export default async function ReportPage({ params }: PageProps) {
       data.questionDetails,
       data.savedWords ?? [],
       data.timeLimitMinutes,
+      data.benchmarks,
     );
   } catch (err) {
     console.error('[ReportPage] generateAllInsights failed:', err);
@@ -165,10 +166,12 @@ export default async function ReportPage({ params }: PageProps) {
               titleEn="vs. Top 10%"
               subtitle="상위 10%와의 비교 성적"
             />
-            <ReportBenchmarkChart
-              sections={data.sections}
-              sectionBenchmarks={data.benchmarks.sections}
-            />
+            {data.benchmarks.source !== 'insufficient' && (
+              <ReportBenchmarkChart
+                sections={data.sections}
+                sectionBenchmarks={data.benchmarks.sections}
+              />
+            )}
             <div className="mt-5 space-y-3">
               {data.sections.map((section: { name: string; accuracy: number; correctCount: number; totalQuestions: number; domainBreakdown: { domain: string; accuracy: number; total: number }[] }) => {
                 const insight = insights.sections[section.name];

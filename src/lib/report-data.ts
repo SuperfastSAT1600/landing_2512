@@ -5,15 +5,13 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { SECTION_BENCHMARKS, DOMAIN_BENCHMARKS } from '@/lib/report-benchmarks';
+import type { SectionBenchmarks, DomainBenchmark } from '@/lib/report-benchmarks';
+import { buildQuestionPool, extractAttempts } from '@/lib/diagnosis-attempts';
+import { loadComboContext, getComboBenchmarks } from '@/lib/diagnosis-combo-data';
 import { difficultyToLevel } from '@/lib/vocab-levels';
 import diagnosticTest1, { type TestQuestion } from '@/app/diagnosis/data/diagnostic-test-1';
 import { diagnosticTest2Vocab } from '@/app/diagnosis/data/diagnostic-test-2-vocab';
 import { classifyRWQuestion, classifyRWStudent, type RWQuestionType, type RWStudentProfile } from '@/lib/rw-profile';
-
-// REQ-003: type guard — JSONB can store any type, not just string
-const safeStr = (v: unknown): string =>
-  typeof v === 'string' ? v : String(v ?? '');
 
 export type { RWQuestionType, RWStudentProfile };
 
@@ -82,8 +80,11 @@ export interface ReportData {
   }[];
   savedWords: { word: string; section: string; difficulty: string; domain: string; vocabLevel: number }[];
   benchmarks: {
-    sections: typeof SECTION_BENCHMARKS;
-    domains: typeof DOMAIN_BENCHMARKS;
+    sections: Record<string, SectionBenchmarks>;
+    domains: Record<string, DomainBenchmark>;
+    /** computed: 이 조합 기준 / legacy: 문제세트1 정적값 / insufficient: 비교 표본 부족 */
+    source: 'computed' | 'legacy' | 'insufficient';
+    sampleSize: number;
   };
   editedInsights: Record<string, string> | null;
   coupon: { discountPercent: number; expiresAt: string } | null;
@@ -139,7 +140,6 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
   }
 
   const rawAnswers: Record<string, unknown> = result.answers ?? {};
-  const confidenceLevels: Record<string, number> = result.confidence_levels ?? {};
   const questionTimes: Record<string, number> = result.question_times ?? {};
   const flaggedQuestions: string[] = result.flagged_questions ?? [];
   const savedWords: { word: string; questionId: string; section: string }[] =
@@ -147,9 +147,6 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
 
   // v2 detection — answers stored as { __v2__: true, vocab, rw, math }
   const isV2 = result.test_id === 'diagnostic-test-2' || rawAnswers.__v2__ === true;
-  const mathAnswers: Record<string, unknown> = isV2
-    ? (rawAnswers.math as Record<string, unknown> ?? {})
-    : rawAnswers;
   type RawRWResult = { questionId: string; firstYesOptionId: string; optionsViewedCount: number; finalAnswer: string; confidence: number; isCorrect: boolean };
   type RawVocabResult = { wordId: string; selectedOptionId: string | null; isCorrect: boolean; timeTaken: number };
   const rwResultsRaw: RawRWResult[] = isV2 ? (rawAnswers.rw as RawRWResult[] ?? []) : [];
@@ -158,21 +155,26 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
   const desmosUsageRaw = rawAnswers.desmos_usage;
   const desmosUsedSet = new Set<string>(Array.isArray(desmosUsageRaw) ? (desmosUsageRaw as string[]) : []);
 
+  // 정오답은 저장된 클라이언트 값이 아니라 문항 정답으로 서버가 다시 채점한다.
+  // 세트에서 교체된 문항으로 답한 제출은 전체 문항 풀에서 복구한다.
+  const ctx = await loadComboContext();
+  const pool = buildQuestionPool([questions, [...ctx.pool.values()]]);
+  const attempts = extractAttempts(result, questions, pool);
+  const attemptById = new Map(attempts.map((a) => [a.questionId, a]));
+  const reportQuestions = attempts.map((a) => pool.get(a.questionId)!);
+
   const domainStats: Record<string, { correct: number; total: number }> = {};
   const sectionStats: Record<string, { correct: number; total: number }> = {};
   const rwCognitionItems: RWCognitionItem[] = [];
 
-  const questionDetails = questions.map((q, idx) => {
-    let isCorrect = false;
-    let answered = false;
-    let confidence = 0;
+  const questionDetails = reportQuestions.map((q, idx) => {
+    const attempt = attemptById.get(q.id)!;
+    const { isCorrect, answered } = attempt;
+    const confidence = attempt.confidence ?? 0;
 
     if (isV2 && q.section === 'Reading and Writing') {
       const rwResult = rwResultsRaw.find(r => r.questionId === q.id);
       if (rwResult) {
-        isCorrect = rwResult.isCorrect;
-        answered = true;
-        confidence = rwResult.confidence ?? 0;
         const options = q.options ?? [];
         const correctOptionIdx = options.findIndex(o => o.type === 'correct');
         const chosenOptionIdx = options.findIndex(o => o.id === rwResult.firstYesOptionId);
@@ -189,19 +191,6 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
           questionType,
         });
       }
-    } else {
-      const studentAnswer = mathAnswers[q.id];
-      const correctAnswer =
-        q.type === 'multiple-choice'
-          ? (q.options?.find((o) => o.type === 'correct')?.id ?? '')
-          : (q.answers?.[0] ?? '');
-      isCorrect = studentAnswer !== undefined
-        ? q.type === 'multiple-choice'
-          ? safeStr(studentAnswer) === safeStr(correctAnswer)
-          : safeStr(studentAnswer).trim().toLowerCase() === safeStr(correctAnswer).trim().toLowerCase()
-        : false;
-      answered = studentAnswer !== undefined;
-      confidence = confidenceLevels[q.id] ?? 0;
     }
 
     if (!domainStats[q.domain]) domainStats[q.domain] = { correct: 0, total: 0 };
@@ -228,7 +217,7 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
   });
 
   // Desmos usage analysis — Math questions only
-  const desmosAnalysis: DesmosAnalysisItem[] = questions
+  const desmosAnalysis: DesmosAnalysisItem[] = reportQuestions
     .flatMap((q, idx) => {
       if (q.section !== 'Math') return [];
       const desmosUsed = desmosUsedSet.has(q.id);
@@ -268,7 +257,7 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
   const sections = Object.entries(sectionStats).map(([name, stats]) => {
     const domainBreakdown = Object.entries(domainStats)
       .filter(([domain]) => {
-        const q = questions.find((q) => q.domain === domain);
+        const q = reportQuestions.find((q) => q.domain === domain);
         return q?.section === name;
       })
       .map(([domain, dStats]) => ({
@@ -288,7 +277,7 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
   });
 
   const enrichedSavedWords = savedWords.map((sw) => {
-    const q = questions.find((q) => q.id === sw.questionId);
+    const q = pool.get(sw.questionId);
     const difficulty = q?.difficulty ?? 'Medium';
     return {
       word: sw.word,
@@ -307,10 +296,7 @@ export async function fetchReportData(resultId: string): Promise<ReportData | nu
     sections,
     questionDetails,
     savedWords: enrichedSavedWords,
-    benchmarks: {
-      sections: SECTION_BENCHMARKS,
-      domains: DOMAIN_BENCHMARKS,
-    },
+    benchmarks: await getComboBenchmarks(result.test_id, result.test_version_id),
     editedInsights: result.edited_insights ?? null,
     coupon: result.coupon ?? null,
     previousScoreStatus: result.previous_score_status ?? undefined,

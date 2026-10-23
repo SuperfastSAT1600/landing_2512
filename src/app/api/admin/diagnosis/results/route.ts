@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/server-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import diagnosticTest1 from '@/app/diagnosis/data/diagnostic-test-1';
-import type { VocabAnswer, RWSequentialAnswer } from '@/types/diagnosis';
+import type { VocabAnswer } from '@/types/diagnosis';
+import { extractAttempts } from '@/lib/diagnosis-attempts';
+import { loadComboContext, questionsForResult } from '@/lib/diagnosis-combo-data';
 
 /**
  * GET /api/admin/diagnosis/results
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
     let query = supabaseAdmin
       .from('diagnostic_test_results')
       .select(
-        'id, student_email, student_name, submitted_at, total_time_seconds, test_id, answers, question_times, slack_sent_at, slack_error',
+        'id, student_email, student_name, submitted_at, total_time_seconds, test_id, test_version_id, answers, confidence_levels, question_times, slack_sent_at, slack_error',
         { count: 'exact' }
       )
       .order('submitted_at', { ascending: false })
@@ -65,63 +66,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const questions = diagnosticTest1.questions;
-    const mathQuestions = questions.filter(q => q.section === 'Math');
-
-    const calcMathCorrect = (math: Record<string, string>) =>
-      mathQuestions.reduce((count, q) => {
-        const sa = math[q.id];
-        if (!sa) return count;
-        const ca = q.type === 'multiple-choice'
-          ? (q.options?.find(o => o.type === 'correct')?.id ?? '')
-          : (q.answers?.[0] ?? '');
-        const correct = q.type === 'multiple-choice'
-          ? sa === ca
-          : sa.trim().toLowerCase() === ca.trim().toLowerCase();
-        return correct ? count + 1 : count;
-      }, 0);
+    const ctx = await loadComboContext();
 
     const results = (data || []).map((item) => {
       const rawAnswers = (item.answers as Record<string, unknown>) ?? {};
       const isV2 = rawAnswers.__v2__ === true;
-
-      let answeredCount: number;
-      let correctCount: number;
-
-      let vocabAnsweredCount: number | undefined;
-      let vocabCorrectCount: number | undefined;
-
-      if (isV2) {
-        const vocab = (rawAnswers.vocab as VocabAnswer[]) ?? [];
-        const rw = (rawAnswers.rw as RWSequentialAnswer[]) ?? [];
-        const math = (rawAnswers.math as Record<string, string>) ?? {};
-        vocabAnsweredCount = vocab.length;
-        vocabCorrectCount = vocab.filter(v => v.isCorrect).length;
-        const mathAnsweredCount = mathQuestions.filter(q => math[q.id] !== undefined).length;
-        answeredCount = rw.length + mathAnsweredCount;
-        correctCount =
-          rw.filter(r => r.isCorrect).length +
-          calcMathCorrect(math);
-      } else {
-        const answersMap = rawAnswers as Record<string, string>;
-        answeredCount = Object.keys(answersMap).length;
-        correctCount = questions.reduce((count, q) => {
-          const sa = answersMap[q.id];
-          if (!sa) return count;
-          const ca = q.type === 'multiple-choice'
-            ? (q.options?.find(o => o.type === 'correct')?.id ?? '')
-            : (q.answers?.[0] ?? '');
-          const correct = q.type === 'multiple-choice'
-            ? sa === ca
-            : sa.trim().toLowerCase() === ca.trim().toLowerCase();
-          return correct ? count + 1 : count;
-        }, 0);
-      }
-
-      const allQuestionTimeKeys = Object.keys((item.question_times as Record<string, number>) ?? {});
-      const totalQuestions = isV2
-        ? allQuestionTimeKeys.filter(k => !k.match(/^v\d+$/)).length
-        : allQuestionTimeKeys.length;
+      const attempts = extractAttempts(item, questionsForResult(item, ctx), ctx.pool);
+      const vocab = isV2 ? ((rawAnswers.vocab as VocabAnswer[]) ?? []) : undefined;
 
       return {
         id: item.id,
@@ -130,11 +81,11 @@ export async function GET(request: NextRequest) {
         submitted_at: item.submitted_at,
         total_time_seconds: item.total_time_seconds,
         test_id: item.test_id,
-        answeredCount,
-        totalQuestions,
-        correctCount,
-        vocabAnsweredCount,
-        vocabCorrectCount,
+        answeredCount: attempts.filter((a) => a.answered).length,
+        totalQuestions: attempts.length,
+        correctCount: attempts.filter((a) => a.isCorrect).length,
+        vocabAnsweredCount: vocab?.length,
+        vocabCorrectCount: vocab?.filter((v) => v.isCorrect).length,
         slack_sent_at: item.slack_sent_at ?? null,
         slack_error: item.slack_error ?? null,
       };

@@ -14,7 +14,8 @@ import { SequentialRevealQuestion } from './SequentialRevealQuestion';
 import { TestSubmittedScreen } from './TestSubmittedScreen';
 import { SubmitConfirmationScreen } from './SubmitConfirmationScreen';
 import type { DiagnosticTestData } from '../data/diagnostic-test-1';
-import { SubmitTestRequest, SavedWord, VocabAnswer, RWSequentialAnswer } from '@/types/diagnosis';
+import { questionElapsedSeconds } from '../utils/question-time';
+import { SubmitTestRequest, SavedWord, SubmittedVocabAnswer, SubmittedRWAnswer } from '@/types/diagnosis';
 import { calcAverageConfidence } from '../utils/calcAverageConfidence';
 
 interface DiagnosticTestViewProps {
@@ -29,7 +30,7 @@ interface DiagnosticTestViewProps {
   previousTestDate?: string;
   previousRwScore?: number;
   previousMathScore?: number;
-  vocabAnswers?: VocabAnswer[];
+  vocabAnswers?: SubmittedVocabAnswer[];
 }
 
 export function DiagnosticTestView({
@@ -51,7 +52,7 @@ export function DiagnosticTestView({
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [confidence, setConfidence] = useState<Record<string, number>>({});
-  const [rwSequentialData, setRwSequentialData] = useState<RWSequentialAnswer[]>([]);
+  const [rwSequentialData, setRwSequentialData] = useState<SubmittedRWAnswer[]>([]);
   const [flagged, setFlagged] = useState<Set<string>>(new Set());
   const [crossedOut, setCrossedOut] = useState<Record<string, Set<string>>>({});
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
@@ -91,14 +92,12 @@ export function DiagnosticTestView({
 
   const recordQuestionTime = useCallback(() => {
     if (!currentQuestion) return;
-    const raw = Math.floor((Date.now() - questionStartTime) / 1000);
-    const timeLimitSeconds = timeLimitMinutes ? timeLimitMinutes * 60 : Infinity;
-    const elapsed = Math.min(raw, timeLimitSeconds);
+    const elapsed = questionElapsedSeconds(questionStartTime, Date.now(), effectiveTimeLimit);
     setQuestionTimes(prev => ({
       ...prev,
       [currentQuestion.id]: (prev[currentQuestion.id] ?? 0) + elapsed,
     }));
-  }, [currentQuestion, questionStartTime, timeLimitMinutes]);
+  }, [currentQuestion, questionStartTime, effectiveTimeLimit]);
 
   const navigateToQuestion = useCallback((index: number) => {
     recordQuestionTime();
@@ -336,7 +335,12 @@ export function DiagnosticTestView({
 
             <button
               type="button"
-              onClick={() => setStartTime(Date.now())}
+              onClick={() => {
+                // 안내 화면에 머문 시간이 첫 문제 시간에 섞이지 않도록 시험 시작 시점부터 잰다
+                const now = Date.now();
+                setStartTime(now);
+                setQuestionStartTime(now);
+              }}
               className="w-full py-4 rounded-xl font-bold text-lg text-white transition-all shadow-lg"
               style={{ background: '#071be9', boxShadow: '0 4px 24px rgba(7,27,233,0.2)' }}
               onMouseEnter={e => (e.currentTarget.style.background = '#1a31f0')}

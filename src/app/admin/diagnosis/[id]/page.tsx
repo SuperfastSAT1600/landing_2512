@@ -53,7 +53,7 @@ export default function AdminDiagnosisDetailPage() {
       const data = await response.json();
       setResult(data.result);
       if (data.result?.testVersionId) {
-        fetchStats(data.result.testVersionId);
+        fetchStats(data.result.testVersionId, data.result.testId);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : '요청 처리 중 오류가 발생했습니다.';
@@ -63,9 +63,9 @@ export default function AdminDiagnosisDetailPage() {
     }
   };
 
-  const fetchStats = async (versionId: string) => {
+  const fetchStats = async (versionId: string, testId?: string | null) => {
     try {
-      const res = await fetch(`/api/admin/diagnosis/question-stats?versionId=${versionId}`, {
+      const res = await fetch(`/api/admin/diagnosis/question-stats?versionId=${versionId}${testId ? `&testId=${testId}` : ''}`, {
         headers: { 'x-admin-key': adminKey },
       });
       if (!res.ok) return;
