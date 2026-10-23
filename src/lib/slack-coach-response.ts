@@ -6,7 +6,7 @@ import { formatKst, lessonOptions } from '@/lib/coach-prep-request';
 import { buildChoiceMessages } from '@/lib/coach-prep-student-message';
 import type { LessonTimes } from '@/types/coach-prep';
 
-export const COACH_RESPONSE_CHANNEL = 'C0C9B0DEGDN';
+export const COACH_RESPONSE_CHANNEL = 'C0CCCD90Z0Q';
 
 export interface CoachResponseNotice {
   studentName: string;

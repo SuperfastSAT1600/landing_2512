@@ -159,6 +159,18 @@ describe('buildLinkMessage', () => {
     expect(msg).toContain('유승준: https://x.com/coach-prep/stu-1?t=tok2');
     expect(msg).toContain('10/21(수)');
     expect(msg).toContain('09:00');
+    expect(msg.startsWith('<신규 학생 배정 안내>')).toBe(true);
+  });
+
+  it('코치 한 명이면 이름 없이 링크만 붙인다', () => {
+    const msg = buildLinkMessage('https://x.com', 'stu-1', [{ coachName: '김혜지', token: 'tok1' }], '2026-10-24T15:00:00+09:00');
+    expect(msg).toBe([
+      '<신규 학생 배정 안내>',
+      '',
+      '신규 학생 자료를 확인하시고 10/24(토) 15:00(KST)까지 수업 가능 여부와 희망하시는 첫 수업·두 번째 수업 일정(옵션 1, 2)을 남겨 주세요!',
+      '',
+      'https://x.com/coach-prep/stu-1?t=tok1',
+    ].join('\n'));
   });
 });
 

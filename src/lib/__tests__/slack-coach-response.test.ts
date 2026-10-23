@@ -89,13 +89,13 @@ describe('notifyCoachResponseToSlack', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('REQ-005: C0C9B0DEGDN 채널로 본문을 보낸다', async () => {
+  it('REQ-005: C0CCCD90Z0Q 채널로 본문을 보낸다', async () => {
     await notifyCoachResponseToSlack({ ...base, action: 'accept', lessons });
-    expect(COACH_RESPONSE_CHANNEL).toBe('C0C9B0DEGDN');
+    expect(COACH_RESPONSE_CHANNEL).toBe('C0CCCD90Z0Q');
     expect(fetchMock).toHaveBeenCalledTimes(1); // ts가 없으면 스레드 안내는 생략
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://slack.com/api/chat.postMessage');
-    expect(JSON.parse(init.body).channel).toBe('C0C9B0DEGDN');
+    expect(JSON.parse(init.body).channel).toBe('C0CCCD90Z0Q');
     expect(init.headers.Authorization).toBe('Bearer xoxb-test');
   });
 

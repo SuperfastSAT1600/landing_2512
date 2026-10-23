@@ -153,6 +153,14 @@ export function buildLinkMessage(
   items: { coachName: string; token: string }[],
   deadlineAt: string,
 ): string {
-  const lines = items.map((i) => `${i.coachName}: ${origin}/coach-prep/${studentId}?t=${i.token}`);
-  return [`학생 자료를 확인하시고 ${formatKst(deadlineAt)}(KST)까지 수업 가능 여부와 희망하시는 첫 수업·두 번째 수업 일정(옵션 1, 2)을 남겨 주세요.`, '', ...lines].join('\n');
+  const link = (token: string) => `${origin}/coach-prep/${studentId}?t=${token}`;
+  // 코치 한 명이면 그대로 전달할 수 있게 링크만, 여러 명이면 누구 링크인지 이름을 붙인다
+  const lines = items.length === 1 ? [link(items[0].token)] : items.map((i) => `${i.coachName}: ${link(i.token)}`);
+  return [
+    '<신규 학생 배정 안내>',
+    '',
+    `신규 학생 자료를 확인하시고 ${formatKst(deadlineAt)}(KST)까지 수업 가능 여부와 희망하시는 첫 수업·두 번째 수업 일정(옵션 1, 2)을 남겨 주세요!`,
+    '',
+    ...lines,
+  ].join('\n');
 }
