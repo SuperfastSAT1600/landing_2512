@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { LogOut, Menu } from 'lucide-react';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import NavGroup from './components/NavGroup';
 
 type NavItem =
     | { href: string; label: string; icon: string; children?: undefined }
@@ -153,33 +154,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
                     {NAV_ITEMS.map((item) => {
                         if (item.children) {
-                            const isGroupActive = item.children.some(c => pathname === c.href);
-                            const groupHref = item.children[0]?.href;
                             return (
-                                <div key={item.label}>
-                                    <Link
-                                        href={groupHref ?? '#'}
-                                        className={`flex items-center gap-3 px-3 py-2 rounded-md font-medium transition-colors ${isGroupActive ? 'text-white bg-[#1e2023]' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
-                                    >
-                                        <span className="opacity-70">{item.icon}</span> {item.label}
-                                    </Link>
-                                    <div className="ml-6 space-y-0.5">
-                                        {item.children.map(child => (
-                                            <Link
-                                                key={child.href}
-                                                href={child.href}
-                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors font-medium ${
-                                                    pathname === child.href
-                                                        ? 'text-white bg-[#1e2023]'
-                                                        : 'text-gray-500 hover:text-white hover:bg-white/5'
-                                                }`}
-                                            >
-                                                <span className="w-1 h-1 rounded-full bg-current opacity-50 flex-shrink-0" />
-                                                {child.label}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </div>
+                                <NavGroup
+                                    key={item.label}
+                                    label={item.label}
+                                    icon={item.icon}
+                                    items={item.children}
+                                    pathname={pathname}
+                                />
                             );
                         }
                         return (
