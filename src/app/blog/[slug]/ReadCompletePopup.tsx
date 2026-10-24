@@ -44,6 +44,12 @@ export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props
   }, []);
 
   useEffect(() => {
+    let waitId: ReturnType<typeof setTimeout> | undefined;
+    const cancelWait = () => {
+      clearTimeout(waitId);
+      waitId = undefined;
+    };
+
     const timeoutId = setTimeout(() => {
       const sentinel = document.getElementById(sentinelId);
       if (!sentinel || dismissedRef.current) return;
@@ -51,11 +57,19 @@ export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props
       const observer = new IntersectionObserver(
         ([entry]) => {
           if (dismissedRef.current) return;
-          const elapsed = Date.now() - readStartRef.current;
-          if (entry.isIntersecting && elapsed >= MIN_READ_TIME_MS) {
-            setVisible(true);
-          } else if (!entry.isIntersecting) {
-            // Reader scrolled back up — hide until they return
+          cancelWait();
+          if (entry.isIntersecting) {
+            // The observer only fires on change, so an early arrival must
+            // schedule its own show instead of being dropped.
+            const remaining = MIN_READ_TIME_MS - (Date.now() - readStartRef.current);
+            if (remaining <= 0) {
+              setVisible(true);
+            } else {
+              waitId = setTimeout(() => setVisible(true), remaining);
+            }
+          } else if (entry.boundingClientRect.top > 0) {
+            // Sentinel is below the viewport (reader scrolled back up) — hide.
+            // Scrolled past it (top < 0) keeps the popup up.
             setVisible(false);
           }
         },
@@ -68,6 +82,7 @@ export function ReadCompletePopup({ fixedPost, relatedPosts, sentinelId }: Props
 
     return () => {
       clearTimeout(timeoutId);
+      cancelWait();
       if (observerRef.current) {
         observerRef.current.disconnect();
         observerRef.current = null;

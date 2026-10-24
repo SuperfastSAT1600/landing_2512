@@ -257,6 +257,9 @@ export default async function Post({ params }: Props) {
                     )}
                 </article>
 
+                {/* Sentinel: 본문을 다 읽었을 때(관련 글 앞) 팝업 트리거 */}
+                <div id="post-end-sentinel" className="h-px" />
+
                 {/* Related Posts */}
                 {relatedPosts.length > 0 && (
                     <div className="max-w-6xl mx-auto px-6 mt-12 sm:mt-24">
@@ -308,8 +311,6 @@ export default async function Post({ params }: Props) {
                     </div>
                 )}
 
-                {/* Sentinel: 페이지 맨 끝에 도달했을 때 팝업 트리거 */}
-                <div id="post-end-sentinel" className="h-px" />
             </main>
 
             {(popupTargetPost || relatedPosts.length > 0) && (
