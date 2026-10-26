@@ -24,7 +24,18 @@ export function fakeClient(db: FakeDb) {
         eq(col: string, v: unknown) { filters.push((r) => r[col] === v); return builder; },
         is(col: string, v: unknown) { filters.push((r) => (r[col] ?? null) === v); return builder; },
         lte(col: string, v: string) { filters.push((r) => String(r[col]) <= v); return builder; },
-        or() { return builder; },
+        // 'a.is.null,b.gte.X' 같은 OR 목록 — 이 route가 쓰는 is·gte만 흉내 낸다
+        or(expr: string) {
+          const preds = expr.split(',').map((part) => {
+            const [col, op, ...rest] = part.split('.');
+            const v = rest.join('.');
+            if (op === 'is' && v === 'null') return (r: Row) => r[col] == null;
+            if (op === 'gte') return (r: Row) => r[col] != null && String(r[col]) >= v;
+            throw new Error(`fake or(): 지원하지 않는 조건 ${part}`);
+          });
+          filters.push((r) => preds.some((f) => f(r)));
+          return builder;
+        },
         order(col: string) { orderCols.push(col); return builder; },
         range(from: number, to: number) { range = [from, to]; return builder; },
         maybeSingle() { single = true; return builder; },

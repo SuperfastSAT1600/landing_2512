@@ -22,11 +22,11 @@ const yoonjae: TutoringEntry<TutoringRowStudent> = {
   bySubject: [
     {
       subject: 'SAT', purchased: 62, completed: 22, refunded: 0,
-      remaining: 40, scheduled: 22, unscheduled: 18, overscheduled: 0, paymentStatus: 'active',
+      remaining: 40, scheduled: 22, unscheduled: 18, overscheduled: 0, held: 0, paymentStatus: 'active',
     },
     {
       subject: 'special', purchased: 68, completed: 68, refunded: 0,
-      remaining: 0, scheduled: 0, unscheduled: 0, overscheduled: 0, paymentStatus: 'inactive',
+      remaining: 0, scheduled: 0, unscheduled: 0, overscheduled: 0, held: 0, paymentStatus: 'inactive',
     },
   ],
 };
@@ -83,6 +83,38 @@ describe('expandSubjectRows', () => {
   it('입력 순서를 유지한다 — 정렬은 표가 담당한다', () => {
     const rows = expandSubjectRows([yoonjae, unlinked]);
     expect(rows.map((r) => r.student.id)).toEqual(['s1', 's1', 's2']);
+  });
+});
+
+// REQ-003 (crm-renewal-held-hours)
+describe('완료 처리 대기 반영', () => {
+  /** 형서진 SAT (2026-10-22): SRM 완료 4 · 예약 8, 그중 지난 수업 4h가 접속 기록으로 확인됨 */
+  const seojin: TutoringEntry<TutoringRowStudent> = {
+    ...yoonjae,
+    student: student('s3', '형서진'),
+    bySubject: [{
+      subject: 'SAT', purchased: 10, completed: 4, refunded: 0,
+      remaining: 6, scheduled: 8, unscheduled: 0, overscheduled: 2, held: 4, paymentStatus: 'active',
+    }],
+  };
+
+  it('처리 대기 시간을 완료로 옮기고 잔여·예약에서 뺀다 — 학생 카드와 같은 수치', () => {
+    const [row] = expandSubjectRows([seojin]);
+    expect(row.hours).toEqual({
+      purchased: 10, completed: 8, refunded: 0, remaining: 2, scheduled: 4, unscheduled: 0, overscheduled: 2,
+    });
+    expect(row.heldHours).toBe(4);
+    expect(row.remainingHours).toBe(2);
+  });
+
+  it('처리 대기가 없으면 SRM 수치 그대로', () => {
+    const [sat] = expandSubjectRows([yoonjae]);
+    expect(sat.hours).toMatchObject({ completed: 22, remaining: 40, scheduled: 22 });
+    expect(sat.heldHours).toBe(0);
+  });
+
+  it('SRM 미연결 행은 처리 대기 0', () => {
+    expect(expandSubjectRows([unlinked])[0].heldHours).toBe(0);
   });
 });
 

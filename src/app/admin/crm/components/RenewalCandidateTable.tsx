@@ -22,9 +22,12 @@ interface Column<K extends SortKey = SortKey> {
   hint: string;
 }
 
+/** 학생 카드(코치룸 수업 내역)와 같은 실제 진행 기준 — 완료·잔여·예약에 처리 대기 시간이 반영돼 있다. */
+const HELD_HINT = '수업은 했지만 SRM 완료 처리가 안 된 시간(코치·학생 접속 기록으로 확인) — 완료에 포함하고 잔여·예약에서 뺐습니다.';
+
 const METRIC_COLUMNS: Column<MetricKey>[] = [
   { key: 'purchased', label: '구매', descFirst: true, hint: '결제한 총 시간' },
-  { key: 'completed', label: '완료', descFirst: true, hint: '진행 완료한 수업 시간' },
+  { key: 'completed', label: '완료', descFirst: true, hint: '진행한 수업 시간 — SRM 완료 + 접속 기록으로 확인된 완료 처리 대기' },
   { key: 'refunded', label: '환불', descFirst: true, hint: '환불된 시간' },
   { key: 'remaining', label: '잔여', descFirst: false, hint: '구매 − 환불 − 완료. 음수면 결제분을 넘겨 수업한 상태' },
   { key: 'scheduled', label: '예약', descFirst: true, hint: '캘린더에 잡혀 있는 미진행 수업 시간' },
@@ -288,6 +291,15 @@ export function RenewalCandidateTable({ entries, onAdd, pendingStudentId, onSele
                     }`}
                   >
                     {hours ? num(col.key, hours[col.key]) : '—'}
+                    {col.key === 'completed' && row.heldHours > 0 && (
+                      <div
+                        data-testid={`held-${rowKey(row)}`}
+                        title={HELD_HINT}
+                        className="text-[10px] font-medium text-orange-600 whitespace-nowrap"
+                      >
+                        처리 대기 {row.heldHours}
+                      </div>
+                    )}
                   </td>
                 ))}
 

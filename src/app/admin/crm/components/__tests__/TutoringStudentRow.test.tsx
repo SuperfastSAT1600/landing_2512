@@ -140,7 +140,7 @@ describe('classifyTutoringEntries', () => {
           subjectBreakdown: [
             {
               subject: 'SAT', purchased: 62, completed: 22, refunded: 0,
-              remaining: 40, scheduled: 22, unscheduled: 18, overscheduled: 0, paymentStatus: 'active',
+              remaining: 40, scheduled: 22, unscheduled: 18, overscheduled: 0, held: 0, paymentStatus: 'active',
             },
           ],
         }),
@@ -150,7 +150,7 @@ describe('classifyTutoringEntries', () => {
     expect(entry.bySubject).toEqual([
       {
         subject: 'SAT', purchased: 62, completed: 22, refunded: 0,
-        remaining: 40, scheduled: 22, unscheduled: 18, overscheduled: 0, paymentStatus: 'active',
+        remaining: 40, scheduled: 22, unscheduled: 18, overscheduled: 0, held: 0, paymentStatus: 'active',
       },
     ]);
   });

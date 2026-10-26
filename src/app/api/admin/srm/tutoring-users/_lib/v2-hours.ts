@@ -4,6 +4,7 @@
 import { supabaseSFv2 } from '@/lib/supabase-sfv2';
 import { scanAllPages } from '@/lib/supabase-scan';
 import type { SubjectKey } from '@/lib/tutoring-subject-breakdown';
+import { heldLessonIds, isPastLesson, WINDOW_PAD_MS, type RoomSession } from '@/lib/coach-room-attendance';
 
 /** 학생 → 과목 → 시간. 과목 행(V2 Payment 페이지 단위)을 만들기 위한 이중 집계. */
 type HoursBySubject = Map<string, Map<SubjectKey, number>>;
@@ -62,6 +63,32 @@ async function fetchRawRows() {
   return { payments, transactions, refunds, matchings, events, participants };
 }
 
+// UUID 100개 ≈ 3.7KB — 프록시 URL 길이 한도(8KB) 안쪽
+const IN_CHUNK = 100;
+
+/**
+ * SRM 완료 처리 안 된 지난 수업 중 접속 기록으로 실제 열린 수업 — 학생 카드(coach-room-ledger)와 같은 판정.
+ * 접속 기록은 수만 건이라 전부 읽지 않고, 대기 수업의 매칭·시간대에 걸치는 것만 읽는다.
+ */
+async function fetchHeldEventIds(events: EventRow[], now: string): Promise<Set<string>> {
+  const nowMs = Date.parse(now);
+  const pending = events
+    .filter((e) => e.status !== 'completed' && isPastLesson(e.ends_at, nowMs))
+    .flatMap((e) => (e.matching_id ? [{ ...e, matching_id: e.matching_id }] : []));
+  if (!pending.length) return new Set();
+  const mids = [...new Set(pending.map((e) => e.matching_id))];
+  const lo = new Date(Math.min(...pending.map((e) => Date.parse(e.starts_at))) - WINDOW_PAD_MS).toISOString();
+  const hi = new Date(Math.max(...pending.map((e) => Date.parse(e.ends_at))) + WINDOW_PAD_MS).toISOString();
+  const parts = Array.from({ length: Math.ceil(mids.length / IN_CHUNK) }, (_, i) => mids.slice(i * IN_CHUNK, (i + 1) * IN_CHUNK));
+  const sessions = (await Promise.all(parts.map((part) => scanAllPages<RoomSession>((f, t, c) =>
+    supabaseSFv2.from('coach_room_session')
+      .select('matching_id, role, started_at, ended_at', c)
+      .in('matching_id', part).lte('started_at', hi).or(`ended_at.is.null,ended_at.gte.${lo}`)
+      .order('id').range(f, t)
+  )))).flat();
+  return heldLessonIds(pending, sessions, now);
+}
+
 // 1. 구매 시간 + 최근 결제일: payment_transactions.hours by student_id (과목은 transaction.subject)
 function foldPurchased(rows: TxRow[]) {
   const purchased = new Map<string, number>();
@@ -92,24 +119,28 @@ function foldRefunded(refunds: RefundRow[], payments: PaymentRow[]) {
 }
 
 // 3. 세션 시간 by user_id — 완료(used) / 예약 대기(scheduled) + 최근 세션일.
+//    held = 예약 중 접속 기록으로 실제 열린 지난 수업(SRM 완료 처리 대기). SRM 수치와 별도로 둔다.
 function foldSessions(
   matchings: { id: string; subject: string | null }[],
   events: EventRow[],
-  participants: ParticipantRow[]
+  participants: ParticipantRow[],
+  heldIds: Set<string>
 ) {
   const used = new Map<string, number>();
   const scheduled = new Map<string, number>();
   const usedBySubject: HoursBySubject = new Map();
   const scheduledBySubject: HoursBySubject = new Map();
+  const heldBySubject: HoursBySubject = new Map();
   const lastSessionDate = new Map<string, string>();
 
   const matchingSubject = new Map(matchings.map((m) => [m.id, m.subject]));
-  const eventMeta = new Map<string, { duration: number; startsAt: string; completed: boolean; subject: SubjectKey }>();
+  const eventMeta = new Map<string, { duration: number; startsAt: string; completed: boolean; held: boolean; subject: SubjectKey }>();
   for (const e of events) {
     eventMeta.set(e.id, {
       duration: (new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime()) / 3_600_000,
       startsAt: e.starts_at,
       completed: e.status === 'completed',
+      held: heldIds.has(e.id),
       subject: e.matching_id ? matchingSubject.get(e.matching_id) ?? null : null,
     });
   }
@@ -120,6 +151,7 @@ function foldSessions(
     if (!meta.completed) {
       scheduled.set(p.user_id, (scheduled.get(p.user_id) ?? 0) + meta.duration);
       addSubjectHours(scheduledBySubject, p.user_id, meta.subject, meta.duration);
+      if (meta.held) addSubjectHours(heldBySubject, p.user_id, meta.subject, meta.duration);
       continue;
     }
     used.set(p.user_id, (used.get(p.user_id) ?? 0) + meta.duration);
@@ -127,16 +159,17 @@ function foldSessions(
     const prev = lastSessionDate.get(p.user_id);
     if (!prev || meta.startsAt > prev) lastSessionDate.set(p.user_id, meta.startsAt);
   }
-  return { used, scheduled, usedBySubject, scheduledBySubject, lastSessionDate };
+  return { used, scheduled, usedBySubject, scheduledBySubject, heldBySubject, lastSessionDate };
 }
 
 /** SFv2 결제 행과 시간 집계. 결제 행은 route가 관리 상태 분류에 다시 쓴다. */
-export async function fetchV2Data() {
+export async function fetchV2Data(now = new Date().toISOString()) {
   const raw = await fetchRawRows();
+  const heldIds = await fetchHeldEventIds(raw.events, now);
   return {
     payments: raw.payments,
     ...foldPurchased(raw.transactions),
     ...foldRefunded(raw.refunds, raw.payments),
-    ...foldSessions(raw.matchings, raw.events, raw.participants),
+    ...foldSessions(raw.matchings, raw.events, raw.participants, heldIds),
   };
 }
