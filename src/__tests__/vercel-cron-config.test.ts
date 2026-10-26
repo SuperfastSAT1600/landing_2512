@@ -30,6 +30,8 @@ const EXPECTED_CRONS: Record<string, string> = {
   '/api/cron/weekly-visitor-report': '0 19 * * 2',
   // 스케줄 미입력 이메일 넛지 (3시간마다) — 3cb1581f에서 추가
   '/api/cron/schedule-nudge': '0 */3 * * *',
+  // 매칭 첫 수업 잡힘 슬랙 알림 (10분마다)
+  '/api/cron/first-lesson-notice': '*/10 * * * *',
 };
 
 function readCrons(): { path: string; schedule: string }[] {
