@@ -94,6 +94,54 @@ describe('GET /api/admin/srm/tutoring-users', () => {
     expect(await res.json()).toMatchSnapshot();
   });
 
+  // REQ-002 (crm-renewal-held-hours): 완료 처리 안 된 지난 수업 + 함께 접속 → 과목별 held
+  it('접속 기록으로 열린 것이 확인된 예약 수업은 held로 따로 내려 주고 SRM 수치는 그대로 둔다', async () => {
+    // e00020: approved · m1(SAT) · s1 · 2026-06-03T12:00Z~13:00Z
+    const at = (h: number) => new Date(Date.parse('2026-06-03T12:00:00Z') + h * H).toISOString();
+    sfv2.tables.coach_room_session = [
+      { id: 'cs1', matching_id: 'm1', role: 'teacher', started_at: at(0), ended_at: at(1) },
+      { id: 'cs2', matching_id: 'm1', role: 'student', started_at: at(0), ended_at: at(1) },
+    ];
+    const { GET } = await import('../route');
+    const body = await (await GET(req())).json();
+    const sat = body.linked.find((u: { sfv2ProfileId: string }) => u.sfv2ProfileId === 's1')
+      .subjectBreakdown.find((b: { subject: string }) => b.subject === 'SAT');
+    expect(sat.held).toBe(1);
+    sfv2.tables.coach_room_session = [];
+    const plain = (await (await GET(req())).json()).linked.find((u: { sfv2ProfileId: string }) => u.sfv2ProfileId === 's1')
+      .subjectBreakdown.find((b: { subject: string }) => b.subject === 'SAT');
+    expect(plain.held).toBe(0);
+    expect({ ...sat, held: 0 }).toEqual(plain);
+  });
+
+  it('아직 닫히지 않은 접속도 지금까지 있던 것으로 보고 held로 센다', async () => {
+    sfv2.tables.coach_room_session = [
+      { id: 'cs1', matching_id: 'm1', role: 'teacher', started_at: '2026-06-03T12:00:00.000Z', ended_at: null },
+      { id: 'cs2', matching_id: 'm1', role: 'student', started_at: '2026-06-03T12:00:00.000Z', ended_at: null },
+    ];
+    const { GET } = await import('../route');
+    const body = await (await GET(req())).json();
+    const sat = body.linked.find((u: { sfv2ProfileId: string }) => u.sfv2ProfileId === 's1')
+      .subjectBreakdown.find((b: { subject: string }) => b.subject === 'SAT');
+    expect(sat.held).toBeGreaterThanOrEqual(1);
+  });
+
+  it('대기 수업 시간대 밖의 접속은 읽지 않는다', async () => {
+    // 모든 대기 수업보다 먼저 끝난 접속 — 조회 조건(ended_at ≥ 창 시작)에서 걸러진다
+    sfv2.tables.coach_room_session = [
+      { id: 'cs1', matching_id: 'm1', role: 'teacher', started_at: '2026-01-01T00:00:00.000Z', ended_at: '2026-01-01T02:00:00.000Z' },
+      { id: 'cs2', matching_id: 'm1', role: 'student', started_at: '2026-01-01T00:00:00.000Z', ended_at: '2026-01-01T02:00:00.000Z' },
+    ];
+    const { GET } = await import('../route');
+    await GET(req());
+    const sessionReads = sfv2.requests.filter((r) => r.table === 'coach_room_session');
+    expect(sessionReads.length).toBeGreaterThan(0);
+    const body = await (await GET(req())).json();
+    const sat = body.linked.find((u: { sfv2ProfileId: string }) => u.sfv2ProfileId === 's1')
+      .subjectBreakdown.find((b: { subject: string }) => b.subject === 'SAT');
+    expect(sat.held).toBe(0);
+  });
+
   it('1000행이 넘는 참가자 테이블도 빠짐없이 집계한다', async () => {
     const { GET } = await import('../route');
     const body = await (await GET(req())).json();

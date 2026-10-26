@@ -27,6 +27,7 @@ exports[`GET /api/admin/srm/tutoring-users > 응답이 기준 스냅샷과 같�
       "subjectBreakdown": [
         {
           "completed": 0,
+          "held": 0,
           "overscheduled": 0,
           "paymentStatus": "onboarding",
           "purchased": 12,
@@ -38,6 +39,7 @@ exports[`GET /api/admin/srm/tutoring-users > 응답이 기준 스냅샷과 같�
         },
         {
           "completed": 330,
+          "held": 0,
           "overscheduled": 330,
           "paymentStatus": null,
           "purchased": 0,
@@ -70,6 +72,7 @@ exports[`GET /api/admin/srm/tutoring-users > 응답이 기준 스냅샷과 같�
       "subjectBreakdown": [
         {
           "completed": 262.5,
+          "held": 0,
           "overscheduled": 315.5,
           "paymentStatus": "active",
           "purchased": 20,
@@ -81,6 +84,7 @@ exports[`GET /api/admin/srm/tutoring-users > 응답이 기준 스냅샷과 같�
         },
         {
           "completed": 0,
+          "held": 0,
           "overscheduled": 0,
           "paymentStatus": "paused",
           "purchased": 10,
@@ -114,6 +118,7 @@ exports[`GET /api/admin/srm/tutoring-users > 응답이 기준 스냅샷과 같�
       "subjectBreakdown": [
         {
           "completed": 263.5,
+          "held": 0,
           "overscheduled": 335,
           "paymentStatus": "inactive",
           "purchased": 0,

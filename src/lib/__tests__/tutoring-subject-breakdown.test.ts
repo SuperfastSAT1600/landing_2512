@@ -27,6 +27,7 @@ describe('buildSubjectBreakdown', () => {
         scheduled: 22,
         unscheduled: 18,
         overscheduled: 0,
+        held: 0,
         paymentStatus: 'active',
       },
       {
@@ -38,6 +39,7 @@ describe('buildSubjectBreakdown', () => {
         scheduled: 0,
         unscheduled: 0,
         overscheduled: 0,
+        held: 0,
         paymentStatus: 'inactive',
       },
     ]);
@@ -112,6 +114,21 @@ describe('buildSubjectBreakdown', () => {
     expect(row.purchased).toBe(10.1);
     expect(row.completed).toBe(3.3);
     expect(row.remaining).toBe(6.8);
+  });
+
+  // REQ-002 (crm-renewal-held-hours)
+  it('완료 처리 대기(held) 시간을 SRM 수치와 따로 담는다 — 기존 완료·잔여·예약은 그대로', () => {
+    const [sat] = buildSubjectBreakdown({
+      purchased: new Map([['SAT', 10]]),
+      used: new Map([['SAT', 4]]),
+      scheduled: new Map([['SAT', 8]]),
+      held: new Map([['SAT', 4]]),
+    });
+    expect(sat).toMatchObject({ completed: 4, remaining: 6, scheduled: 8, overscheduled: 2, held: 4 });
+  });
+
+  it('held 소스가 없으면 0', () => {
+    expect(buildSubjectBreakdown(YOONJAE)[0].held).toBe(0);
   });
 
   it('아무 데이터도 없으면 빈 배열', () => {

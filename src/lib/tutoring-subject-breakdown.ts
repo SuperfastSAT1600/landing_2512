@@ -29,6 +29,11 @@ export interface SubjectHours {
   scheduled: number;
   unscheduled: number;
   overscheduled: number;
+  /**
+   * 예약 중 이미 지난 수업인데 접속 기록으로 실제 열린 것이 확인된 시간 — SRM 완료 처리 대기.
+   * 위 SRM 수치(완료·잔여·예약)에는 섞지 않는다. 실제 진행 기준이 필요한 화면이 직접 옮긴다.
+   */
+  held: number;
   paymentStatus: PaymentManagementStatus | null;
 }
 
@@ -37,6 +42,7 @@ export interface SubjectSources {
   refunded?: Map<SubjectKey, number>;
   used?: Map<SubjectKey, number>;
   scheduled?: Map<SubjectKey, number>;
+  held?: Map<SubjectKey, number>;
   paymentStatus?: Map<SubjectKey, PaymentManagementStatus>;
 }
 
@@ -87,6 +93,7 @@ export function buildSubjectBreakdown(sources: SubjectSources): SubjectHours[] {
       scheduled,
       unscheduled: round1(Math.max(0, remaining - scheduled)),
       overscheduled: round1(Math.max(0, scheduled - remaining)),
+      held: round1(sources.held?.get(subject) ?? 0),
       paymentStatus: sources.paymentStatus?.get(subject) ?? null,
     };
   });

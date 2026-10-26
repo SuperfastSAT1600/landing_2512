@@ -94,7 +94,7 @@ export function RenewalCandidateAdd({
         <div>
           <h3 className="text-xs font-semibold text-gray-700">재결제 대상 추가</h3>
           <p className="text-[10px] text-gray-400 mt-0.5">
-            플랫폼 Payment 페이지와 같은 시간 내역·필터 — 초과예약·잔여 부족 순. 추가하면 이번 주차 파이프라인 1단계로 들어갑니다.
+            완료·잔여·예약은 SRM 완료 처리 대기까지 반영(학생 카드 기준) — 초과예약·잔여 부족 순. 추가하면 이번 주차 파이프라인 1단계로 들어갑니다.
           </p>
         </div>
         <button

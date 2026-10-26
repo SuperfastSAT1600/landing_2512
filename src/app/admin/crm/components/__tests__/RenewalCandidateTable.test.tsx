@@ -40,6 +40,7 @@ function entry(
     paymentStatus: 'active',
     subject: null,
     bySubject: [],
+    heldHours: 0,
     ...rest,
   };
 }
@@ -289,6 +290,24 @@ describe('RenewalCandidateTable', () => {
       expect(screen.getByText('Special')).toBeTruthy();
       expect(screen.getByText('Active')).toBeTruthy();
       expect(screen.getByText('Inactive')).toBeTruthy();
+    });
+
+    // REQ-003 (crm-renewal-held-hours)
+    it('완료 처리 대기 시간이 있으면 완료 칸 아래에 따로 알려 준다', () => {
+      const seojin = subjectRow('s3', '형서진', 'SAT', {
+        purchased: 10, completed: 8, remaining: 2, scheduled: 4, unscheduled: 0, overscheduled: 2,
+      }, { heldHours: 4 });
+      render(<RenewalCandidateTable entries={[seojin]} onAdd={noop} pendingStudentId={null} />);
+
+      const cell = screen.getByTestId('cell-completed-s3-SAT');
+      expect(cell.textContent).toContain('8');
+      expect(screen.getByTestId('held-s3-SAT').textContent).toBe('처리 대기 4');
+      expect(screen.getByTestId('held-s3-SAT').getAttribute('title')).toContain('SRM 완료 처리');
+    });
+
+    it('처리 대기가 없으면 완료 칸은 숫자만', () => {
+      render(<RenewalCandidateTable entries={yoonjae} onAdd={noop} pendingStudentId={null} />);
+      expect(screen.queryByTestId('held-s1-SAT')).toBeNull();
     });
 
     it('추가는 어느 과목 행에서 눌러도 학생 단위로 보낸다', () => {

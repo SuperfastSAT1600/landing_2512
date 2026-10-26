@@ -44,3 +44,31 @@ export function togetherMinutes(
 export function attendanceHeld(together: number, lessonMinutes: number): boolean {
   return together > 0 && together >= Math.min(20, lessonMinutes / 2);
 }
+
+/** 끝나고 여유 시간(30분)이 지나야 지난 수업 — 늦게 끝나는 수업·아직 열린 접속을 기다린다 */
+export function isPastLesson(endsAt: string, now: number): boolean {
+  return new Date(endsAt).getTime() + WINDOW_PAD_MS <= now;
+}
+
+/** 아직 닫히지 않은 접속은 지금까지 있던 것으로 본다(수업 창으로 잘리므로 오래 열린 접속도 과대 집계되지 않는다) */
+export function closeOpenSessions(sessions: RoomSession[], now: string): RoomSession[] {
+  return sessions.map((s) => (s.ended_at ? s : { ...s, ended_at: now }));
+}
+
+/** SRM 완료 처리는 안 됐지만 접속 기록으로 실제 열린 것이 확인된 지난 수업의 id */
+export function heldLessonIds(
+  lessons: { id: string; matching_id: string; status: string; starts_at: string; ends_at: string }[],
+  sessions: RoomSession[],
+  now: string,
+): Set<string> {
+  const nowMs = new Date(now).getTime();
+  const closed = closeOpenSessions(sessions, now);
+  const out = new Set<string>();
+  for (const l of lessons) {
+    if (l.status === 'completed' || !isPastLesson(l.ends_at, nowMs)) continue;
+    const minutes = (new Date(l.ends_at).getTime() - new Date(l.starts_at).getTime()) / 60_000;
+    const together = togetherMinutes({ matchingId: l.matching_id, startsAt: l.starts_at, endsAt: l.ends_at }, closed);
+    if (attendanceHeld(together, minutes)) out.add(l.id);
+  }
+  return out;
+}

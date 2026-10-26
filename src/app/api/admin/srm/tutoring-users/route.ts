@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
     );
     const {
       purchased, refunded, used, scheduled, lastSessionDate,
-      purchasedBySubject, refundedBySubject, usedBySubject, scheduledBySubject,
+      purchasedBySubject, refundedBySubject, usedBySubject, scheduledBySubject, heldBySubject,
     } = v2;
     const {
       subjects: subjectsByStudent,
@@ -267,6 +267,7 @@ export async function GET(request: NextRequest) {
           refunded: refundedBySubject.get(pid),
           used: usedBySubject.get(pid),
           scheduled: scheduledBySubject.get(pid),
+          held: heldBySubject.get(pid),
           paymentStatus: statusBySubject.get(pid),
         }),
         status,
