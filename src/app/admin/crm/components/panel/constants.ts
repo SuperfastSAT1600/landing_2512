@@ -65,9 +65,15 @@ export function formatSatDate(value: string | null | undefined): string {
   return found ? found.label : value;
 }
 
-// SAT 시행 월 패턴(3·5·6·8·10·11·12월) 및 과거 목록 시작 연도.
+// SAT 기본 시행 월 패턴(3·5·6·8·10·11·12월 — 그 밖의 월은 시험일 마스터에서 보충) 및 과거 목록 시작 연도.
 const SAT_MONTHS = [3, 5, 6, 8, 10, 11, 12];
 const SAT_PAST_START_YEAR = 2023;
+
+// 그 해 시행 월: 고정 패턴 + 시험일 마스터에 있는 월(2026년부터 생긴 9월 시험 등).
+function satMonthsOf(year: number): number[] {
+  const extra = SAT_DATE_ALL.filter(d => d.value.startsWith(`${year}-`)).map(d => Number(d.value.slice(5, 7)));
+  return [...new Set([...SAT_MONTHS, ...extra])].sort((a, b) => a - b);
+}
 
 // 응시함(직전 응시) 드롭다운: 현재 날짜 기준 이미 진행된 시행 월을 YYYY-MM으로 최신순 반환.
 export function getSatPastMonths(now: Date = new Date()): { value: string; label: string }[] {
@@ -75,7 +81,7 @@ export function getSatPastMonths(now: Date = new Date()): { value: string; label
   const curMonth = now.getMonth() + 1;
   const out: { value: string; label: string }[] = [];
   for (let year = SAT_PAST_START_YEAR; year <= curYear; year++) {
-    for (const month of SAT_MONTHS) {
+    for (const month of satMonthsOf(year)) {
       if (year < curYear || month <= curMonth) {
         out.push({ value: `${year}-${String(month).padStart(2, '0')}`, label: `${year}년 ${month}월` });
       }

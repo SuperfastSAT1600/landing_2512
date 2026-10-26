@@ -23,10 +23,17 @@ describe('getSatPastMonths', () => {
     expect(values).not.toContain('2026-10');
   });
 
-  it('시행 월 패턴(3·5·6·8·10·11·12)만 사용', () => {
+  it('9월 시험 전에는 시행 월 패턴(3·5·6·8·10·11·12)만 사용', () => {
     const months = getSatPastMonths(NOW).map(m => Number(m.value.split('-')[1]));
     const allowed = new Set([3, 5, 6, 8, 10, 11, 12]);
     expect(months.every(m => allowed.has(m))).toBe(true);
+  });
+
+  it('시험일 마스터에 있는 9월 시험(2026-09-12)도 지나면 포함, 마스터에 없는 해의 9월은 제외', () => {
+    const values = getSatPastMonths(new Date(2026, 9, 26)).map(m => m.value);
+    expect(values.slice(0, 3)).toEqual(['2026-10', '2026-09', '2026-08']);
+    expect(values).not.toContain('2025-09');
+    expect(values).not.toContain('2027-09');
   });
 
   it('2023년까지 거슬러 올라감', () => {
