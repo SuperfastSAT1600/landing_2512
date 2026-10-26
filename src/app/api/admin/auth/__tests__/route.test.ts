@@ -16,7 +16,7 @@ describe('CRM 로그인 코드', () => {
     const roster: [string, string][] = [
       ['dlalswo', '이민재'], ['rladndud', '김우영'], ['rlaskawns', '김남준'],
       ['rlawodus', '김재연'], ['qoqudbs', '배병윤'], ['qkrrmsdn', '박근우'],
-      ['alsrudeh', '민경도'],
+      ['alsrudeh', '민경도'], ['kimra@argonautai.co.kr', '김리안'],
     ];
     for (const [code, name] of roster) {
       const r = await call(code);
