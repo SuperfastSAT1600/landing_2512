@@ -25,7 +25,7 @@ export function formatInZone(iso: string, timeZone: string): string {
   const part = (locale: string, opts: Intl.DateTimeFormatOptions, type: string) =>
     new Intl.DateTimeFormat(locale, { timeZone, hourCycle: 'h23', ...opts }).formatToParts(d).find((x) => x.type === type)?.value ?? '';
   const ko = (opts: Intl.DateTimeFormatOptions, type: string) => part('ko-KR', opts, type);
-  const time = `${ko({ hour: '2-digit' }, 'hour')}:${ko({ minute: '2-digit' }, 'minute')}`;
+  const time = `${ko({ hour: '2-digit' }, 'hour').padStart(2, '0')}:${ko({ minute: '2-digit' }, 'minute').padStart(2, '0')}`;
   // 요일은 한글, 시간대 약어(PDT 등)는 영문이 읽기 쉽다
   return `${ko({ month: 'numeric' }, 'month')}/${ko({ day: 'numeric' }, 'day')}(${ko({ weekday: 'short' }, 'weekday')}) ${time} ${part('en-US', { timeZoneName: 'short' }, 'timeZoneName')}`;
 }

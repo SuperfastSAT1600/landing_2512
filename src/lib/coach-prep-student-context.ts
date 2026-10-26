@@ -16,7 +16,7 @@ const validTz = (tz: string | null | undefined): string | null => {
   }
 };
 
-async function sfv2Timezone(profileId: string): Promise<string | null> {
+export async function sfv2Timezone(profileId: string): Promise<string | null> {
   const { data, error } = await supabaseSFv2
     .from('scheduled_availability_slots').select('tz').eq('owner_id', profileId).order('effective_from', { ascending: false, nullsFirst: false }).limit(1);
   if (error) throw new Error(error.message);
