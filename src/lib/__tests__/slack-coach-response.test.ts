@@ -72,15 +72,19 @@ describe('notifyCoachResponseToSlack', () => {
 
   it('수락이면 본문 뒤에 스레드로 한글·영어 선택 안내를 학생 시간대로 남긴다', async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true, ts: '111.222' }) });
-    await notifyCoachResponseToSlack({ ...base, action: 'accept', lessons, studentTimezone: 'America/Los_Angeles' });
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    const [, ko, en] = fetchMock.mock.calls.map(([, init]) => JSON.parse(init.body));
+    await notifyCoachResponseToSlack({ ...base, action: 'accept', lessons, studentTimezone: 'America/Los_Angeles', coachTimezone: 'America/New_York' });
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    const [, ko, en, coach] = fetchMock.mock.calls.map(([, init]) => JSON.parse(init.body));
     expect(ko.thread_ts).toBe('111.222');
     expect(ko.text).toContain('하나를 선택');
     expect(ko.text).toContain('옵션 1: 첫 수업 10/25(일) 오후 10:30');
     expect(en.thread_ts).toBe('111.222');
     expect(en.text).toContain('pick the one option');
     expect(en.text).toContain('Option 1: 1st lesson Sun 10/25, 10:30 PM');
+    expect(coach.thread_ts).toBe('111.222');
+    expect(coach.text).toContain('코치 전달용');
+    expect(coach.text).toContain('코치님 현지 시간 America/New_York');
+    expect(coach.text).toContain('옵션 1: 첫 수업 10/26(월) 오전 1:30'); // 10/26 14:30 KST = 10/26 01:30 EDT
   });
 
   it('거절이면 스레드 안내 없이 본문만 보낸다', async () => {

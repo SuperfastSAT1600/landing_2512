@@ -3,7 +3,7 @@ import { apiError } from '@/lib/api-response';
 import { EMPTY_LESSON_TIMES, RespondSchema, isClosed, isSameResponse } from '@/lib/coach-prep-request';
 import { findByToken, getStudentName, saveResponse } from '@/lib/coach-prep-requests-db';
 import { outsideAvailability } from '@/lib/availability-window';
-import { loadAvailabilitySlots, loadStudentMessageContext } from '@/lib/coach-prep-student-context';
+import { loadAvailabilitySlots, loadCoachTimezone, loadStudentMessageContext } from '@/lib/coach-prep-student-context';
 import { notifyCoachResponseToSlack } from '@/lib/slack-coach-response';
 
 // 코치 응답(수업 수락/어려움) — 코치별 토큰이 자격이다. 마감 전에는 수정할 수 있다.
@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
         reason: declineReason,
         deadlineAt: req.deadline_at,
         studentTimezone: accepted ? (await loadStudentMessageContext(req.student_id).catch(() => null))?.timezone : null,
+        coachTimezone: accepted ? await loadCoachTimezone(req.coach_slug).catch(() => null) : null,
       });
     }
 

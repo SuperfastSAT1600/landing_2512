@@ -78,3 +78,18 @@ export function buildChoiceMessages(
   ];
   return { ko: ko.join('\n'), en: en.join('\n') };
 }
+
+// 코치 수락 슬랙 스레드용: 코치가 입력한 수업 시간을 코치 시간대로 되짚어 주는 확인 안내
+export function buildCoachConfirmMessage(
+  { coachName, options, timezone }: Pick<MessageInput, 'coachName' | 'options' | 'timezone'>,
+): string {
+  const tz = timezone ?? KST;
+  const lines = options.map((o) => {
+    const num = o.label.replace(/\D/g, '');
+    return `옵션 ${num}: 첫 수업 ${formatInTimeZone(o.first, tz, 'ko')} / 두 번째 수업 ${formatInTimeZone(o.second, tz, 'ko')}`;
+  });
+  return [
+    `${coachName} 코치님, 아래 시간에 수업 가능하다고 입력해 주셨어요! 학생이 옵션을 고르면 다시 안내드릴게요. (${timezone ? `코치님 현지 시간 ${timezone}` : '한국 시간(KST)'} 기준)`,
+    ...lines,
+  ].join('\n');
+}

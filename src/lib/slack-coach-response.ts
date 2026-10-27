@@ -3,7 +3,7 @@
  * 상담 메모 알림(slack-memo)과 채널이 달라 별도 모듈로 둔다. 전송 실패는 삼켜서 응답 저장에 영향을 주지 않는다.
  */
 import { formatKst, lessonOptions } from '@/lib/coach-prep-request';
-import { buildChoiceMessages } from '@/lib/coach-prep-student-message';
+import { buildChoiceMessages, buildCoachConfirmMessage } from '@/lib/coach-prep-student-message';
 import type { LessonTimes } from '@/types/coach-prep';
 
 export const COACH_RESPONSE_CHANNEL = 'C0CCCD90Z0Q';
@@ -17,6 +17,8 @@ export interface CoachResponseNotice {
   deadlineAt: string;
   /** 학생 IANA 시간대. 있으면 수업 시간 옆에 학생 현지 시각을 함께 보여 준다 */
   studentTimezone?: string | null;
+  /** 코치 IANA 시간대(SFv2). 없으면 코치 전달용 안내를 KST로 쓴다 */
+  coachTimezone?: string | null;
 }
 
 /** "10/25(일) 22:30 PDT" — 학생 현지 시각(DST 반영) */
@@ -73,6 +75,8 @@ export async function notifyCoachResponseToSlack(notice: CoachResponseNotice): P
     const { ko, en } = buildChoiceMessages({ coachName: notice.coachName, options: lessonOptions(notice.lessons), timezone: notice.studentTimezone ?? null });
     await postMessage(token, { thread_ts: ts, text: `*한글*\n${ko}` });
     await postMessage(token, { thread_ts: ts, text: `*English*\n${en}` });
+    const coachMsg = buildCoachConfirmMessage({ coachName: notice.coachName, options: lessonOptions(notice.lessons), timezone: notice.coachTimezone ?? null });
+    await postMessage(token, { thread_ts: ts, text: `*코치 전달용*\n${coachMsg}` });
   } catch (e) {
     console.error('[slack-coach-response]', e);
   }
