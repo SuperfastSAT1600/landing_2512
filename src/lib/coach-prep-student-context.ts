@@ -60,6 +60,17 @@ export async function loadStudentMessageContext(studentId: string): Promise<Stud
   };
 }
 
+// 코치 시간대: CRM coaches.v2_user_id로 SFv2 계정을 찾아 profiles.timezone을 읽고, 없으면 가능 시간 슬롯의 tz로 대신한다.
+export async function loadCoachTimezone(coachSlug: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin.from('coaches').select('v2_user_id').eq('slug', coachSlug).maybeSingle();
+  if (error) throw new Error(error.message);
+  const profileId = (data as { v2_user_id: string | null } | null)?.v2_user_id;
+  if (!profileId) return null;
+  const { data: profile, error: pErr } = await supabaseSFv2.from('profiles').select('timezone').eq('id', profileId).maybeSingle();
+  if (pErr) throw new Error(pErr.message);
+  return validTz((profile as { timezone: string | null } | null)?.timezone) ?? sfv2Timezone(profileId);
+}
+
 // 학생이 SFv2에 입력한 코치룸 가능 시간 원본. SFv2 계정이 없거나 입력이 없으면 빈 배열(= 제한 없음)
 export async function loadAvailabilitySlots(studentId: string): Promise<AvailabilitySlot[]> {
   const { data } = await supabaseAdmin.from('students').select('sfv2_profile_id').eq('id', studentId).maybeSingle();

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatInTimeZone, buildStudentMessage, SCHEDULE_PROMPT_EN, SCHEDULE_PROMPT_KO } from '../coach-prep-student-message';
+import { formatInTimeZone, buildStudentMessage, buildCoachConfirmMessage, SCHEDULE_PROMPT_EN, SCHEDULE_PROMPT_KO } from '../coach-prep-student-message';
 
 // 2026-10-26 10:00 KST = 2026-10-26 01:00 UTC = 2026-10-25 21:00 EDT = 2026-10-25 18:00 PDT
 const KST_MON_10 = '2026-10-26T10:00:00+09:00';
@@ -77,5 +77,19 @@ describe('buildStudentMessage', () => {
   it('링크가 없으면 링크 줄 없이 안내문까지만', () => {
     const msg = buildStudentMessage({ ...base, language: 'korean', scheduleUrl: null });
     expect(msg.endsWith(SCHEDULE_PROMPT_KO)).toBe(true);
+  });
+});
+
+describe('buildCoachConfirmMessage', () => {
+  it('코치 시간대로 옵션 시간을 보여 준다', () => {
+    const m = buildCoachConfirmMessage({ coachName: 'Jasmine', timezone: 'America/New_York', options: base.options });
+    expect(m).toContain('코치님 현지 시간 America/New_York');
+    expect(m).toContain('옵션 1: 첫 수업 10/25(일) 오후 9:00 / 두 번째 수업 10/27(화) 오후 9:00');
+  });
+
+  it('시간대를 모르면 KST로 안내한다', () => {
+    const m = buildCoachConfirmMessage({ coachName: 'Jasmine', timezone: null, options: base.options });
+    expect(m).toContain('한국 시간(KST) 기준');
+    expect(m).toContain('10/26(월) 오전 10:00');
   });
 });
