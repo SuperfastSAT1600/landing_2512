@@ -32,6 +32,8 @@ const EXPECTED_CRONS: Record<string, string> = {
   '/api/cron/schedule-nudge': '0 */3 * * *',
   // 매칭 첫 수업 잡힘 슬랙 알림 (10분마다)
   '/api/cron/first-lesson-notice': '*/10 * * * *',
+  // 미완료 학생 배정 체크리스트 DM 알림 (3시간마다)
+  '/api/cron/assignment-checklist-reminder': '0 */3 * * *',
 };
 
 function readCrons(): { path: string; schedule: string }[] {
