@@ -182,6 +182,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
                 student={entry.student}
                 displayStatus={entry.displayStatus}
                 remainingHours={entry.remainingHours}
+                heldHours={entry.heldHours}
                 onClick={() => onStudentClick(entry.student)}
                 action={
                   <button

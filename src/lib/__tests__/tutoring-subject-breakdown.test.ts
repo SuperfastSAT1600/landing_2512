@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { buildSubjectBreakdown } from '@/lib/tutoring-subject-breakdown';
+import { buildSubjectBreakdown, totalHeld, withHeld } from '@/lib/tutoring-subject-breakdown';
 
 /** 노윤재(2026-08 실측): SAT 62구매/22완료/22예약, special 68구매/68완료. */
 const YOONJAE = {
@@ -133,5 +133,19 @@ describe('buildSubjectBreakdown', () => {
 
   it('아무 데이터도 없으면 빈 배열', () => {
     expect(buildSubjectBreakdown({})).toEqual([]);
+  });
+});
+
+describe('withHeld / totalHeld', () => {
+  it('처리 대기를 예약에서 완료로 옮기고 나머지 필드는 그대로 둔다(0.1 단위 반올림)', () => {
+    expect(withHeld({ completed: 10.1, remaining: 3.2, scheduled: 0.1, overscheduled: 2 }, 0.2)).toEqual({
+      completed: 10.3, remaining: 3, scheduled: -0.1, overscheduled: 2,
+    });
+  });
+
+  it('과목별 처리 대기를 0.1 단위로 합친다', () => {
+    const b = (held: number) => ({ held }) as Parameters<typeof totalHeld>[0][number];
+    expect(totalHeld([b(0.1), b(0.2)])).toBe(0.3);
+    expect(totalHeld([])).toBe(0);
   });
 });

@@ -19,6 +19,7 @@ const yoonjae: TutoringEntry<TutoringRowStudent> = {
   },
   subjects: ['SAT', 'special'],
   paymentStatus: 'active',
+  heldHours: 0,
   bySubject: [
     {
       subject: 'SAT', purchased: 62, completed: 22, refunded: 0,
@@ -40,6 +41,7 @@ const unlinked: TutoringEntry<TutoringRowStudent> = {
   hours: null,
   subjects: [],
   paymentStatus: null,
+  heldHours: 0,
   bySubject: [],
 };
 

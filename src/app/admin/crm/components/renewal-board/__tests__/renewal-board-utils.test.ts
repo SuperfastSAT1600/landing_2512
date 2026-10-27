@@ -50,13 +50,8 @@ describe('groupTargetsByStage', () => {
 });
 
 describe('buildTutoringByStudentId', () => {
-  const entry = (id: string, hours: unknown, held: number[] = []) =>
-    ({
-      student: { id } as Student,
-      displayStatus: 'active',
-      hours,
-      bySubject: held.map((h) => ({ held: h })),
-    }) as unknown as TutoringEntry<Student>;
+  const entry = (id: string, hours: unknown, heldHours = 0) =>
+    ({ student: { id } as Student, displayStatus: 'active', hours, heldHours }) as unknown as TutoringEntry<Student>;
 
   it('0으로 깎지 않은 잔여(초과 사용 포함)를 그대로 담는다', () => {
     const map = buildTutoringByStudentId([
@@ -71,9 +66,9 @@ describe('buildTutoringByStudentId', () => {
     });
   });
 
-  it('처리 대기 시간(과목 합)을 잔여·예약에서 빼고, 초과예약은 그대로 둔다 — 후보 표와 같은 기준', () => {
+  it('처리 대기는 entry에 이미 반영돼 있다 — 다시 빼지 않고 그대로 옮긴다', () => {
     const map = buildTutoringByStudentId([
-      entry('s3', { completed: 30, remaining: 8, scheduled: 4, overscheduled: 1 }, [1.5, 0.5]),
+      entry('s3', { completed: 32, remaining: 6, scheduled: 2, overscheduled: 1 }, 2),
     ]);
     expect(map.get('s3')).toEqual({
       displayStatus: 'active',
@@ -84,8 +79,8 @@ describe('buildTutoringByStudentId', () => {
     });
   });
 
-  it('SRM 시간 정보가 없으면 null 로 채우고 처리 대기도 0 (과목 내역이 있어도)', () => {
-    const map = buildTutoringByStudentId([entry('s2', null, [2])]);
+  it('SRM 시간 정보가 없으면 null 로 채운다', () => {
+    const map = buildTutoringByStudentId([entry('s2', null)]);
     expect(map.get('s2')).toEqual({
       displayStatus: 'active',
       remainingHours: null,

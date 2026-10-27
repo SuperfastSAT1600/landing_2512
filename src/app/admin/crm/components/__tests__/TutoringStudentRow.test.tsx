@@ -6,6 +6,8 @@ import {
   TUTORING_SUB_TABS,
   type TutoringRowStudent,
 } from '../TutoringStudentRow';
+import { buildTutoringByStudentId } from '../renewal-board/renewal-board-utils';
+import { expandSubjectRows } from '../renewal-candidate-rows';
 import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
 
 function student(over: Partial<TutoringRowStudent> = {}): TutoringRowStudent {
@@ -82,6 +84,19 @@ describe('TutoringStudentRow', () => {
       />
     );
     expect(screen.getByText('주의')).toBeTruthy();
+  });
+
+  it('처리 대기 시간이 있으면 잔여 옆에 작게 알려 준다', () => {
+    render(
+      <TutoringStudentRow student={student()} displayStatus="active" remainingHours={6} heldHours={2} />
+    );
+    expect(screen.getByText('잔여 6h')).toBeTruthy();
+    expect(screen.getByText('처리 대기 2h').getAttribute('title')).toContain('SRM 완료 처리');
+  });
+
+  it('처리 대기가 없으면 표시하지 않는다', () => {
+    render(<TutoringStudentRow student={student()} displayStatus="active" remainingHours={6} heldHours={0} />);
+    expect(screen.queryByText(/처리 대기/)).toBeNull();
   });
 
   it('omits remaining hours when unknown', () => {
@@ -166,10 +181,11 @@ describe('classifyTutoringEntries', () => {
   it('carries the SRM status and remaining hours through', () => {
     const entries = classifyTutoringEntries(
       [student()],
-      [tutoringUser({ status: 'sales', remainingHours: -3 })]
+      [tutoringUser({ status: 'sales', remainingHours: 4, netRemainingHours: 4 })]
     );
     expect(entries[0].displayStatus).toBe('sales');
-    expect(entries[0].remainingHours).toBe(-3);
+    expect(entries[0].remainingHours).toBe(4);
+    expect(entries[0].heldHours).toBe(0);
   });
 
   it('carries the full payment-page hour breakdown, keeping a negative 잔여 signed', () => {
@@ -206,6 +222,47 @@ describe('classifyTutoringEntries', () => {
     expect(entries[0].remainingHours).toBe(0);
   });
 
+  it('과목별 처리 대기 합을 완료로 옮기고 잔여·예약에서 뺀다 — 학생 카드·후보 표·보드 카드와 같은 기준', () => {
+    const sub = (subject: string, held: number) => ({
+      subject, purchased: 0, completed: 0, refunded: 0, remaining: 0,
+      scheduled: 0, unscheduled: 0, overscheduled: 0, held, paymentStatus: 'active' as const,
+    });
+    const [entry] = classifyTutoringEntries(
+      [student()],
+      [
+        tutoringUser({
+          purchasedHours: 80, usedHours: 72, refundedHours: 0,
+          remainingHours: 8, netRemainingHours: 8,
+          scheduledHours: 6, unscheduledHours: 2, overscheduledHours: 0,
+          subjectBreakdown: [sub('SAT', 1.5), sub('AP', 0.5)],
+        }),
+      ]
+    );
+    expect(entry.heldHours).toBe(2);
+    expect(entry.hours).toEqual({
+      purchased: 80, completed: 74, refunded: 0,
+      remaining: 6, scheduled: 4, unscheduled: 2, overscheduled: 0,
+    });
+    expect(entry.remainingHours).toBe(6);
+  });
+
+  it('처리 대기가 잔여보다 크면 행 표시용 잔여는 0 하한, 전체 수치는 음수 유지', () => {
+    const [entry] = classifyTutoringEntries(
+      [student()],
+      [
+        tutoringUser({
+          remainingHours: 1, netRemainingHours: 1, scheduledHours: 4,
+          subjectBreakdown: [{
+            subject: 'SAT', purchased: 0, completed: 0, refunded: 0, remaining: 0,
+            scheduled: 0, unscheduled: 0, overscheduled: 0, held: 3, paymentStatus: 'active',
+          }],
+        }),
+      ]
+    );
+    expect(entry.hours?.remaining).toBe(-2);
+    expect(entry.remainingHours).toBe(0);
+  });
+
   // CRM 미연결 SFv2 계정도 목록에 남긴다 — '미연결' 탭에서 연결 작업을 해야 하기 때문.
   // 미연결 여부는 displayStatus 가 아니라 isCrmLinked 로 표현한다(라이프사이클 축과 별개).
   it('CRM 미연결 계정은 isCrmLinked=false 로 남기고 라이프사이클 상태는 보존한다', () => {
@@ -239,5 +296,31 @@ describe('하위 탭 구성', () => {
     expect(counts.all).toBe(3);
     expect(counts.unlinked).toBe(1);
     expect(counts.active).toBe(1); // 미연결 건은 active 에 중복 계상되지 않는다
+  });
+});
+
+// 처리 대기 차감은 classifyTutoringEntries 한 곳에서만 — 보드 카드·후보 표가 다시 빼면 안 된다.
+describe('처리 대기 차감은 한 번만', () => {
+  const [entry] = classifyTutoringEntries([], [
+    tutoringUser({
+      purchasedHours: 80, usedHours: 72, refundedHours: 0,
+      remainingHours: 8, netRemainingHours: 8,
+      scheduledHours: 6, unscheduledHours: 2, overscheduledHours: 0,
+      subjectBreakdown: [{
+        subject: 'SAT', purchased: 80, completed: 72, refunded: 0, remaining: 8,
+        scheduled: 6, unscheduled: 2, overscheduled: 0, held: 2, paymentStatus: 'active',
+      }],
+    }),
+  ]);
+
+  it('보드 카드: 잔여 6h · 예약 4h · 처리 대기 2h', () => {
+    const card = buildTutoringByStudentId([entry as never]).get('s-1');
+    expect(card).toMatchObject({ remainingHours: 6, scheduledHours: 4, heldHours: 2 });
+  });
+
+  it('후보 표 과목 행: 완료 74 · 잔여 6 · 예약 4', () => {
+    const [row] = expandSubjectRows([entry]);
+    expect(row.hours).toMatchObject({ completed: 74, remaining: 6, scheduled: 4 });
+    expect(row.heldHours).toBe(2);
   });
 });
