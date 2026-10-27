@@ -10,18 +10,24 @@ import { getCurrentWeekDef } from '@/lib/week-definitions';
 import type { RenewalCardTutoring } from '../RenewalCard';
 import { sortByNextContact } from '../renewal-sort';
 import type { TutoringEntry } from '../TutoringStudentRow';
+import { withHeld } from '../renewal-candidate-rows';
 
 export function buildTutoringByStudentId(
   entries: TutoringEntry<Student>[]
 ): Map<string, RenewalCardTutoring> {
   const map = new Map<string, RenewalCardTutoring>();
   for (const e of entries) {
+    // 재결제 후보 표·학생 카드와 같은 실제 진행 기준 — 수업은 했지만 SRM 완료 처리 전인 시간을
+    // 예약에서 완료로 옮긴다. 초과예약(잔여 − 예약)은 그대로다.
+    const held = Math.round(e.bySubject.reduce((sum, b) => sum + b.held, 0) * 10) / 10;
+    const hours = e.hours ? withHeld(e.hours, held) : null;
     map.set(e.student.id, {
       displayStatus: e.displayStatus,
       // 카드는 0으로 깎지 않은 값을 쓴다 — 초과 사용(-3h)이 재결제 시급도의 핵심 신호다.
-      remainingHours: e.hours ? e.hours.remaining : null,
-      scheduledHours: e.hours?.scheduled ?? null,
-      overscheduledHours: e.hours?.overscheduled ?? null,
+      remainingHours: hours ? hours.remaining : null,
+      scheduledHours: hours ? hours.scheduled : null,
+      overscheduledHours: hours?.overscheduled ?? null,
+      heldHours: hours ? held : 0,
     });
   }
   return map;
