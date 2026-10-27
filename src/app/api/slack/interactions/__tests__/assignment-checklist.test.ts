@@ -6,6 +6,9 @@ import { buildChecklistBlocks } from '@/lib/slack-assignment-checklist';
 
 vi.mock('@/lib/supabase-admin', () => ({ supabaseAdmin: {} }));
 
+const saveChecked = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+vi.mock('@/lib/assignment-checklist-store', () => ({ saveChecked }));
+
 const fetchMock = vi.fn().mockResolvedValue({ json: () => Promise.resolve({ ok: true }) });
 global.fetch = fetchMock as unknown as typeof fetch;
 
@@ -35,6 +38,7 @@ function togglePayload(prevChecked: Record<string, string>, selected: string[]) 
 
 beforeEach(() => {
   fetchMock.mockClear();
+  saveChecked.mockClear();
   process.env.SLACK_SIGNING_SECRET = SECRET;
   process.env.SLACK_BOT_TOKEN = 'xoxb-test';
 });
@@ -50,6 +54,7 @@ describe('interactions: 배정 체크리스트 (REQ-004)', () => {
     expect(body).toMatchObject({ channel: 'C0C9B0DEGDN', ts: '200.2' });
     expect(JSON.stringify(body.blocks)).toContain('홍길동');
     expect(JSON.stringify(body.blocks)).toContain('1/9');
+    expect(saveChecked).toHaveBeenCalledWith('C0C9B0DEGDN', '200.2', ['t1'], false);
   });
 
   it('해제하면 해당 항목이 빠진다', async () => {
@@ -66,5 +71,6 @@ describe('interactions: 배정 체크리스트 (REQ-004)', () => {
     await POST(signedRequest(togglePayload(prev, ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9'])));
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(JSON.stringify(body.blocks)).toContain('배정 업무 완료');
+    expect(saveChecked).toHaveBeenCalledWith('C0C9B0DEGDN', '200.2', expect.arrayContaining(['t9']), true);
   });
 });

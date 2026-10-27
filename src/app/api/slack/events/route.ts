@@ -6,6 +6,7 @@ import { verifySlackRequest, postSlack, getTodayTopics, BLOG_CHANNEL } from './s
 import { handleBlogWrite, handlePublish, handleTopicSuggest, type Platform } from './handlers';
 import { buildLeadFormBlocks } from '@/app/api/slack/interactions/lead-blocks';
 import { isAssignmentRequest, postChecklist } from '@/lib/slack-assignment-checklist';
+import { createChecklist } from '@/lib/assignment-checklist-store';
 import type { Topic } from './blog-writer';
 
 const LEAD_CHANNEL = 'C07FK85V9PD';
@@ -65,7 +66,10 @@ export async function POST(request: NextRequest) {
   // 배정 요청 글(워크플로가 올린 bot 글 포함)에는 업무 체크리스트를 답글로 단다. Slack 재전송은 건너뛴다.
   if (event && isAssignmentRequest(event)) {
     if (!request.headers.get('x-slack-retry-num')) {
-      after(() => postChecklist(event.channel!, event.ts!).catch(err => console.error('[slack/events] 체크리스트 게시 실패:', err)));
+      after(() => (async () => {
+        const messageTs = await postChecklist(event.channel!, event.ts!);
+        if (messageTs) await createChecklist(event.channel!, messageTs, event.text ?? '');
+      })().catch(err => console.error('[slack/events] 체크리스트 게시 실패:', err)));
     }
     return NextResponse.json({ ok: true });
   }

@@ -44,6 +44,10 @@
     {
       "path": "/api/cron/first-lesson-notice",
       "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/assignment-checklist-reminder",
+      "schedule": "0 */3 * * *"
     }
   ]
 }

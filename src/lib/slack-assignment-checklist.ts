@@ -77,25 +77,27 @@ export function applyToggle(prev: CheckedMap, selected: string[], user: string, 
   return next;
 }
 
-async function slackCall(method: string, payload: Record<string, unknown>): Promise<void> {
+async function slackCall(method: string, payload: Record<string, unknown>): Promise<string | undefined> {
   const token = process.env.SLACK_BOT_TOKEN;
-  if (!token) return;
+  if (!token) return undefined;
   const res = await fetch(`https://slack.com/api/${method}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(payload),
   });
-  const data = (await res.json()) as { ok: boolean; error?: string };
+  const data = (await res.json()) as { ok: boolean; error?: string; ts?: string };
   if (!data.ok) console.error(`[slack/assignment-checklist] ${method} 실패:`, data.error);
+  return data.ts;
 }
 
-export function postChecklist(channel: string, threadTs: string): Promise<void> {
+/** 게시한 체크리스트 메시지의 ts (실패·토큰 없음이면 undefined) */
+export function postChecklist(channel: string, threadTs: string): Promise<string | undefined> {
   return slackCall('chat.postMessage', {
     channel, thread_ts: threadTs, text: '학생 배정 업무 체크리스트', blocks: buildChecklistBlocks({}),
   });
 }
 
-export function updateChecklist(channel: string, ts: string, checked: CheckedMap): Promise<void> {
+export function updateChecklist(channel: string, ts: string, checked: CheckedMap): Promise<string | undefined> {
   return slackCall('chat.update', { channel, ts, text: '학생 배정 업무 체크리스트', blocks: buildChecklistBlocks(checked) });
 }
 

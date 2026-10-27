@@ -4,7 +4,8 @@ import { appendStageHistory } from '@/lib/stage-history';
 import { verifySlackRequest } from '@/app/api/slack/events/slack-utils';
 import { generateLeadName } from '@/app/api/slack/lead-intake/route';
 import { buildLeadSuccessBlocks } from './lead-blocks';
-import { applyToggle, readCheckedMap, updateChecklist, CHECKLIST_ACTION_ID } from '@/lib/slack-assignment-checklist';
+import { saveChecked } from '@/lib/assignment-checklist-store';
+import { ASSIGNMENT_TASKS, applyToggle, readCheckedMap, updateChecklist, CHECKLIST_ACTION_ID } from '@/lib/slack-assignment-checklist';
 import { FUNNEL_STAGE_LABELS, type InquiryChannel, type TrafficSource, type LeadType } from '@/types/crm';
 
 export const runtime = 'nodejs';
@@ -84,6 +85,9 @@ export async function POST(request: NextRequest) {
     const selected = (action.selected_options ?? []).map(o => o.value);
     const next = applyToggle(readCheckedMap(payload.message.blocks), selected, payload.user?.name ?? '담당자', new Date());
     await updateChecklist(payload.channel.id, payload.message.ts, next);
+    const ids = Object.keys(next);
+    await saveChecked(payload.channel.id, payload.message.ts, ids, ids.length === ASSIGNMENT_TASKS.length)
+      .catch(err => console.error('[slack/interactions] 체크리스트 저장 실패:', err));
     return NextResponse.json({ ok: true });
   }
 
