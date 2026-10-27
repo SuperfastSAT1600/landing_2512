@@ -54,6 +54,24 @@ function round1(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+/**
+ * 실제 진행 기준 — 수업은 했지만 SRM 완료 처리 전인 시간(held)을 예약에서 완료로 옮긴다.
+ * 미예약·초과예약은 (잔여 − 예약)이 그대로라 바뀌지 않는다. 학생 카드(코치룸 수업 내역)와 같은 수치.
+ */
+export function withHeld<H extends { completed: number; remaining: number; scheduled: number }>(h: H, held: number): H {
+  return {
+    ...h,
+    completed: round1(h.completed + held),
+    remaining: round1(h.remaining - held),
+    scheduled: round1(h.scheduled - held),
+  };
+}
+
+/** 학생 단위 처리 대기 = 과목별 처리 대기 합. */
+export function totalHeld(breakdown: SubjectHours[]): number {
+  return round1(breakdown.reduce((sum, b) => sum + b.held, 0));
+}
+
 function orderIndex(subject: SubjectKey): number {
   if (subject === null) return SUBJECT_ORDER.length + 1;
   const known = SUBJECT_ORDER.indexOf(subject);

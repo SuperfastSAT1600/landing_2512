@@ -17,7 +17,7 @@ import {
   type RenewalTarget,
 } from '@/types/crm';
 import { getKstDateString, getWeekLabel } from '@/lib/week-definitions';
-import { TUTORING_STATUS_META, type TutoringDisplayStatus } from './TutoringStudentRow';
+import { HELD_HINT, TUTORING_STATUS_META, type TutoringDisplayStatus } from './TutoringStudentRow';
 import { daysSince } from '../lib/format';
 
 export interface RenewalCardTutoring {
@@ -30,8 +30,6 @@ export interface RenewalCardTutoring {
   /** 수업은 했지만 SRM 완료 처리 전인 시간 — 잔여·예약에서 이미 빠져 있다. */
   heldHours: number;
 }
-
-const HELD_HINT = '수업은 했지만 SRM 완료 처리가 안 된 시간(코치·학생 접속 기록으로 확인) — 잔여·예약에서 뺐습니다.';
 
 interface RenewalCardProps {
   target: RenewalTarget;

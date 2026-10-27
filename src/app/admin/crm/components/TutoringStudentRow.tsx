@@ -7,7 +7,10 @@ import { Crown, AlertTriangle, Search } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Student } from '@/types/crm';
 import type { TutoringUser } from '@/app/api/admin/srm/tutoring-users/route';
-import type { PaymentManagementStatus, SubjectHours } from '@/lib/tutoring-subject-breakdown';
+import { totalHeld, withHeld, type PaymentManagementStatus, type SubjectHours } from '@/lib/tutoring-subject-breakdown';
+
+/** 처리 대기 표시의 툴팁 — 튜터링 중 행·재결제 보드 카드가 같이 쓴다. */
+export const HELD_HINT = '수업은 했지만 SRM 완료 처리가 안 된 시간(코치·학생 접속 기록으로 확인) — 잔여·예약에서 뺐습니다.';
 
 /** 행 렌더에 필요한 학생 필드만 — 부분 조인된 학생도 그대로 넘길 수 있다. */
 export type TutoringRowStudent = Pick<
@@ -37,10 +40,15 @@ export interface TutoringEntry<S extends TutoringRowStudent = Student> {
   displayStatus: TutoringDisplayStatus;
   /** CRM 학생 레코드와 연결됐으면 true. false면 SFv2 계정만 있고 CRM 미연결 상태. */
   isCrmLinked: boolean;
-  /** 0 하한 잔여 — '튜터링 중' 행 표시용(기존 동작 유지). */
+  /** 0 하한 잔여 — '튜터링 중' 행 표시용. 처리 대기 반영. */
   remainingHours: number | null;
-  /** Payment 페이지와 동일한 전체 수치. SRM 미연결이면 null. */
+  /**
+   * Payment 페이지와 같은 정의의 전체 수치에 처리 대기를 반영한 값(학생 카드와 같은 실제 진행 기준).
+   * SRM 미연결이면 null.
+   */
   hours: TutoringHours | null;
+  /** 수업은 했지만 SRM 완료 처리 전인 시간 — hours·remainingHours에 이미 반영돼 있다. */
+  heldHours: number;
   subjects: string[];
   paymentStatus: PaymentManagementStatus | null;
   /**
@@ -86,20 +94,10 @@ export function classifyTutoringEntries<S extends TutoringRowStudent>(
   linked: TutoringUser[]
 ): TutoringEntry<S>[] {
   return linked
-    .map((tu) => ({
-      student: {
-        id: tu.crmStudentId ?? tu.sfv2ProfileId,
-        name: tu.name,
-        grade: tu.grade,
-        parent_phone: null,
-        is_vip: false,
-        needs_attention: false,
-        traffic_source: null,
-      } as unknown as S,
-      displayStatus: tu.status as TutoringDisplayStatus,
-      isCrmLinked: !!tu.crmStudentId,
-      remainingHours: tu.remainingHours,
-      hours: {
+    .map((tu) => {
+      const bySubject = tu.subjectBreakdown ?? [];
+      const heldHours = totalHeld(bySubject);
+      const hours = withHeld({
         purchased: tu.purchasedHours,
         completed: tu.usedHours,
         refunded: tu.refundedHours,
@@ -107,11 +105,27 @@ export function classifyTutoringEntries<S extends TutoringRowStudent>(
         scheduled: tu.scheduledHours,
         unscheduled: tu.unscheduledHours,
         overscheduled: tu.overscheduledHours,
-      },
-      subjects: tu.subjects ?? [],
-      paymentStatus: tu.paymentStatus ?? null,
-      bySubject: tu.subjectBreakdown ?? [],
-    }));
+      }, heldHours);
+      return {
+        student: {
+          id: tu.crmStudentId ?? tu.sfv2ProfileId,
+          name: tu.name,
+          grade: tu.grade,
+          parent_phone: null,
+          is_vip: false,
+          needs_attention: false,
+          traffic_source: null,
+        } as unknown as S,
+        displayStatus: tu.status as TutoringDisplayStatus,
+        isCrmLinked: !!tu.crmStudentId,
+        remainingHours: Math.max(0, hours.remaining),
+        hours,
+        heldHours,
+        subjects: tu.subjects ?? [],
+        paymentStatus: tu.paymentStatus ?? null,
+        bySubject,
+      };
+    });
 }
 
 /**
@@ -139,6 +153,7 @@ export function TutoringStudentRow({
   student,
   displayStatus,
   remainingHours,
+  heldHours = 0,
   onClick,
   action,
   badge,
@@ -146,6 +161,8 @@ export function TutoringStudentRow({
   student: TutoringRowStudent;
   displayStatus: TutoringDisplayStatus;
   remainingHours: number | null;
+  /** 잔여에서 이미 뺀 처리 대기 시간 — 0보다 크면 잔여 옆에 표시. */
+  heldHours?: number;
   onClick?: () => void;
   /** 우측 액션 버튼 — 클릭은 행으로 전파되지 않는다. */
   action?: ReactNode;
@@ -183,6 +200,9 @@ export function TutoringStudentRow({
           <span className="text-xs text-gray-400">{student.parent_phone}</span>
           {remainingHours !== null && (
             <span className="text-xs text-gray-400">잔여 {remainingHours}h</span>
+          )}
+          {heldHours > 0 && (
+            <span title={HELD_HINT} className="text-xs font-medium text-orange-600">처리 대기 {heldHours}h</span>
           )}
           {student.traffic_source && (
             <span className="text-xs text-gray-400">{student.traffic_source}</span>

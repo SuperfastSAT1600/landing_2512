@@ -2,32 +2,15 @@
 // 플랫폼 V2 Payment 페이지가 같은 단위로 보여주고, 실무자는 "SAT는 남았고 special은 소진"을
 // 그 화면에서 판단한다. 학생 단위로 합치면 그 구분이 사라진다.
 
-import type { SubjectHours, SubjectKey } from '@/lib/tutoring-subject-breakdown';
+import { withHeld, type SubjectHours, type SubjectKey } from '@/lib/tutoring-subject-breakdown';
 import type { TutoringEntry, TutoringHours, TutoringRowStudent } from './TutoringStudentRow';
 
 export interface CandidateRow extends TutoringEntry<TutoringRowStudent> {
   /** 이 행의 과목. 과목 내역이 없는 학생(SRM 미연결 등)은 null. */
   subject: SubjectKey;
-  /** 수업은 열렸지만 SRM 완료 처리 전인 시간 — hours에는 이미 완료로 반영돼 있다. */
-  heldHours: number;
 }
 
-const round1 = (n: number) => Math.round(n * 10) / 10;
-
-/**
- * 실제 진행 기준 — 학생 카드(코치룸 수업 내역)·재결제 보드 카드와 같은 수치
- * ('튜터링 중' 탭은 SRM 수치 그대로).
- * 처리 대기 시간을 예약에서 완료로 옮긴다. 미예약·초과예약은 (잔여 − 예약)이 그대로라 바뀌지 않는다.
- */
-export function withHeld<H extends Pick<TutoringHours, 'completed' | 'remaining' | 'scheduled'>>(h: H, held: number): H {
-  return {
-    ...h,
-    completed: round1(h.completed + held),
-    remaining: round1(h.remaining - held),
-    scheduled: round1(h.scheduled - held),
-  };
-}
-
+/** 과목 행의 실제 진행 기준 수치 — 과목 원값에 그 과목의 처리 대기를 반영한다. */
 function actualHours(b: SubjectHours): TutoringHours {
   const { purchased, refunded, unscheduled, overscheduled, completed, remaining, scheduled } = b;
   return withHeld({ purchased, refunded, unscheduled, overscheduled, completed, remaining, scheduled }, b.held);
@@ -60,7 +43,7 @@ export function expandSubjectRows(entries: TutoringEntry<TutoringRowStudent>[]):
   return entries.flatMap((entry) =>
     entry.bySubject.length > 0
       ? entry.bySubject.map((breakdown) => rowFromSubject(entry, breakdown))
-      : [{ ...entry, subject: null, heldHours: 0 }]
+      : [{ ...entry, subject: null }]
   );
 }
 
