@@ -4,6 +4,7 @@ import { appendStageHistory } from '@/lib/stage-history';
 import { verifySlackRequest } from '@/app/api/slack/events/slack-utils';
 import { generateLeadName } from '@/app/api/slack/lead-intake/route';
 import { buildLeadSuccessBlocks } from './lead-blocks';
+import { applyToggle, readCheckedMap, updateChecklist, CHECKLIST_ACTION_ID } from '@/lib/slack-assignment-checklist';
 import { FUNNEL_STAGE_LABELS, type InquiryChannel, type TrafficSource, type LeadType } from '@/types/crm';
 
 export const runtime = 'nodejs';
@@ -17,7 +18,7 @@ type StateValues = {
 
 type BlockActionsPayload = {
   type: string;
-  actions: { action_id: string; value?: string }[];
+  actions: { action_id: string; value?: string; selected_options?: { value: string }[] }[];
   channel: { id: string };
   message: { ts: string; blocks?: unknown[] };
   response_url: string;
@@ -77,6 +78,14 @@ export async function POST(request: NextRequest) {
   if (payload.type !== 'block_actions') return NextResponse.json({ ok: true });
   const action = payload.actions[0];
   if (!action) return NextResponse.json({ ok: true });
+
+  // 배정 업무 체크리스트: 체크 상태를 메시지에 다시 그린다
+  if (action.action_id === CHECKLIST_ACTION_ID) {
+    const selected = (action.selected_options ?? []).map(o => o.value);
+    const next = applyToggle(readCheckedMap(payload.message.blocks), selected, payload.user?.name ?? '담당자', new Date());
+    await updateChecklist(payload.channel.id, payload.message.ts, next);
+    return NextResponse.json({ ok: true });
+  }
 
   // REQ-BTN-03~04: 재문의 리드 인입 복귀
   if (action.action_id === 'reinquiry_restore') {
