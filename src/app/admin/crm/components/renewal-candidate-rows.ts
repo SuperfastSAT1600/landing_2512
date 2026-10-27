@@ -15,20 +15,22 @@ export interface CandidateRow extends TutoringEntry<TutoringRowStudent> {
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
 /**
- * 실제 진행 기준 — 학생 카드(코치룸 수업 내역)와 같은 수치. 이 후보 표에서만 쓴다
- * ('튜터링 중'·재결제 보드 카드는 SRM 수치 그대로).
+ * 실제 진행 기준 — 학생 카드(코치룸 수업 내역)·재결제 보드 카드와 같은 수치
+ * ('튜터링 중' 탭은 SRM 수치 그대로).
  * 처리 대기 시간을 예약에서 완료로 옮긴다. 미예약·초과예약은 (잔여 − 예약)이 그대로라 바뀌지 않는다.
  */
-function actualHours(b: SubjectHours): TutoringHours {
+export function withHeld<H extends Pick<TutoringHours, 'completed' | 'remaining' | 'scheduled'>>(h: H, held: number): H {
   return {
-    purchased: b.purchased,
-    refunded: b.refunded,
-    unscheduled: b.unscheduled,
-    overscheduled: b.overscheduled,
-    completed: round1(b.completed + b.held),
-    remaining: round1(b.remaining - b.held),
-    scheduled: round1(b.scheduled - b.held),
+    ...h,
+    completed: round1(h.completed + held),
+    remaining: round1(h.remaining - held),
+    scheduled: round1(h.scheduled - held),
   };
+}
+
+function actualHours(b: SubjectHours): TutoringHours {
+  const { purchased, refunded, unscheduled, overscheduled, completed, remaining, scheduled } = b;
+  return withHeld({ purchased, refunded, unscheduled, overscheduled, completed, remaining, scheduled }, b.held);
 }
 
 function rowFromSubject(

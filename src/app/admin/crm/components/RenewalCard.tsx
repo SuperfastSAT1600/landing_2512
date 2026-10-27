@@ -22,11 +22,16 @@ import { daysSince } from '../lib/format';
 
 export interface RenewalCardTutoring {
   displayStatus: TutoringDisplayStatus;
-  /** 부호 있는 잔여 (플랫폼 Payment 페이지의 Remaining). SRM 미연결이면 null. */
+  /** 부호 있는 잔여 — SRM Remaining에서 처리 대기 시간을 뺀 실제 진행 기준. SRM 미연결이면 null. */
   remainingHours: number | null;
+  /** 예약 — 처리 대기 시간을 뺀 값. */
   scheduledHours: number | null;
   overscheduledHours: number | null;
+  /** 수업은 했지만 SRM 완료 처리 전인 시간 — 잔여·예약에서 이미 빠져 있다. */
+  heldHours: number;
 }
+
+const HELD_HINT = '수업은 했지만 SRM 완료 처리가 안 된 시간(코치·학생 접속 기록으로 확인) — 잔여·예약에서 뺐습니다.';
 
 interface RenewalCardProps {
   target: RenewalTarget;
@@ -149,7 +154,7 @@ export function RenewalCard({
         <p className="text-[11px] text-gray-400 mt-0.5">{student.parent_phone}</p>
       )}
 
-      {/* 우선순위 신호 — 플랫폼 Payment 페이지의 잔여·예약·초과예약을 그대로 옮긴다 */}
+      {/* 우선순위 신호 — 잔여·예약·초과예약(처리 대기 반영, 재결제 후보 표와 같은 기준) */}
       <div className="flex items-center gap-1.5 flex-wrap mt-1 text-[10px]">
         {tutoring?.remainingHours != null && (
           <span
@@ -164,6 +169,11 @@ export function RenewalCard({
             }
           >
             잔여 {tutoring.remainingHours}h
+          </span>
+        )}
+        {tutoring && tutoring.heldHours > 0 && (
+          <span title={HELD_HINT} className="text-orange-600 font-medium">
+            처리 대기 {tutoring.heldHours}h
           </span>
         )}
         {tutoring?.scheduledHours ? (

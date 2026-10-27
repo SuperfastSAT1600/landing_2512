@@ -87,6 +87,7 @@ describe('RenewalCard', () => {
         remainingHours: 0,
         scheduledHours: 0,
         overscheduledHours: 0,
+        heldHours: 0,
       },
     });
     expect(screen.getByText('잔여 0h')).toBeTruthy();
@@ -105,11 +106,39 @@ describe('RenewalCard', () => {
         remainingHours: -3,
         scheduledHours: 19,
         overscheduledHours: 22,
+        heldHours: 0,
       },
     });
     expect(screen.getByText('잔여 -3h').className).toContain('text-red-600');
     expect(screen.getByText('예약 19h')).toBeTruthy();
     expect(screen.getByText('초과 22h').className).toContain('text-orange-600');
+  });
+
+  it('처리 대기 시간이 있으면 잔여 옆에 작게 알려 준다', () => {
+    renderCard({
+      tutoring: {
+        displayStatus: 'active' as TutoringDisplayStatus,
+        remainingHours: 6,
+        scheduledHours: 2,
+        overscheduledHours: 0,
+        heldHours: 2,
+      },
+    });
+    expect(screen.getByText('잔여 6h')).toBeTruthy();
+    expect(screen.getByText('처리 대기 2h').getAttribute('title')).toContain('SRM 완료 처리');
+  });
+
+  it('처리 대기가 없으면 표시하지 않는다', () => {
+    renderCard({
+      tutoring: {
+        displayStatus: 'active' as TutoringDisplayStatus,
+        remainingHours: 6,
+        scheduledHours: 2,
+        overscheduledHours: 0,
+        heldHours: 0,
+      },
+    });
+    expect(screen.queryByText(/처리 대기/)).toBeNull();
   });
 
   it('hides 예약/초과 when they are zero so the card stays quiet', () => {
@@ -119,6 +148,7 @@ describe('RenewalCard', () => {
         remainingHours: 40,
         scheduledHours: 0,
         overscheduledHours: 0,
+        heldHours: 0,
       },
     });
     expect(screen.getByText('잔여 40h')).toBeTruthy();
