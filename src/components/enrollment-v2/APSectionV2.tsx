@@ -478,10 +478,11 @@ function APHourPicker({ lang = 'ko' }: { lang?: 'ko' | 'en' }) {
 }
 
 /* ── 인기 패키지 데이터 ─────────────────────────────────────────── */
+// 32·48시간은 구간 단가 계산값(270만 7,200원 / 380만 1,600원)이 아니라 끝자리를 정리한 고정가.
 const AP_PKGS = [
   { id: 'ap-16h', hours: 16, totalPrice: 16 * 90000, discountRate: null as null | number },
-  { id: 'ap-32h', hours: 32, totalPrice: 32 * 84600, discountRate: 6 },
-  { id: 'ap-48h', hours: 48, totalPrice: 48 * 79200, discountRate: 12 },
+  { id: 'ap-32h', hours: 32, totalPrice: 2700000, discountRate: 6 },
+  { id: 'ap-48h', hours: 48, totalPrice: 3800000, discountRate: 12 },
 ];
 
 /* ════════════════════════════════════════════════════════════════════
