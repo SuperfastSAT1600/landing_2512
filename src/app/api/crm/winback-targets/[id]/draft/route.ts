@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isAuthenticated } from '@/lib/server-auth';
 import { anthropicErrorMessage } from '@/lib/anthropic-error';
-import { getQwenAnthropicClient, isQwenConfigured, qwenModel } from '@/lib/qwen';
+import { getQwenAnthropicClient, isQwenConfigured } from '@/lib/qwen';
 import { buildDraftContext, parseDraftResult, WINBACK_DRAFT_SYSTEM } from '@/lib/winback/draft';
 import { apiError, unauthorized } from '@/lib/api-response';
 
 export const maxDuration = 30;
+
+// qwen-turbo는 사람이 읽을 로드맵 문구엔 품질이 부족하고 한도도 자주 걸린다(2026-10-28 Throttling).
+const DRAFT_MODEL = process.env.WINBACK_DRAFT_MODEL?.trim() || 'qwen-plus';
 
 const STUDENT_FIELDS = 'id,name,grade,parent_phone,lead_status,churn_tag';
 
@@ -32,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const client = getQwenAnthropicClient();
     const response = await client.messages.create({
-      model: qwenModel('fast'),
+      model: DRAFT_MODEL,
       max_tokens: 400,
       system: [{ type: 'text', text: WINBACK_DRAFT_SYSTEM }],
       messages: [{ role: 'user', content: buildDraftContext({ play: target.play, variant: target.variant, target, student: target.student }) }],
@@ -43,7 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const { data, error: updateError } = await supabaseAdmin
       .from('winback_targets')
-      .update({ message_draft: result.message_draft, message_generated_at: new Date().toISOString(), message_model: qwenModel('fast'), updated_at: new Date().toISOString() })
+      .update({ message_draft: result.message_draft, message_generated_at: new Date().toISOString(), message_model: DRAFT_MODEL, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select(`*, student:students(${STUDENT_FIELDS})`)
       .single();
