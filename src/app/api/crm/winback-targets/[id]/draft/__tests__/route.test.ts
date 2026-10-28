@@ -16,7 +16,10 @@ const target = {
   signals: [],
   play: { title: '캠페인', product_brief: 'SAT 1:1' },
   variant: null,
-  student: { id: 's1', name: '학생', grade: '11th', parent_phone: '', lead_status: 'inactive', churn_tag: null },
+  student: {
+    id: 's1', name: '학생', grade: '11th', parent_phone: '', lead_status: 'inactive', churn_tag: null,
+    consultation_timeline: [{ created_at: '2026-10-09T00:00:00Z', raw_memo: '9월 1420점, 12월 1500 목표' }],
+  },
 };
 vi.mock('@/lib/supabase-admin', () => ({
   supabaseAdmin: {
@@ -57,5 +60,14 @@ describe('POST /api/crm/winback-targets/[id]/draft — 모델', () => {
     await POST(req(), params);
     expect(createQwen.mock.calls[0][0].model).toBe('qwen-max');
     expect(update.mock.calls[0][0].message_model).toBe('qwen-max');
+  });
+
+  // REQ-004 (winback-draft-memo)
+  it('학생 상담 메모를 프롬프트에 넣는다', async () => {
+    const { POST } = await import('../route');
+    await POST(req(), params);
+    const content = createQwen.mock.calls[0][0].messages[0].content as string;
+    expect(content).toContain('[2026-10-09] 9월 1420점, 12월 1500 목표');
+    expect(content).toMatch(/오늘: \d{4}-\d{2}-\d{2}/);
   });
 });
