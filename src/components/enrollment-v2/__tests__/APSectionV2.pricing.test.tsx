@@ -1,5 +1,5 @@
 /// <reference types="vitest/globals" />
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { APSectionV2 } from '../APSectionV2';
 
 beforeAll(() => {
@@ -32,5 +32,32 @@ describe('AP 인기 패키지 가격', () => {
     expect(card(32).textContent).toContain('(6% off) saves');
     expect(card(32).textContent).toContain('vs. 16 hrs');
     expect(card(48).textContent).toContain('(12% off) saves');
+  });
+});
+
+// REQ-004 (ap-package-prices)
+describe('시간 직접 입력 계산기', () => {
+  function setHours(h: number) {
+    fireEvent.change(screen.getByRole('slider'), { target: { value: String(h) } });
+  }
+  function calc() {
+    return screen.getByRole('slider').closest('section')!.textContent!;
+  }
+
+  it.each([
+    [32, '270만원', '기본가보다 18만원 저렴합니다'],
+    [48, '380만원', '기본가보다 52만원 저렴합니다'],
+  ])('%i시간은 카드와 같은 가격', async (h, price, saved) => {
+    render(<APSectionV2 />);
+    setHours(h);
+    // 가격 박스는 AnimatePresence(wait)로 교체되므로 퇴장 애니메이션이 끝날 때까지 기다린다.
+    await waitFor(() => expect(calc()).toContain(saved));
+    expect(calc()).toContain(price);
+  });
+
+  it('그 밖의 시간은 구간 단가 계산 그대로', async () => {
+    render(<APSectionV2 />);
+    setHours(31);
+    await waitFor(() => expect(calc()).toContain('262만 2,600원')); // 31 × 84,600
   });
 });

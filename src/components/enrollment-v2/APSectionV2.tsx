@@ -36,6 +36,14 @@ function getTier(h: number) {
   return TIERS.find(t => h >= t.min && h <= t.max) ?? TIERS[0];
 }
 
+// 인기 패키지 시간은 구간 단가 계산값(270만 7,200원 / 380만 1,600원) 대신 끝자리를 정리한 고정가.
+const FIXED_TOTALS: Record<number, number> = { 32: 2700000, 48: 3800000 };
+
+/** 총 수업료 — 카드와 계산기가 같이 쓴다. */
+function apTotal(h: number) {
+  return FIXED_TOTALS[h] ?? h * getTier(h).rate;
+}
+
 /* ── AP 과목 + 상태 데이터 ──────────────────────────────────────── */
 type SubjectStatus = 'available' | 'waiting' | 'closed';
 
@@ -339,8 +347,8 @@ function APHourPicker({ lang = 'ko' }: { lang?: 'ko' | 'en' }) {
   const [hours, setHours] = useState(16);
 
   const tier = getTier(hours);
-  const total = hours * tier.rate;
-  const savedVsBase = (AP_BASE - tier.rate) * hours;
+  const total = apTotal(hours);
+  const savedVsBase = AP_BASE * hours - total;
 
   function clamp(v: number) {
     return Math.min(60, Math.max(1, v));
@@ -478,11 +486,10 @@ function APHourPicker({ lang = 'ko' }: { lang?: 'ko' | 'en' }) {
 }
 
 /* ── 인기 패키지 데이터 ─────────────────────────────────────────── */
-// 32·48시간은 구간 단가 계산값(270만 7,200원 / 380만 1,600원)이 아니라 끝자리를 정리한 고정가.
 const AP_PKGS = [
-  { id: 'ap-16h', hours: 16, totalPrice: 16 * 90000, discountRate: null as null | number },
-  { id: 'ap-32h', hours: 32, totalPrice: 2700000, discountRate: 6 },
-  { id: 'ap-48h', hours: 48, totalPrice: 3800000, discountRate: 12 },
+  { id: 'ap-16h', hours: 16, totalPrice: apTotal(16), discountRate: null as null | number },
+  { id: 'ap-32h', hours: 32, totalPrice: apTotal(32), discountRate: 6 },
+  { id: 'ap-48h', hours: 48, totalPrice: apTotal(48), discountRate: 12 },
 ];
 
 /* ════════════════════════════════════════════════════════════════════
