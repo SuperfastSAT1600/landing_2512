@@ -38,6 +38,7 @@ const NAV_ITEMS: NavItem[] = [
     },
     { href: '/admin/popup-settings', label: '팝업 설정', icon: '🔔' },
     { href: '/admin/portal-posts', label: '포털 게시글', icon: '📌' },
+    { href: '/admin/guide', label: 'v2 튜토리얼', icon: '🎮' },
     {
         label: 'Superfastsat', icon: '⚡', children: [
             { href: '/admin/business', label: 'Business' },
