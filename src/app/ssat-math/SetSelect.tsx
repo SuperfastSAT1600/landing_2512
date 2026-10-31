@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { MAX_SSAT_SET } from '@/lib/ssat-math-config';
 
 const RESULTS_KEY = 'ssat_math_results_v1';
 
@@ -54,7 +55,7 @@ export function SetSelect({ studentId, onSelect }: { studentId: string; onSelect
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {Array.from({ length: 20 }, (_, i) => i + 1).map((setNum) => {
+          {Array.from({ length: MAX_SSAT_SET }, (_, i) => i + 1).map((setNum) => {
             const result = results[String(setNum)];
             const done = !!result;
             return (

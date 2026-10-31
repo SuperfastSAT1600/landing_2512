@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAdminAuth } from '@/lib/useAdminAuth';
 import { ContentRenderer } from '@/app/diagnosis/components/ContentRenderer';
+import { MAX_SSAT_SET } from '@/lib/ssat-math-config';
 
 const POLL_INTERVAL = 5000; // 5초마다 자동 갱신
 
@@ -336,7 +337,7 @@ export default function SSATMathAdminPage() {
 
         {/* Set tabs */}
         <div className="flex flex-wrap gap-1 mb-6">
-          {Array.from({ length: 20 }, (_, i) => i + 1).map(n => (
+          {Array.from({ length: MAX_SSAT_SET }, (_, i) => i + 1).map(n => (
             <button
               key={n}
               onClick={() => setActiveSet(n)}
