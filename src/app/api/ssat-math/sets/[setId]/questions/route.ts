@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { MAX_SSAT_SET } from '@/lib/ssat-math-config';
 
 export async function GET(
   _req: NextRequest,
@@ -8,7 +9,7 @@ export async function GET(
   const { setId } = await params;
   const setNumber = parseInt(setId, 10);
 
-  if (isNaN(setNumber) || setNumber < 1 || setNumber > 20) {
+  if (isNaN(setNumber) || setNumber < 1 || setNumber > MAX_SSAT_SET) {
     return NextResponse.json(
       { error: { code: 'INVALID_SET', message: '유효하지 않은 세트 번호입니다.' } },
       { status: 400 }
