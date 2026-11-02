@@ -8,6 +8,7 @@ exports[`GET /api/admin/srm/tutoring-users > 응답이 기준 스냅샷과 같�
       "id": "c9",
       "name": "미연결학생",
       "parent_phone": "010",
+      "reason": "no_profile",
     },
   ],
   "linked": [

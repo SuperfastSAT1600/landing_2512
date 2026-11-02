@@ -159,6 +159,27 @@ describe('GET /api/admin/srm/tutoring-users', () => {
     expect(paged.filter((r) => !r.ordered)).toEqual([]);
   });
 
+  // REQ-001 (crm-tutoring-search-gap)
+  it('프로필은 연결됐지만 SRM 결제 계정이 없는 수업 중 학생을 미연결 목록에 no_srm_payment로 넣는다', async () => {
+    crm.tables.students.push(
+      { id: 'c5', name: '정민채', grade: 'Y11', sfv2_profile_id: 's5', funnel_stage: '8', parent_phone: null },
+      { id: 'c6', name: '이탈학생', grade: null, sfv2_profile_id: 's6', funnel_stage: 'churned', parent_phone: null },
+    );
+    const { GET } = await import('../route');
+    const body = await (await GET(req())).json();
+    expect(body.crmUnlinked).toEqual([
+      { id: 'c9', name: '미연결학생', grade: '12', parent_phone: '010', reason: 'no_profile' },
+      { id: 'c5', name: '정민채', grade: 'Y11', parent_phone: null, reason: 'no_srm_payment' },
+    ]);
+  });
+
+  it('결제 계정이 종료(inactive)뿐이어도 결제 계정이 있는 학생은 미연결로 보지 않는다', async () => {
+    crm.tables.students.push({ id: 'c3', name: '종료학생', grade: null, sfv2_profile_id: 's3', funnel_stage: '8', parent_phone: null });
+    const { GET } = await import('../route');
+    const body = await (await GET(req())).json();
+    expect(body.crmUnlinked.map((s: { id: string }) => s.id)).toEqual(['c9']);
+  });
+
   // REQ-003
   it('SFv2 조회가 실패하면 일부 데이터로 계산하지 않고 500', async () => {
     sfv2.failTables = new Set(['scheduled_event_participants']);
