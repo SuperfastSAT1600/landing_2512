@@ -6,6 +6,8 @@ import { Student } from '@/types/crm';
 import { getAdminUserName } from '@/lib/admin-user';
 import { RefundModal } from './RefundModal';
 import { SrmLinkModal } from './SrmLinkModal';
+import { CrmUnlinkedRow } from './CrmUnlinkedRow';
+import { matchUnlinkedForSearch } from './tutoring-search';
 import {
   TutoringStudentRow,
   TutoringListControls,
@@ -53,7 +55,7 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
       setEntries(allEntries.filter(e => e.isCrmLinked));
       // SFv2에만 있는 학생 → 연결 모달에서 사용
       setSfv2Unlinked(linked.filter(u => !u.crmStudentId));
-      // CRM 결제 완료 & SFv2 미연결 → 미연결 탭
+      // CRM 결제 완료인데 튜터링 목록에 못 들어간 학생(프로필 미연결·SRM 결제 계정 없음) → 미연결 탭
       setCrmUnlinked(unlinked);
       if (unlinked.length === 0) setSubTab('active');
     } catch (err) {
@@ -76,11 +78,11 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
     [entries, subTab, vipOnly, searchQuery]
   );
 
-  const visibleCrmUnlinked = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return crmUnlinked;
-    return crmUnlinked.filter(s => s.name?.toLowerCase().includes(q));
-  }, [crmUnlinked, searchQuery]);
+  // 미연결 탭 목록 + 전체 탭 검색 결과에 섞을 미연결 학생
+  const visibleCrmUnlinked = useMemo(
+    () => matchUnlinkedForSearch(crmUnlinked, subTab, searchQuery, vipOnly),
+    [crmUnlinked, subTab, searchQuery, vipOnly]
+  );
 
   const handleRefundConfirm = async (refundAmount: number, refundReason: string, churnType: string) => {
     if (!refundTarget) return;
@@ -111,8 +113,8 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
   };
 
   const isUnlinkedTab = subTab === 'unlinked';
-  const listCount = isUnlinkedTab ? visibleCrmUnlinked.length : visible.length;
-  const isEmpty = isUnlinkedTab ? visibleCrmUnlinked.length === 0 : visible.length === 0;
+  const listCount = visibleCrmUnlinked.length + visible.length;
+  const isEmpty = listCount === 0;
 
   return (
     <div className="space-y-4">
@@ -140,63 +142,40 @@ export function EnrolledLeads({ adminKey, onStudentClick, onStudentUpdate }: Enr
         </div>
       ) : isEmpty ? (
         <div className="py-16 text-center text-sm text-gray-400">
-          {isUnlinkedTab ? 'SFv2 미연결 학생이 없습니다.' : '해당 학생이 없습니다.'}
+          {isUnlinkedTab ? '미연결 학생이 없습니다.' : '해당 학생이 없습니다.'}
         </div>
       ) : (
         <div className="space-y-2">
           <p className="text-xs text-gray-400">{listCount}명</p>
 
-          {isUnlinkedTab ? (
-            visibleCrmUnlinked.map(student => (
-              <div
-                key={student.id}
-                onClick={() => onStudentClick({ id: student.id, name: student.name } as Student)}
-                className="flex items-center gap-3 p-3.5 bg-white border border-gray-100 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-sm text-gray-900">{student.name}</span>
-                    {student.grade && <span className="text-xs text-gray-500">{student.grade}</span>}
-                    <span className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded font-semibold bg-blue-50 text-blue-600">
-                      SFv2 미연결
-                    </span>
-                  </div>
-                  {student.parent_phone && (
-                    <p className="text-xs text-gray-400 mt-0.5">{student.parent_phone}</p>
-                  )}
-                </div>
-                <div className="shrink-0" onClick={e => e.stopPropagation()}>
-                  <button
-                    onClick={() => setLinkTarget(student)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
-                  >
-                    SRM 연결
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            visible.map(entry => (
-              <TutoringStudentRow
-                key={entry.student.id}
-                student={entry.student}
-                displayStatus={entry.displayStatus}
-                remainingHours={entry.remainingHours}
-                heldHours={entry.heldHours}
-                onClick={() => onStudentClick(entry.student)}
-                action={
-                  <button
-                    onClick={() => setRefundTarget(entry.student)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
-                    title="환불 처리"
-                  >
-                    <RotateCcw size={12} />
-                    <span className="hidden sm:inline">환불</span>
-                  </button>
-                }
-              />
-            ))
-          )}
+          {visibleCrmUnlinked.map(student => (
+            <CrmUnlinkedRow
+              key={student.id}
+              student={student}
+              onClick={() => onStudentClick({ id: student.id, name: student.name } as Student)}
+              onLink={() => setLinkTarget(student)}
+            />
+          ))}
+          {visible.map(entry => (
+            <TutoringStudentRow
+              key={entry.student.id}
+              student={entry.student}
+              displayStatus={entry.displayStatus}
+              remainingHours={entry.remainingHours}
+              heldHours={entry.heldHours}
+              onClick={() => onStudentClick(entry.student)}
+              action={
+                <button
+                  onClick={() => setRefundTarget(entry.student)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-orange-600 border border-orange-200 rounded-lg hover:bg-orange-50 transition-colors"
+                  title="환불 처리"
+                >
+                  <RotateCcw size={12} />
+                  <span className="hidden sm:inline">환불</span>
+                </button>
+              }
+            />
+          ))}
         </div>
       )}
 

@@ -64,18 +64,22 @@ export interface UnlinkedTutoringUser {
   netRemainingHours: number;
 }
 
-/** CRM 결제 완료 학생 중 SFv2 계정 미연결 — CRM 미연결 탭 전용. */
+/**
+ * CRM 결제 완료 학생 중 튜터링 목록에 들어가지 못한 학생 — CRM 미연결 탭 전용.
+ * no_profile: SFv2 프로필 미연결. no_srm_payment: 프로필은 연결됐지만 SRM 결제 계정이 아직 없음.
+ */
 export interface CrmUnlinkedStudent {
   id: string;
   name: string;
   grade: string | null;
   parent_phone: string | null;
+  reason: 'no_profile' | 'no_srm_payment';
 }
 
 export interface TutoringUsersResponse {
   linked: TutoringUser[];
   unlinked: UnlinkedTutoringUser[];
-  /** CRM funnel_stage='8' & sfv2_profile_id IS NULL 학생 목록. */
+  /** CRM funnel_stage='8' 학생 중 SFv2 프로필 미연결이거나 SRM 결제 계정이 없는 학생. */
   crmUnlinked: CrmUnlinkedStudent[];
 }
 
@@ -133,7 +137,7 @@ export async function GET(request: NextRequest) {
       fetchV2Data(),
       supabaseAdmin
         .from('students')
-        .select('id, name, grade, sfv2_profile_id')
+        .select('id, name, grade, sfv2_profile_id, funnel_stage, parent_phone')
         .not('sfv2_profile_id', 'is', null),
       supabaseAdmin
         .from('student_pauses')
@@ -200,11 +204,13 @@ export async function GET(request: NextRequest) {
       return !!lastSession && lastSession >= ninetyDaysAgoStr;
     });
 
-    // SFv2 profiles 이름 조회 — 연결·미연결 대상을 함께, 배치 500을 동시에
+    // SFv2 profiles 이름 조회 — 연결·미연결 대상을 함께 동시에.
+    // id 500개면 URL이 16KB를 넘어 Node fetch가 UND_ERR_HEADERS_OVERFLOW로 실패한다 → 200개(약 7KB)씩.
     const profileIds = [...relevantProfileIds, ...unlinkedProfileIds];
+    const PROFILE_BATCH = 200;
     const profileBatches = await Promise.all(
-      Array.from({ length: Math.ceil(profileIds.length / 500) }, (_, i) =>
-        supabaseSFv2.from('profiles').select('id, full_name').in('id', profileIds.slice(i * 500, i * 500 + 500))
+      Array.from({ length: Math.ceil(profileIds.length / PROFILE_BATCH) }, (_, i) =>
+        supabaseSFv2.from('profiles').select('id, full_name').in('id', profileIds.slice(i * PROFILE_BATCH, (i + 1) * PROFILE_BATCH))
       )
     );
     const sfv2ProfilesById = new Map<string, { id: string; full_name: string | null }>();
@@ -216,6 +222,7 @@ export async function GET(request: NextRequest) {
     // CRM 학생은 enrichment (이름·학년·crmStudentId)
     const crmStudents = (crmResult.data ?? []) as {
       id: string; name: string; grade: string | null; sfv2_profile_id: string;
+      funnel_stage: string | null; parent_phone: string | null;
     }[];
     const crmByProfile = new Map<string, typeof crmStudents[0]>();
     for (const s of crmStudents) crmByProfile.set(s.sfv2_profile_id, s);
@@ -302,12 +309,22 @@ export async function GET(request: NextRequest) {
     }
     unlinked.sort((a, b) => b.netRemainingHours - a.netRemainingHours || a.name.localeCompare(b.name));
 
-    const crmUnlinked: CrmUnlinkedStudent[] = (crmUnlinkedResult.data ?? []).map((s) => ({
-      id: s.id,
-      name: s.name ?? '',
-      grade: s.grade ?? null,
-      parent_phone: s.parent_phone ?? null,
-    }));
+    const toUnlinked = (
+      s: { id: string; name: string | null; grade: string | null; parent_phone: string | null },
+      reason: CrmUnlinkedStudent['reason'],
+    ): CrmUnlinkedStudent => ({
+      id: s.id, name: s.name ?? '', grade: s.grade ?? null, parent_phone: s.parent_phone ?? null, reason,
+    });
+    // 프로필은 연결됐지만 SRM 결제 계정이 하나도 없는 수업 중 학생(가입 직후·SRM 결제 등록 전).
+    // 이들은 linked에도 빠지므로 여기 넣지 않으면 튜터링 탭 어디서도 보이지 않는다.
+    const profilesWithPayment = new Set(allPaymentRows.map((p) => p.student_id));
+    const crmUnlinked: CrmUnlinkedStudent[] = [
+      ...(crmUnlinkedResult.data ?? []).map((s) => toUnlinked(s, 'no_profile')),
+      ...crmStudents
+        .filter((s) => s.funnel_stage === '8' && !profilesWithPayment.has(s.sfv2_profile_id))
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((s) => toUnlinked(s, 'no_srm_payment')),
+    ];
 
     return NextResponse.json({ linked: results, unlinked, crmUnlinked } satisfies TutoringUsersResponse);
   } catch (e) {
