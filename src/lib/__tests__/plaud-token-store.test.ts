@@ -43,7 +43,7 @@ describe('plaud-token-store (REQ-002: 계정 인식)', () => {
 
   it('REQ-002: write는 account_key 포함해 (provider,account_key)로 upsert', async () => {
     const { writeStoredRefreshToken } = await import('@/lib/plaud-token-store');
-    await writeStoredRefreshToken('byungyun', 'rotated-tok');
+    expect(await writeStoredRefreshToken('byungyun', 'rotated-tok')).toBe(true);
 
     expect(upsert).toHaveBeenCalledTimes(1);
     const [row, opts] = upsert.mock.calls[0];
@@ -55,10 +55,16 @@ describe('plaud-token-store (REQ-002: 계정 인식)', () => {
     expect(opts).toEqual({ onConflict: 'provider,account_key' });
   });
 
-  it('REQ-002: write 실패는 삼켜서 noop(치명적 아님)', async () => {
+  it('REQ-002: write 실패는 throw하지 않고 false(치명적 아님)', async () => {
     upsert.mockRejectedValue(new Error('supabase down'));
     const { writeStoredRefreshToken } = await import('@/lib/plaud-token-store');
-    await expect(writeStoredRefreshToken('me', 't')).resolves.toBeUndefined();
+    await expect(writeStoredRefreshToken('me', 't')).resolves.toBe(false);
+  });
+
+  it('keepalive: upsert가 error를 돌려주면 false', async () => {
+    upsert.mockResolvedValue({ error: { message: 'rls' } });
+    const { writeStoredRefreshToken } = await import('@/lib/plaud-token-store');
+    expect(await writeStoredRefreshToken('me', 't')).toBe(false);
   });
 
   it('REQ-DB: listStoredAccountKeys는 토큰 저장된 계정 키만 반환', async () => {

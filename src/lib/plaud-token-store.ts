@@ -53,14 +53,17 @@ export async function readStoredRefreshToken(accountKey: string): Promise<string
   }
 }
 
-/** 지정 계정의 회전된 새 refresh_token을 저장한다. 실패는 치명적이지 않다(다음 갱신에서 재시도). */
+/**
+ * 지정 계정의 회전된 새 refresh_token을 저장한다. 저장 성공 여부를 반환하고 throw하지 않는다.
+ * 일반 조회에서는 실패가 치명적이지 않고(다음 갱신에서 재시도), keep-alive는 false를 실패로 본다.
+ */
 export async function writeStoredRefreshToken(
   accountKey: string,
   refreshToken: string
-): Promise<void> {
+): Promise<boolean> {
   try {
     const { supabaseAdmin } = await import('./supabase-admin');
-    await supabaseAdmin.from('integration_tokens').upsert(
+    const { error } = await supabaseAdmin.from('integration_tokens').upsert(
       {
         provider: PROVIDER,
         account_key: accountKey,
@@ -69,7 +72,8 @@ export async function writeStoredRefreshToken(
       },
       { onConflict: 'provider,account_key' }
     );
+    return !error;
   } catch {
-    /* noop */
+    return false;
   }
 }
