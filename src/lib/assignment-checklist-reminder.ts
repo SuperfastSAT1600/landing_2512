@@ -1,7 +1,7 @@
 /** 미완료 배정 체크리스트 DM 알림: 대상 선별과 문구 (순수) + 전송 */
 import { ASSIGNMENT_TASKS } from '@/lib/slack-assignment-checklist';
 
-/** 알림 받을 담당자 (2017newshcoach, minjae.lee90) */
+/** 모든 건을 받는 고정 담당자 (2017newshcoach, minjae.lee90). 요청 글에서 태그된 사용자는 그 건만 추가로 받는다 */
 export const REMINDER_RECIPIENTS = ['U07FK6LSK7C', 'U07FMTVHYBX'];
 
 /** cron 이 3시간마다 도는 시각 오차를 감안해 3시간보다 조금 짧게 잡는다 */
@@ -22,9 +22,30 @@ export function pickDueChecklists(rows: OpenChecklist[], now: Date): OpenCheckli
 
 function describe(row: OpenChecklist): string {
   const remaining = ASSIGNMENT_TASKS.filter((t) => !row.checked_ids.includes(t.id)).map((t) => `• ${t.label}`);
-  const title = row.request_text.split('\n')[0].slice(0, 80) || '(요청 글)';
+  const title = row.request_text.replace(MENTION, '').split('\n').map((l) => l.trim()).find(Boolean)?.slice(0, 80) ?? '(요청 글)';
   const link = `https://slack.com/archives/${row.channel}/p${row.message_ts.replace('.', '')}`;
   return `*${title}*\n${remaining.join('\n')}\n<${link}|스레드 보기>`;
+}
+
+const MENTION = /<@([UW][A-Z0-9]+)(?:\|[^>]*)?>/g;
+
+/** 요청 글에서 태그된 Slack 사용자 ID (순서 유지, 중복 제거) */
+export function extractMentionedUserIds(text: string): string[] {
+  return [...new Set([...text.matchAll(MENTION)].map((m) => m[1]))];
+}
+
+/** 고정 담당자 + 요청 글에서 태그된 사용자 */
+export function recipientsOf(row: OpenChecklist): string[] {
+  return [...new Set([...REMINDER_RECIPIENTS, ...extractMentionedUserIds(row.request_text)])];
+}
+
+/** 수신자별로 자기가 받을 건만 모은다 (한 사람에게 DM 1통) */
+export function groupByRecipient(rows: OpenChecklist[]): Map<string, OpenChecklist[]> {
+  const groups = new Map<string, OpenChecklist[]>();
+  for (const row of rows) {
+    for (const userId of recipientsOf(row)) groups.set(userId, [...(groups.get(userId) ?? []), row]);
+  }
+  return groups;
 }
 
 export function buildReminderText(rows: OpenChecklist[]): string {
