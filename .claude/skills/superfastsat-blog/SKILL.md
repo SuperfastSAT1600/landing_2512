@@ -11,9 +11,9 @@ description: "SuperfastSAT 네이버/구글/랜딩페이지 블로그 포스팅�
 
 | # | 문서 | 용도 |
 |---|------|------|
-| 1 | `/workspace/.claude/skills/superfastsat-persona.md` | 화자 페르소나, 목소리 원칙, 설득 전제 조건 |
-| 2 | `/workspace/.claude/skills/superfastsat-blog/voice-guide.md` | 실제 교정 사례. 같은 실수 반복 방지. |
-| 3 | `/workspace/.claude/skills/superfastsat-blog/teaching-content.md` | 수업 내용 DB. 처방형/선호형 분류 확인 후 서술 방식 결정. |
+| 1 | `.claude/skills/superfastsat-persona.md` | 화자 페르소나, 목소리 원칙, 설득 전제 조건 |
+| 2 | `.claude/skills/superfastsat-blog/voice-guide.md` | 실제 교정 사례. 같은 실수 반복 방지. |
+| 3 | `.claude/skills/superfastsat-blog/teaching-content.md` | 수업 내용 DB. 처방형/선호형 분류 확인 후 서술 방식 결정. |
 | 4 | 주제 관련 소스 데이터 | 원고 파일, 분석 자료, 또는 schema 집계 — 가상 수치 금지 |
 
 **문서 4 수집 규칙**: 스킬 분석 포스팅이면 `schema/questions/master_sat_ontology_v3.jsonl`을 직접 grep/jq로 집계한다. 외부 원고가 있으면 해당 파일을 읽는다. 데이터 없이 산문 생성 금지.
