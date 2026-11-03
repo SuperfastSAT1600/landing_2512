@@ -48,4 +48,29 @@ describe('GET /api/cron/assignment-checklist-reminder (REQ-003)', () => {
     await GET(req('Bearer s'));
     expect(markReminded).not.toHaveBeenCalled();
   });
+
+  describe('요청 글에서 태그된 사용자 (REQ-003)', () => {
+    const tagged = { ...open, message_ts: '300.3', request_text: '<@U09KUDME9NW>\n박서진 배정' };
+    const sent = () => fetchMock.mock.calls.map((c) => JSON.parse(c[1].body));
+
+    it('태그된 사용자도 그 건의 DM 을 받고, 다른 건은 받지 않는다', async () => {
+      fetchOpen.mockResolvedValue([tagged, open]);
+      await GET(req('Bearer s'));
+      const toTagged = sent().find((m) => m.channel === 'U09KUDME9NW');
+      expect(toTagged.text).toContain('박서진 배정');
+      expect(toTagged.text).toContain('1건');
+      expect(sent().map((m) => m.channel).sort()).toEqual(['U07FK6LSK7C', 'U07FMTVHYBX', 'U09KUDME9NW']);
+    });
+
+    it('태그된 사용자 DM 이 실패해도 담당자 DM 은 나가고, 그 건만 알림 시각을 갱신하지 않는다', async () => {
+      fetchOpen.mockResolvedValue([tagged, open]);
+      fetchMock.mockImplementation((_url: string, init: { body: string }) => Promise.resolve({
+        json: () => Promise.resolve(JSON.parse(init.body).channel === 'U09KUDME9NW' ? { ok: false, error: 'cannot_dm_bot' } : { ok: true }),
+      }));
+      const res = await GET(req('Bearer s'));
+      expect(sent().filter((m) => m.channel.startsWith('U07F'))).toHaveLength(2);
+      expect(markReminded).toHaveBeenCalledWith([{ channel: 'C0C9B0DEGDN', message_ts: '200.2' }], expect.any(Date));
+      expect((await res.json()).reminded).toBe(1);
+    });
+  });
 });
