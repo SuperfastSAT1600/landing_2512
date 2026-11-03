@@ -28,7 +28,7 @@ describe('plaud-client', () => {
     process.env.PLAUD_REFRESH_TOKEN = 'refresh-xyz';
     // 기본: 저장소 비어있음 → env 씨앗 폴백.
     readStoredRefreshToken.mockResolvedValue(null);
-    writeStoredRefreshToken.mockResolvedValue(undefined);
+    writeStoredRefreshToken.mockResolvedValue(true);
     listStoredAccountKeys.mockResolvedValue([]);
   });
   afterEach(() => vi.unstubAllGlobals());
@@ -262,5 +262,63 @@ describe('plaud-client', () => {
     listStoredAccountKeys.mockResolvedValue(['wooyoung']);
     const mod = await import('@/lib/plaud-client');
     expect(await mod.listPlaudAccountKeys()).toEqual(['me', 'wooyoung']);
+  });
+
+  it('REQ-001(keepalive): force면 캐시가 있어도 다시 갱신하고 회전 토큰을 저장', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ access_token: 'access-1', expires_in: 86400, refresh_token: 'rot-1' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ access_token: 'access-2', expires_in: 86400, refresh_token: 'rot-2' }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { getPlaudAccessToken } = await import('@/lib/plaud-client');
+    expect(await getPlaudAccessToken('me')).toBe('access-1');
+    // 캐시 재사용(기본 동작 불변)
+    expect(await getPlaudAccessToken('me')).toBe('access-1');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    readStoredRefreshToken.mockResolvedValue('rot-1');
+    expect(await getPlaudAccessToken('me', { force: true })).toBe('access-2');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(String(fetchMock.mock.calls[1][1].body)).toContain('refresh_token=rot-1');
+    expect(writeStoredRefreshToken).toHaveBeenLastCalledWith('me', 'rot-2');
+  });
+
+  it('REQ-001(keepalive): force인데 회전 토큰 저장에 실패하면 throw', async () => {
+    writeStoredRefreshToken.mockResolvedValue(false);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ access_token: 'a', expires_in: 86400, refresh_token: 'rot' }),
+    }));
+    const { getPlaudAccessToken } = await import('@/lib/plaud-client');
+    await expect(getPlaudAccessToken('me', { force: true })).rejects.toThrow(/저장 실패/);
+  });
+
+  it('REQ-001(keepalive): 저장 실패여도 일반 호출은 access token을 그대로 반환', async () => {
+    writeStoredRefreshToken.mockResolvedValue(false);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ access_token: 'a', expires_in: 86400, refresh_token: 'rot' }),
+    }));
+    const { getPlaudAccessToken } = await import('@/lib/plaud-client');
+    expect(await getPlaudAccessToken('me')).toBe('a');
+  });
+
+  it('REQ-001(keepalive): force면 PLAUD_ACCESS_TOKEN override를 무시하고 실제 갱신', async () => {
+    process.env.PLAUD_ACCESS_TOKEN = 'override';
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ access_token: 'fresh', expires_in: 86400, refresh_token: 'rot' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { getPlaudAccessToken } = await import('@/lib/plaud-client');
+    expect(await getPlaudAccessToken('me')).toBe('override');
+    expect(await getPlaudAccessToken('me', { force: true })).toBe('fresh');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

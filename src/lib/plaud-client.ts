@@ -124,18 +124,23 @@ async function refreshAccessToken(
   };
 }
 
-/** 지정 계정의 유효한 access token을 반환한다(캐시 → env override → refresh). */
+/**
+ * 지정 계정의 유효한 access token을 반환한다(캐시 → env override → refresh).
+ * force면 캐시와 override를 건너뛰고 갱신하며, 회전 토큰 저장에 실패하면 throw한다
+ * — keep-alive 크론이 refresh_token 7일 만료 전에 회전시키고 저장까지 확인하는 용도.
+ */
 export async function getPlaudAccessToken(
-  accountKey: string = DEFAULT_ACCOUNT_KEY
+  accountKey: string = DEFAULT_ACCOUNT_KEY,
+  opts: { force?: boolean } = {}
 ): Promise<string> {
   const account = getAccount(accountKey);
 
   const override = process.env.PLAUD_ACCESS_TOKEN?.trim();
-  if (override) return override;
+  if (override && !opts.force) return override;
 
   const now = Date.now();
   const cached = tokenCache.get(accountKey);
-  if (cached && cached.expiresAt - 60_000 > now) return cached.token;
+  if (!opts.force && cached && cached.expiresAt - 60_000 > now) return cached.token;
 
   // 저장소의 최신 회전 토큰 우선, 없으면 계정 seed env(부트스트랩). 저장소 오류는 null 폴백.
   const stored = await readStoredRefreshToken(accountKey).catch(() => null);
@@ -168,7 +173,10 @@ export async function getPlaudAccessToken(
   });
   // 회전된 새 refresh_token을 해당 계정에 저장해 다음 갱신에 사용(seed 7일 만료와 무관하게 체인 유지).
   if (refreshed.newRefreshToken && refreshed.newRefreshToken !== usedToken) {
-    await writeStoredRefreshToken(accountKey, refreshed.newRefreshToken).catch(() => {});
+    const saved = await writeStoredRefreshToken(accountKey, refreshed.newRefreshToken);
+    if (opts.force && !saved) {
+      throw new Error(`회전된 Plaud refresh_token 저장 실패 [account=${accountKey}]`);
+    }
   }
   return refreshed.token;
 }
