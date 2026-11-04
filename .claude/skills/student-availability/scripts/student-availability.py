@@ -33,6 +33,7 @@ CRM_URL = env.get("NEXT_PUBLIC_SUPABASE_URL", "")
 CRM_KEY = env.get("SUPABASE_SERVICE_ROLE_KEY", "")
 COACH_PREP_BASE = "https://tutoring.superfastsat.com/coach-prep"
 
+DST_SCAN_DAYS = 366  # 종료일 미입력 슬롯의 DST 분할 범위
 WEEKDAYS = ["월", "화", "수", "목", "금", "토", "일"]
 
 def minutes_to_hhmm(m: int) -> str:
@@ -96,7 +97,7 @@ def split_by_dst(tz: str, eff_from: str | None, eff_until: str | None) -> list[d
     """유효 기간을 UTC 오프셋이 바뀌는 지점에서 잘라 [{from, until, diff(분), abbr}] 반환"""
     zone = safe_zone(tz)
     start = date.fromisoformat(eff_from[:10]) if eff_from else date.today()
-    end = date.fromisoformat(eff_until[:10]) if eff_until else start  # 종료일 미입력 → 학생이 입력한 범위까지만
+    end = date.fromisoformat(eff_until[:10]) if eff_until else start + timedelta(days=DST_SCAN_DAYS)  # 종료일 미입력 → 1년 뒤까지 DST 전환을 본다
 
     def segment(seg_start: date, off: int) -> dict:
         abbr = datetime(seg_start.year, seg_start.month, seg_start.day, 12, tzinfo=zone).tzname()
@@ -122,6 +123,7 @@ def slot_to_kst(slot: dict) -> list[dict]:
     """로컬 슬롯 → KST 요일+시간. DST 전환이 기간 안에 있으면 구간별로 나눠 반환"""
     tz = slot.get("tz") or "America/Los_Angeles"
     results = []
+    weekday_local = (slot["weekday"] - 1) % 7  # SFv2 weekday 0 = 일요일 → WEEKDAYS(0 = 월요일) 인덱스
     for seg in split_by_dst(tz, slot.get("effective_from"), slot.get("effective_until")):
         diff = seg["diff"]
         start_kst = slot["start_minute_local"] + diff
@@ -129,10 +131,10 @@ def slot_to_kst(slot: dict) -> list[dict]:
         results.append({
             "tz": tz,
             "tz_abbr": seg["abbr"],
-            "weekday_kst": (slot["weekday"] + start_kst // (24 * 60)) % 7,
+            "weekday_kst": (weekday_local + start_kst // (24 * 60)) % 7,
             "start": minutes_to_hhmm(start_kst % (24 * 60)),
             "end":   minutes_to_hhmm(end_kst % (24 * 60)),
-            "weekday_local": slot["weekday"] % 7,
+            "weekday_local": weekday_local,
             "start_local": minutes_to_hhmm(slot["start_minute_local"]),
             "end_local":   minutes_to_hhmm(slot["end_minute_local"]),
             "effective_from":  seg["from"],

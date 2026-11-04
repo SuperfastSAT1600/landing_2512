@@ -4,7 +4,7 @@ import type { AvailabilitySlot } from '../student-availability';
 
 // 학생 현지(LA) 월요일 16:30~22:00 — KST로는 화요일 새벽 (PDT 기준 08:30~14:00)
 const slot: AvailabilitySlot = {
-  weekday: 0, start_minute_local: 16 * 60 + 30, end_minute_local: 22 * 60, tz: 'America/Los_Angeles',
+  weekday: 1, start_minute_local: 16 * 60 + 30, end_minute_local: 22 * 60, tz: 'America/Los_Angeles',
   effective_from: '2026-10-19', effective_until: '2026-11-30', notes: null,
 };
 
@@ -15,6 +15,11 @@ describe('isWithinAvailability', () => {
   it('시작 시각은 포함, 종료 시각은 제외', () => {
     expect(isWithinAvailability('2026-10-27T08:30:00+09:00', [slot])).toBe(true);
     expect(isWithinAvailability('2026-10-27T14:00:00+09:00', [slot])).toBe(false);
+  });
+  it('SFv2 weekday 0은 일요일 — 일요일 슬롯은 일요일 시각만 맞는다', () => {
+    const sunday = { ...slot, weekday: 0 };
+    expect(isWithinAvailability('2026-10-26T11:00:00+09:00', [sunday])).toBe(true); // LA 일 19:00 PDT
+    expect(isWithinAvailability('2026-10-27T11:00:00+09:00', [sunday])).toBe(false); // LA 월 19:00 PDT
   });
   it('요일이 다르면 false', () => {
     expect(isWithinAvailability('2026-10-28T11:00:00+09:00', [slot])).toBe(false);

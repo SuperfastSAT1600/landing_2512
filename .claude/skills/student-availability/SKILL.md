@@ -47,8 +47,8 @@ DST 전환이 기간에 걸치면 아래처럼 구간을 나눠 출력한다.
 
 ## 참고
 
-- 슬롯의 `weekday`·시간은 `tz`(보통 `America/Los_Angeles`) 로컬 기준이고, KST로 변환하면 보통 다음날로 넘어감
+- SFv2 `weekday`는 0=일요일, 1=월요일 ... 6=토요일. 슬롯의 `weekday`·시간은 `tz`(보통 `America/Los_Angeles`) 로컬 기준이고, KST로 변환하면 보통 다음날로 넘어감
 - 변환은 `zoneinfo`(IANA tz)로 날짜별 UTC 오프셋을 계산. 유효 기간 안에 DST 전환(예: 11/1)이 있으면 전환일 기준으로 기간을 나눠 구간마다 KST를 따로 출력 (`[기간: ... · EDT]` / `[기간: ... · EST]`). 학생 현지 시간은 그대로이고 KST만 1시간 이동
-- 학생이 입력한 기간(`effective_from` ~ `effective_until`)까지만 표시. 종료일이 없는 슬롯은 시작일 기준 한 구간만 출력하고 이후 DST 전환은 추정해서 나누지 않음
+- 학생이 입력한 기간(`effective_from` ~ `effective_until`)까지만 표시. 종료일이 없는 슬롯은 시작일부터 1년(366일) 뒤까지 DST 전환을 반영해 구간을 나눠 출력
 - 이름 부분 일치 검색 지원 (예: "Chloe" 만 입력해도 됨)
 - 스크립트는 `.env.local`에서 `SUPERFASTSAT_V2_SUPABASE_URL`과 `SUPERFASTSAT_V2_SUPABASE_SERVICE_KEY`를 자동으로 읽음 (코치 준비 링크 조회에는 `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`도 사용)

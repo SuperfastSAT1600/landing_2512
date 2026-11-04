@@ -2,7 +2,7 @@
 // .claude/skills/student-availability/scripts/student-availability.py 와 같은 규칙: DST 전환이 유효 기간 안에 있으면 구간을 나눈다.
 
 export interface AvailabilitySlot {
-  weekday: number; // 0 = 월요일
+  weekday: number; // SFv2 규칙: 0 = 일요일, 1 = 월요일 ... 6 = 토요일
   start_minute_local: number;
   end_minute_local: number;
   tz: string | null;
@@ -12,6 +12,7 @@ export interface AvailabilitySlot {
 }
 
 export interface AvailabilityLine {
+  /** 0 = 월요일 (표시용 인덱스) */
   weekdayKst: number;
   start: string;
   end: string;
@@ -38,7 +39,7 @@ const FALLBACK_TZ = 'America/Los_Angeles';
 const KST_OFFSET_MIN = 9 * 60;
 const DAY_MIN = 24 * 60;
 const DAY_MS = DAY_MIN * 60_000;
-// DST 분할은 시작일부터 1년까지만 본다 — 종료일이 2099처럼 멀면 구간이 수백 개로 쪼개지고 서버 렌더가 느려진다
+// DST 분할은 시작일부터 1년까지만 본다 — 종료일이 없거나 2099처럼 멀어도 구간이 수백 개로 쪼개지지 않고 서버 렌더가 느려지지 않는다
 const DST_SCAN_DAYS = 366;
 
 const mod = (n: number, m: number) => ((n % m) + m) % m;
@@ -96,7 +97,7 @@ interface Segment { from: string | null; until: string | null; diff: number; abb
 
 function splitByDst(tz: string, effFrom: string | null, effUntil: string | null, today: Date): Segment[] {
   const start = effFrom ? dayMs(effFrom) : dayMs(isoDay(today.getTime()));
-  const end = effUntil ? dayMs(effUntil) : start; // 종료일 미입력 -> 시작일 한 구간만
+  const end = effUntil ? dayMs(effUntil) : start + DST_SCAN_DAYS * DAY_MS; // 종료일 미입력 -> 1년 뒤까지 본다
   const segmentAt = (ms: number): Segment => {
     const noon = localNoonMs(tz, ms);
     return { from: isoDay(ms), until: null, diff: KST_OFFSET_MIN - offsetAt(tz, noon), abbr: zoneAbbr(tz, noon) };
@@ -150,8 +151,8 @@ function convert(slot: AvailabilitySlot, today: Date): Converted[] {
     const startKst = slot.start_minute_local + seg.diff;
     const endKst = slot.end_minute_local + seg.diff;
     const dayShift = Math.floor(startKst / DAY_MIN);
-    const weekdayKst = mod(slot.weekday + dayShift, 7);
-    const weekdayLocal = mod(slot.weekday, 7);
+    const weekdayLocal = mod(slot.weekday - 1, 7); // SFv2 0 = 일요일 -> 표시용 0 = 월요일
+    const weekdayKst = mod(weekdayLocal + dayShift, 7);
     const dates = nextDatesMs(today, seg.from, seg.until, weekdayLocal, dayShift);
     return {
       tz, abbr: seg.abbr, from: seg.from, until: seg.until,

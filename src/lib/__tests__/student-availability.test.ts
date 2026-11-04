@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { buildAvailability, type AvailabilitySlot } from '../student-availability';
 
+// SFv2 weekday: 0 = 일요일, 1 = 월요일 ... 6 = 토요일
 const TODAY = new Date('2026-10-19T00:00:00Z');
 
 function slot(over: Partial<AvailabilitySlot>): AvailabilitySlot {
   return {
-    weekday: 0,
+    weekday: 1,
     start_minute_local: 16 * 60 + 30,
     end_minute_local: 22 * 60,
     tz: 'America/New_York',
@@ -28,7 +29,7 @@ describe('buildAvailability', () => {
 
   it('REQ-001: 일요일 저녁은 KST 월요일로 넘어간다 (LA 20:00~22:00 PDT)', () => {
     const { blocks } = buildAvailability([
-      slot({ weekday: 6, tz: 'America/Los_Angeles', start_minute_local: 20 * 60, end_minute_local: 22 * 60 }),
+      slot({ weekday: 0, tz: 'America/Los_Angeles', start_minute_local: 20 * 60, end_minute_local: 22 * 60 }),
     ], TODAY);
     expect(blocks[0].lines[0]).toMatchObject({ weekdayKst: 0, start: '12:00', end: '14:00', weekdayLocal: 6 });
   });
@@ -43,10 +44,23 @@ describe('buildAvailability', () => {
     expect(blocks[1].lines[0]).toMatchObject({ start: '06:30', end: '12:00', startLocal: '16:30' });
   });
 
-  it('REQ-002: 종료일이 없으면 한 구간만 만든다', () => {
+  it('REQ-002: 종료일이 없어도 DST 전환(11/1)부터 시차를 바꾼다', () => {
     const { blocks } = buildAvailability([slot({ effective_until: null })], TODAY);
-    expect(blocks).toHaveLength(1);
-    expect(blocks[0].period).toBe('2026-10-19 ~');
+    expect(blocks.map((b) => b.period)).toEqual([
+      '2026-10-19 ~ 2026-10-31 · EDT',
+      '2026-11-01 ~ 2027-03-13 · EST',
+      '2027-03-14 ~ · EDT',
+    ]);
+    expect(blocks[1].lines[0]).toMatchObject({ start: '06:30', end: '12:00' });
+  });
+
+  it('REQ-001: SFv2 weekday 1(월) 뉴욕 19~21시, 서머타임 종료 후(EST)는 KST 화 09~11시', () => {
+    const { blocks } = buildAvailability([
+      slot({ weekday: 1, start_minute_local: 19 * 60, end_minute_local: 21 * 60, effective_from: '2026-10-25', effective_until: null }),
+    ], new Date('2026-11-04T03:00:00Z'));
+    expect(blocks[1].lines[0]).toMatchObject({
+      weekdayKst: 1, start: '09:00', end: '11:00', dateKst: '2026-11-10', weekdayLocal: 0, dateLocal: '2026-11-09',
+    });
   });
 
   it('REQ-002: 먼 미래 종료일(2099)이어도 빠르게 끝나고 DST 분할은 시작 후 1년까지만 한다', () => {
@@ -66,8 +80,8 @@ describe('buildAvailability', () => {
 
   it('REQ-003: 학생 시간대 라벨과 같은 기간 슬롯 묶음, KST 요일/시간순 정렬', () => {
     const { studentTz, blocks } = buildAvailability([
-      slot({ weekday: 2, start_minute_local: 18 * 60, end_minute_local: 21 * 60 }),
-      slot({ weekday: 0 }),
+      slot({ weekday: 3, start_minute_local: 18 * 60, end_minute_local: 21 * 60 }),
+      slot({ weekday: 1 }),
     ], TODAY);
     expect(studentTz).toBe('America/New_York (EDT, UTC-4)');
     expect(blocks).toHaveLength(1);
@@ -84,7 +98,7 @@ describe('buildAvailability', () => {
   it('REQ-003: 약어가 없는 시간대(Asia/Seoul)는 "GMT+9" 대신 UTC 오프셋만 쓴다', () => {
     const { studentTz, blocks } = buildAvailability([
       slot({ tz: 'Asia/Seoul', effective_until: null }),
-      slot({ tz: 'Asia/Seoul', effective_from: '2026-12-01', effective_until: '2026-12-31', weekday: 2 }),
+      slot({ tz: 'Asia/Seoul', effective_from: '2026-12-01', effective_until: '2026-12-31', weekday: 3 }),
     ], TODAY);
     expect(studentTz).toBe('Asia/Seoul (UTC+9)');
     expect(blocks.map((b) => b.period)).toEqual(['2026-10-19 ~ · UTC+9', '2026-12-01 ~ 2026-12-31 · UTC+9']);
@@ -106,7 +120,7 @@ describe('buildAvailability — 요일에 맞는 날짜', () => {
 
   it('REQ-005: 일요일 저녁(LA)은 KST 월요일로 넘어가며 현지 날짜는 하루 앞선다', () => {
     const { blocks } = buildAvailability([
-      slot({ weekday: 6, effective_from: '2026-10-12', tz: 'America/Los_Angeles', start_minute_local: 20 * 60, end_minute_local: 22 * 60 }),
+      slot({ weekday: 0, effective_from: '2026-10-12', tz: 'America/Los_Angeles', start_minute_local: 20 * 60, end_minute_local: 22 * 60 }),
     ], TODAY);
     expect(blocks[0].lines[0]).toMatchObject({ weekdayKst: 0, dateKst: '2026-10-19', weekdayLocal: 6, dateLocal: '2026-10-18' });
   });
