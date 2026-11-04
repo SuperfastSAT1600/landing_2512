@@ -4,6 +4,22 @@ import type { Topic } from './blog-writer';
 
 export const BLOG_CHANNEL = 'C0A28EJQA7P';
 
+// 한 메시지가 app_mention + message 두 이벤트로 오거나 Slack이 재전송하므로 channel+ts 기준으로 한 번만 처리한다.
+const DEDUPE_TTL_MS = 10 * 60 * 1000;
+const seenEvents = new Map<string, number>();
+
+export function isDuplicateEvent(channel: string | undefined, ts: string | undefined): boolean {
+  if (!channel || !ts) return false;
+  const now = Date.now();
+  for (const [key, seenAt] of seenEvents) {
+    if (now - seenAt > DEDUPE_TTL_MS) seenEvents.delete(key);
+  }
+  const key = `${channel}:${ts}`;
+  if (seenEvents.has(key)) return true;
+  seenEvents.set(key, now);
+  return false;
+}
+
 export async function verifySlackRequest(req: NextRequest, body: string): Promise<boolean> {
   const secret = process.env.SLACK_SIGNING_SECRET;
   if (!secret) return true;

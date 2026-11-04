@@ -179,10 +179,8 @@ export async function handleTopicSuggest(
   const message = buildTopicMessage(topics);
   // BLOG_CHANNEL 최상위에 발행 — getTodayTopics()가 날짜 기반으로 파싱할 수 있도록
   await postSlack(BLOG_CHANNEL, message);
-  // 다른 채널에서 요청한 경우에만 해당 스레드에도 회신 (BLOG_CHANNEL 내에서는 중복 방지)
-  if (channel !== BLOG_CHANNEL) {
-    await postSlack(channel, message, threadTs);
-  }
+  // 요청한 스레드에도 항상 회신 — 최상위 글만 있으면 요청자는 결과가 올라온 줄 모른다
+  await postSlack(channel, message, threadTs);
 }
 
 export async function handlePublish(channel: string, threadTs: string): Promise<void> {
