@@ -30,15 +30,31 @@ export interface AvailabilityBlock {
   lines: AvailabilityLine[];
 }
 
+/** 앞으로 UPCOMING_DAYS일 안의 가능 날짜 하나 (날짜 중심 표시용) */
+export interface AvailabilityOccurrence {
+  dateKst: string;
+  weekdayKst: number;
+  start: string;
+  end: string;
+  dateLocal: string;
+  weekdayLocal: number;
+  startLocal: string;
+  endLocal: string;
+  notes: string | null;
+}
+
 export interface AvailabilitySummary {
   studentTz: string;
   blocks: AvailabilityBlock[];
+  /** 오늘(KST)부터 UPCOMING_DAYS일 안의 가능 날짜, 날짜·시작 시각 순 */
+  upcoming: AvailabilityOccurrence[];
 }
 
 const FALLBACK_TZ = 'America/Los_Angeles';
 const KST_OFFSET_MIN = 9 * 60;
 const DAY_MIN = 24 * 60;
 const DAY_MS = DAY_MIN * 60_000;
+const UPCOMING_DAYS = 14;
 // DST 분할은 시작일부터 1년까지만 본다 — 종료일이 없거나 2099처럼 멀어도 구간이 수백 개로 쪼개지지 않고 서버 렌더가 느려지지 않는다
 const DST_SCAN_DAYS = 366;
 
@@ -131,7 +147,7 @@ function tzLabel(tz: string, effFrom: string | null, today: Date): string {
   return abbr === utc ? `${tz} (${utc})` : `${tz} (${abbr}, ${utc})`;
 }
 
-interface Converted extends AvailabilityLine { tz: string; abbr: string; from: string | null; until: string | null }
+interface Converted extends AvailabilityLine { tz: string; abbr: string; from: string | null; until: string | null; dayShift: number }
 
 const weekdayOf = (ms: number) => mod(new Date(ms).getUTCDay() + 6, 7); // 0 = 월요일
 
@@ -155,7 +171,7 @@ function convert(slot: AvailabilitySlot, today: Date): Converted[] {
     const weekdayKst = mod(weekdayLocal + dayShift, 7);
     const dates = nextDatesMs(today, seg.from, seg.until, weekdayLocal, dayShift);
     return {
-      tz, abbr: seg.abbr, from: seg.from, until: seg.until,
+      tz, abbr: seg.abbr, from: seg.from, until: seg.until, dayShift,
       weekdayKst,
       dateKst: dates ? isoDay(dates.kst) : null,
       dateLocal: dates ? isoDay(dates.local) : null,
@@ -169,14 +185,34 @@ function convert(slot: AvailabilitySlot, today: Date): Converted[] {
   });
 }
 
+// 한 변환 줄이 오늘부터 UPCOMING_DAYS일 안에 가지는 날짜들. 현지 달력 기준 유효 기간 안에서 매주 반복한다.
+function occurrencesOf(c: Converted, today: Date): AvailabilityOccurrence[] {
+  const todayKst = dayMs(isoDay(today.getTime() + KST_OFFSET_MIN * 60_000));
+  const windowEnd = todayKst + (UPCOMING_DAYS - 1) * DAY_MS;
+  const first = nextDatesMs(today, c.from, c.until, c.weekdayLocal, c.dayShift);
+  const out: AvailabilityOccurrence[] = [];
+  for (let local = first?.local; local !== undefined; local += 7 * DAY_MS) {
+    const kst = local + c.dayShift * DAY_MS;
+    if (kst > windowEnd || (c.until && local > dayMs(c.until))) break;
+    out.push({
+      dateKst: isoDay(kst), weekdayKst: c.weekdayKst, start: c.start, end: c.end,
+      dateLocal: isoDay(local), weekdayLocal: c.weekdayLocal, startLocal: c.startLocal, endLocal: c.endLocal, notes: c.notes,
+    });
+  }
+  return out;
+}
+
 export function buildAvailability(slots: AvailabilitySlot[], today: Date = new Date()): AvailabilitySummary {
   const converted = slots.flatMap((s) => convert(s, today));
   converted.sort((a, b) => (a.from ?? '').localeCompare(b.from ?? '') || a.weekdayKst - b.weekdayKst || a.start.localeCompare(b.start));
-  if (converted.length === 0) return { studentTz: '', blocks: [] };
+  if (converted.length === 0) return { studentTz: '', blocks: [], upcoming: [] };
+
+  const upcoming = converted.flatMap((c) => occurrencesOf(c, today))
+    .sort((a, b) => a.dateKst.localeCompare(b.dateKst) || a.start.localeCompare(b.start));
 
   const multiPeriod = new Set(converted.map((c) => `${c.from}|${c.until}`)).size > 1;
   const byPeriod = new Map<string, AvailabilityLine[]>();
-  for (const { tz: _tz, abbr, from, until, ...line } of converted) {
+  for (const { tz: _tz, abbr, from, until, dayShift: _shift, ...line } of converted) {
     const key = formatPeriod(from, until) + (multiPeriod ? ` · ${abbr}` : '');
     byPeriod.set(key, [...(byPeriod.get(key) ?? []), line]);
   }
@@ -185,5 +221,6 @@ export function buildAvailability(slots: AvailabilitySlot[], today: Date = new D
   return {
     studentTz: tzs.map((tz) => tzLabel(tz, converted[0].from, today)).join(', '),
     blocks: [...byPeriod].map(([period, lines]) => ({ period, lines })),
+    upcoming,
   };
 }
