@@ -16,6 +16,8 @@ interface Props {
   adminKey: string;
   entry: ConsultationEntry;
   aiLoading: boolean;
+  /** AI 초안 실패 사유(없으면 빈 문자열) */
+  aiError?: string;
   pendingEdit: PendingEdit | null;
   publishing: boolean;
   memoSaving: boolean;
@@ -35,6 +37,7 @@ export function TimelineEntry({
   adminKey,
   entry,
   aiLoading,
+  aiError,
   pendingEdit,
   publishing,
   memoSaving,
@@ -226,6 +229,7 @@ export function TimelineEntry({
             <Sparkles size={11} />✨ AI 초안 생성
           </button>
         )}
+        {!aiLoading && aiError && <p className="mt-1 text-xs text-red-500">{aiError}</p>}
       </div>
     </div>
 

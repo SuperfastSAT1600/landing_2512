@@ -20,6 +20,7 @@ interface Props {
   publishing: boolean;
   memoSaving: string | null;
   aiLoadingFor: string | null;
+  aiError: { entryId: string; message: string } | null;
   pendingEdits: Record<string, PendingEdit>;
   setPendingEdits: (
     updater: (prev: Record<string, PendingEdit>) => Record<string, PendingEdit>
@@ -43,6 +44,7 @@ export function TimelineSection({
   publishing,
   memoSaving,
   aiLoadingFor,
+  aiError,
   pendingEdits,
   setPendingEdits,
   onAiCare,
@@ -79,6 +81,7 @@ export function TimelineSection({
             adminKey={adminKey}
             entry={entry}
             aiLoading={aiLoadingFor === entry.id}
+            aiError={aiError?.entryId === entry.id ? aiError.message : ''}
             pendingEdit={pendingEdits[entry.id] ?? null}
             publishing={publishing}
             memoSaving={memoSaving === entry.id}
