@@ -60,3 +60,15 @@ describe('TimelineEntry — 작성자(상담인) 표시', () => {
     expect(onDeleteMemo).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('TimelineEntry — AI 초안 실패 표시', () => {
+  it('aiError가 있으면 사유를 보여 준다', () => {
+    renderEntry(baseEntry, { aiError: 'AI 초안을 만들지 못했습니다. 다시 눌러 주세요.' });
+    expect(screen.getByText('AI 초안을 만들지 못했습니다. 다시 눌러 주세요.')).toBeTruthy();
+  });
+
+  it('생성 중에는 이전 오류를 숨긴다', () => {
+    renderEntry(baseEntry, { aiError: '실패', aiLoading: true });
+    expect(screen.queryByText('실패')).toBeNull();
+  });
+});

@@ -384,6 +384,7 @@ export function StudentDetailPanel({
               publishing={timelineHook.publishing}
               memoSaving={timelineHook.memoSaving}
               aiLoadingFor={memoHook.aiLoadingFor}
+              aiError={memoHook.aiError}
               pendingEdits={memoHook.pendingEdits}
               setPendingEdits={memoHook.setPendingEdits}
               onAiCare={memoHook.triggerAiCare}

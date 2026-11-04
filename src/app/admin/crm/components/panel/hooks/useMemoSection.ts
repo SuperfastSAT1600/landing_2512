@@ -4,6 +4,14 @@ import { useState } from 'react';
 import type { ConsultationEntry, Attachment } from '@/types/crm';
 import { apiErrorMessage } from '@/lib/api-error';
 
+const AI_DRAFT_FAILED = 'AI 초안을 만들지 못했습니다. 다시 눌러 주세요.';
+
+/** 실패 안내 + 서버 사유(있으면) */
+function aiDraftError(body: unknown): string {
+  const reason = apiErrorMessage(body, '');
+  return reason ? `${AI_DRAFT_FAILED} (${reason})` : AI_DRAFT_FAILED;
+}
+
 interface PendingEdit {
   purified: string;
   coachHistory: string;
@@ -37,19 +45,21 @@ export function useMemoSection({
   const [savingMemo, setSavingMemo] = useState(false);
   const [memoError, setMemoError] = useState('');
   const [aiLoadingFor, setAiLoadingFor] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<{ entryId: string; message: string } | null>(null);
   const [pendingEdits, setPendingEdits] = useState<Record<string, PendingEdit>>({});
   const headers = { 'Content-Type': 'application/json', 'x-admin-key': adminKey };
 
   async function triggerAiCare(entry: ConsultationEntry) {
     setAiLoadingFor(entry.id);
+    setAiError(null);
     try {
       const res = await fetch('/api/crm/ai-care', {
         method: 'POST',
         headers,
         body: JSON.stringify({ raw_memo: entry.raw_memo }),
       });
-      const json = await res.json();
-      if (res.ok && json.data) {
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.data) {
         setPendingEdits((prev) => ({
           ...prev,
           [entry.id]: {
@@ -58,7 +68,11 @@ export function useMemoSection({
             deletedItems: json.data.deleted_items,
           },
         }));
+      } else {
+        setAiError({ entryId: entry.id, message: aiDraftError(json) });
       }
+    } catch {
+      setAiError({ entryId: entry.id, message: `${AI_DRAFT_FAILED} (네트워크 오류)` });
     } finally {
       setAiLoadingFor(null);
     }
@@ -67,14 +81,18 @@ export function useMemoSection({
   async function draftParentNote() {
     if (!memoText.trim()) return;
     setParentDrafting(true);
+    setMemoError('');
     try {
       const res = await fetch('/api/crm/ai-care', {
         method: 'POST',
         headers,
         body: JSON.stringify({ raw_memo: memoText.trim() }),
       });
-      const json = await res.json();
-      if (res.ok && json.data?.purified) setParentText(json.data.purified);
+      const json = await res.json().catch(() => null);
+      if (res.ok && json?.data?.purified) setParentText(json.data.purified);
+      else setMemoError(aiDraftError(json));
+    } catch {
+      setMemoError(`${AI_DRAFT_FAILED} (네트워크 오류)`);
     } finally {
       setParentDrafting(false);
     }
@@ -128,6 +146,7 @@ export function useMemoSection({
     memoError,
     setMemoError,
     aiLoadingFor,
+    aiError,
     pendingEdits,
     setPendingEdits,
     handleAddMemo,
