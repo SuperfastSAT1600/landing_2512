@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { after } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { verifySlackRequest, postSlack, getTodayTopics, BLOG_CHANNEL } from './slack-utils';
+import { verifySlackRequest, postSlack, getTodayTopics, isDuplicateEvent, BLOG_CHANNEL } from './slack-utils';
 import { handleBlogWrite, handlePublish, handleTopicSuggest, type Platform } from './handlers';
 import { buildLeadFormBlocks } from '@/app/api/slack/interactions/lead-blocks';
 import { isAssignmentRequest, postChecklist } from '@/lib/slack-assignment-checklist';
@@ -107,6 +107,9 @@ export async function POST(request: NextRequest) {
   }
 
   if (!isMention && !isBlogChannelMsg) {
+    return NextResponse.json({ ok: true });
+  }
+  if (isDuplicateEvent(event.channel, event.ts)) {
     return NextResponse.json({ ok: true });
   }
 
