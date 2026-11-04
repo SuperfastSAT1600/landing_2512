@@ -153,3 +153,44 @@ describe('buildAvailability — 요일에 맞는 날짜', () => {
   });
 });
 
+
+describe('buildAvailability — upcoming (앞으로 14일의 날짜별 목록)', () => {
+  const NOW = new Date('2026-11-04T03:00:00Z'); // KST 11/4 12:00
+  // SFv2 weekday 1 = 월, 2 = 화. 뉴욕 19~21시, 서머타임 종료 후 EST(KST +14h)
+  const evening = (weekday: number, over: Partial<AvailabilitySlot> = {}) =>
+    slot({ weekday, start_minute_local: 19 * 60, end_minute_local: 21 * 60, effective_from: '2026-10-25', effective_until: null, ...over });
+
+  it('REQ-001/002: 매주 반복 슬롯을 오늘 포함 14일 안의 날짜마다 풀어 날짜순으로 낸다', () => {
+    const { upcoming } = buildAvailability([evening(2), evening(1)], NOW);
+    expect(upcoming.map((o) => o.dateKst)).toEqual(['2026-11-04', '2026-11-10', '2026-11-11', '2026-11-17']);
+    expect(upcoming[1]).toMatchObject({
+      weekdayKst: 1, start: '09:00', end: '11:00', dateLocal: '2026-11-09', weekdayLocal: 0, startLocal: '19:00', endLocal: '21:00',
+    });
+  });
+
+  it('REQ-001: 서머타임이 끝나는 11/1을 걸치면 날짜마다 그날의 시차를 쓴다', () => {
+    // 일요일 20~22시 뉴욕: 11/1(일)은 EST(KST +14h) -> 월 11/2 10~12시
+    const { upcoming } = buildAvailability([
+      slot({ weekday: 0, start_minute_local: 20 * 60, end_minute_local: 22 * 60, effective_from: '2026-10-19', effective_until: null }),
+    ], new Date('2026-10-28T03:00:00Z'));
+    expect(upcoming.map((o) => [o.dateKst, o.start])).toEqual([['2026-11-02', '10:00'], ['2026-11-09', '10:00']]);
+  });
+
+  it('REQ-001: 유효 종료일(학생 현지 달력) 이후 날짜는 내지 않는다', () => {
+    const { upcoming } = buildAvailability([evening(1, { effective_until: '2026-11-09' })], NOW);
+    expect(upcoming.map((o) => o.dateLocal)).toEqual(['2026-11-09']);
+  });
+
+  it('REQ-001: 14일 안에 해당 날짜가 없으면 빈 목록', () => {
+    const { upcoming } = buildAvailability([evening(1, { effective_from: '2026-12-01' })], NOW);
+    expect(upcoming).toEqual([]);
+  });
+
+  it('REQ-002: 같은 날이면 시작 시각 순', () => {
+    const { upcoming } = buildAvailability([
+      evening(1, { start_minute_local: 21 * 60, end_minute_local: 22 * 60 }),
+      evening(1),
+    ], NOW);
+    expect(upcoming.slice(0, 2).map((o) => o.start)).toEqual(['09:00', '11:00']);
+  });
+});
