@@ -1,0 +1,1044 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>11월 SAT 출제 유력 유형 (Copy)</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* Layout: one reading column, each question set as a test card with answer-sheet (OMR) bubbles; the pink is the ink of a Korean OMR card. */
+:root {
+  --paper: #fbf8f9; --card: #ffffff; --ink: #1d1b22; --muted: #6b6470; --rule: #ecd3db;
+  --omr: #c92f5f; --omr-soft: #f8e1e9; --fill: #24212a; --fill-ink: #ffffff; --ok: #1f7a55;
+  --f-display: "Black Han Sans", "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --f-body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --f-test: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #141216; --card: #1d1a20; --ink: #f1ecf0; --muted: #a79fa8; --rule: #3b2c34;
+  --omr: #ff7ba1; --omr-soft: #3a2430; --fill: #f1ecf0; --fill-ink: #141216; --ok: #5fd3a0; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #141216; --card: #1d1a20; --ink: #f1ecf0; --muted: #a79fa8; --rule: #3b2c34;
+  --omr: #ff7ba1; --omr-soft: #3a2430; --fill: #f1ecf0; --fill-ink: #141216; --ok: #5fd3a0; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--paper); color: var(--ink); font: 400 16px/1.75 var(--f-body); }
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 56px; }
+h1, h2, h3 { text-wrap: balance; margin: 0 }
+p { margin: 0 }
+
+header { display: grid; gap: 18px }
+.eyebrow { font: 500 12px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--omr) }
+h1 { font: 400 clamp(34px, 6vw, 56px)/1.15 var(--f-display); letter-spacing: -.01em }
+h1 em { font-style: normal; color: var(--omr) }
+.lede { font-size: 18px; color: var(--muted); max-width: 40em }
+.bubbles-deco { display: flex; gap: 10px; align-items: center }
+.bubbles-deco span { width: 22px; height: 30px; border: 1.5px solid var(--omr); border-radius: 50%; }
+.bubbles-deco span.on { background: var(--fill); border-color: var(--fill) }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding-block: 12px; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap }
+button { font: 500 14px/1 var(--f-body); color: var(--ink); background: transparent; border: 1px solid var(--rule);
+  border-radius: 999px; padding: 9px 14px; cursor: pointer; }
+button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink) }
+button:focus-visible { outline: 2px solid var(--omr); outline-offset: 2px }
+
+.note { font-size: 14px; color: var(--muted); background: var(--omr-soft); border-radius: 10px; padding: 14px 16px }
+.note b { color: var(--ink) }
+
+section.group { display: grid; gap: 28px }
+.group-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap }
+.group-head h2 { font: 400 28px/1.2 var(--f-display) }
+.group-head span { font: 500 12px/1 var(--f-mono); color: var(--muted); letter-spacing: .08em }
+
+article.q { background: var(--card); border: 1px solid var(--rule); border-radius: 16px; padding: 28px clamp(18px, 4vw, 32px);
+  display: grid; gap: 22px; }
+.q-top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap }
+.q-no { font: 500 12px/1 var(--f-mono); letter-spacing: .1em; color: var(--omr) }
+.q-skill { font-size: 13px; color: var(--muted) }
+.ad h3 { font: 400 clamp(24px, 4vw, 32px)/1.25 var(--f-display) }
+.ad p { margin-top: 8px; font-size: 17px; color: var(--muted) }
+
+.test { border: 1px solid var(--rule); border-radius: 12px; padding: 20px; font: 400 17px/1.65 var(--f-test); display: grid; gap: 14px; min-width: 0 }
+.test .stem { font-weight: 600 }
+.test ul.notes { margin: 0; padding-left: 1.2em; display: grid; gap: 2px }
+.blank { display: inline-block; min-width: 4em; border-bottom: 1.5px solid currentColor; transform: translateY(-3px) }
+.frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; font-size: .9em; line-height: 1.1; margin: 0 2px }
+.frac > span:first-child { border-bottom: 1px solid currentColor; padding: 0 2px }
+ol.choices { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px }
+ol.choices li { display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start }
+.bub { width: 26px; height: 30px; border: 1.5px solid var(--omr); border-radius: 50%; display: grid; place-items: center;
+  font: 500 12px/1 var(--f-mono); color: var(--omr); margin-top: 1px }
+li.right .bub { background: var(--fill); border-color: var(--fill); color: var(--fill-ink) }
+.spr { font: 500 15px/1 var(--f-mono); color: var(--muted) }
+.spr b { display: inline-block; border: 1.5px solid var(--omr); border-radius: 8px; padding: 8px 14px; color: var(--ink); margin-left: 6px }
+
+.answer { display: flex; gap: 10px; align-items: center; font-weight: 700 }
+.answer .tag { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; color: var(--ok); border: 1px solid var(--ok); border-radius: 6px; padding: 5px 8px }
+
+dl.parts { margin: 0; display: grid; gap: 16px }
+dl.parts > div { display: grid; grid-template-columns: 92px 1fr; gap: 14px }
+dl.parts dt { font: 500 13px/1.75 var(--f-body); color: var(--omr) }
+dl.parts dd { margin: 0; min-width: 0 }
+@media (max-width: 560px) { dl.parts > div { grid-template-columns: 1fr; gap: 2px } }
+
+body.hide-answers li.right .bub { background: transparent; border-color: var(--omr); color: var(--omr) }
+body.hide-answers .reveal { display: none }
+body.hide-answers .spr b { color: transparent }
+
+.trends { display: grid; gap: 22px }
+.trends h2 { font: 400 32px/1.2 var(--f-display) }
+.trend-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; counter-reset: t }
+.trend-list li { display: grid; grid-template-columns: 34px 1fr; gap: 14px; border-top: 1px solid var(--rule); padding-top: 18px }
+.trend-list li::before { counter-increment: t; content: counter(t); width: 30px; height: 36px; border: 1.5px solid var(--omr); border-radius: 50%;
+  display: grid; place-items: center; font: 500 13px/1 var(--f-mono); color: var(--omr) }
+.trend-list h3 { font: 700 18px/1.5 var(--f-body) }
+.trend-list p { color: var(--muted); margin-top: 4px }
+
+.copybank { display: grid; gap: 14px }
+.copybank h2 { font: 400 28px/1.2 var(--f-display) }
+.copy-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; border: 1px solid var(--rule); border-radius: 12px; padding: 14px 16px; background: var(--card) }
+.copy-row p { min-width: 0 }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 18px; display: grid; gap: 6px }
+@media (prefers-reduced-motion: no-preference) { button { transition: background .15s, color .15s } }
+
+/* Tabs: ad page and the internal evidence page */
+.tabs { display: flex; gap: 6px; flex-wrap: wrap }
+.tabs button { font-size: 15px; padding: 11px 18px }
+.tabpane { display: grid; gap: 56px; min-width: 0 }
+.in section { display: grid; gap: 16px; min-width: 0 }
+.in h2 { font: 400 28px/1.2 var(--f-display) }
+.in h3 { font: 700 18px/1.5 var(--f-body) }
+.in p, .in li { max-width: 46em }
+.in ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 6px }
+.sum { background: var(--card); border: 1px solid var(--rule); border-left: 4px solid var(--omr); border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px }
+.sum p { font-size: 17px }
+.tbl { overflow-x: auto; border: 1px solid var(--rule); border-radius: 12px; background: var(--card) }
+.tbl table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums }
+.tbl th, .tbl td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); white-space: nowrap; vertical-align: middle }
+.tbl th { font-weight: 500; color: var(--muted); font-size: 13px }
+.tbl tr:last-child td { border-bottom: 0 }
+.tbl .n { text-align: right }
+.tbl tr.mark td { background: var(--omr-soft) }
+.tbl tr.avg td { color: var(--muted) }
+.bars { display: grid; gap: 4px; min-width: 160px }
+.bars span { display: block; height: 7px; border-radius: 4px; background: var(--muted); opacity: .45 }
+.bars span.top { background: var(--omr); opacity: 1 }
+.cap { font-size: 13px; color: var(--muted) }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); align-items: center }
+.legend i { display: inline-block; vertical-align: middle; margin-right: 6px }
+.pick { background: var(--card); border: 1px solid var(--rule); border-radius: 16px; padding: 22px clamp(16px, 4vw, 28px); display: grid; gap: 16px; min-width: 0 }
+.pick-top { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline }
+.pick-top h3 { font: 700 18px/1.4 var(--f-body) }
+.strip { display: grid; gap: 6px }
+.strip .yr { display: flex; align-items: center; gap: 5px; flex-wrap: wrap }
+.strip .yr b { font: 500 12px/1 var(--f-mono); color: var(--muted); width: 40px }
+.dot { font: 500 10px/1 var(--f-mono); font-style: normal; width: 22px; height: 28px; border: 1.5px solid var(--rule); border-radius: 50%; display: inline-grid; place-items: center; color: var(--muted) }
+.dot.thin { border-style: dashed }
+.dot.last3 { border-color: var(--omr) }
+.dot.on { background: var(--fill); border-color: var(--fill); color: var(--fill-ink) }
+.dot.on.last3 { box-shadow: 0 0 0 2px var(--omr) }
+dl.facts { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 20px }
+dl.facts div { display: grid; gap: 2px; min-width: 0 }
+dl.facts dt { font-size: 13px; color: var(--muted) }
+dl.facts dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums }
+.why { border-top: 1px dashed var(--rule); padding-top: 12px; font-size: 15px }
+.why b { color: var(--omr) }
+.flag { background: var(--omr-soft); border-radius: 12px; padding: 16px 18px; display: grid; gap: 10px }
+.test .t-wrap { overflow-x: auto }
+.test table { border-collapse: collapse; font: 400 14px/1.45 var(--f-body); font-variant-numeric: tabular-nums }
+.test caption { text-align: left; font-weight: 600; padding-bottom: 6px }
+.test th, .test td { border: 1px solid var(--rule); padding: 6px 10px; text-align: left; white-space: nowrap }
+.hard-chip { font: 500 11px/1 var(--f-mono); letter-spacing: .08em; color: var(--fill-ink); background: var(--omr); border-radius: 6px; padding: 5px 7px; margin-left: 8px }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="bubbles-deco" aria-hidden="true"><span></span><span class="on"></span><span></span><span></span></div>
+    <p class="eyebrow">2026 November SAT · 출제 유력 유형</p>
+    <h1>다시 나오는 문제에는<br><em>이유가 있다</em></h1>
+    <p class="lede">최근 SAT에서 숫자·이름·소재만 바꿔 거듭 출제된 유형 여덟 문제. 답을 외우는 대신 원리를 잡으면, 11월 시험장에서 모양이 바뀌어 나와도 가져갈 수 있다.</p>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="보기">
+    <button type="button" role="tab" id="t-ad" aria-controls="tab-ad" aria-selected="true" aria-pressed="true">광고용</button>
+    <button type="button" role="tab" id="t-hard" aria-controls="tab-hard" aria-selected="false" aria-pressed="false">고난도 예상</button>
+  </div>
+
+  <div class="tabpane" id="tab-ad" role="tabpanel" aria-labelledby="t-ad">
+
+  <div class="toolbar" role="toolbar" aria-label="보기 설정">
+    <div class="filters">
+      <button type="button" id="f-all" aria-pressed="true" data-f="all">전체</button>
+      <button type="button" id="f-math" aria-pressed="false" data-f="math">수학</button>
+      <button type="button" id="f-rw" aria-pressed="false" data-f="rw">읽기·쓰기</button>
+    </div>
+    <button type="button" id="toggle-ans" aria-pressed="false">정답 가리기</button>
+  </div>
+
+  <p class="note"><b>광고 문구 쓰는 법.</b> "최근 시험에서 형태를 바꿔 반복 출제된 유형"이라고만 쓴다. 출제 확률·적중률·횟수 같은 숫자는 내세우지 않는다. 문제와 보기는 시험지 영어 그대로 둔다. 정답 가리기를 켜면 문제만 깨끗하게 캡처할 수 있다.</p>
+
+  <section class="group" data-sec="math">
+    <div class="group-head"><h2>수학</h2><span>MATH · 4</span></div>
+
+    <article class="q">
+      <div class="q-top"><span class="q-no">MATH 01</span><span class="q-skill">Problem-Solving and Data Analysis · Percentages</span></div>
+      <div class="ad"><h3>나누는 수 하나가 답을 가른다</h3><p>가격이 $64에서 $68로. 기준이 처음 값이라는 것만 알면 10초 문제다.</p></div>
+      <div class="test">
+        <p class="stem">The price of an item increased by <i>p</i>% from $64 to $68. What is the value of <i>p</i>?</p>
+        <p class="spr">Student-produced response <b>6.25</b></p>
+      </div>
+      <p class="answer reveal"><span class="tag">ANSWER</span>6.25</p>
+      <dl class="parts reveal">
+        <div><dt>핵심 이론</dt><dd>증가율 = (나중 값 − 처음 값) ÷ <b>처음 값</b> × 100. 퍼센트 변화의 기준은 언제나 바뀌기 전의 값이다.</dd></div>
+        <div><dt>풀이</dt><dd>늘어난 값은 68 − 64 = 4다. 처음 값 64로 나누면 4 ÷ 64 = 0.0625, 100을 곱해 6.25다.</dd></div>
+        <div><dt>함정</dt><dd>나중 값 68로 나누면 약 5.88이 나온다. 무엇이 기준인지 먼저 정하는 습관이 답을 가른다.</dd></div>
+        <div><dt>선정 이유</dt><dd>2025년 봄부터 가격과 숫자만 바꿔 거듭 나왔고, 최근 1년 동안은 거의 매번 나온 유형이다. $90 → $93 판이 특히 흔하다.</dd></div>
+      </dl>
+    </article>
+
+    <article class="q">
+      <div class="q-top"><span class="q-no">MATH 02</span><span class="q-skill">Problem-Solving and Data Analysis · Percentages</span></div>
+      <div class="ad"><h3>120% greater는 1.2배가 아니다</h3><p>퍼센트를 두 번 거치는 문제. 함정도 두 번 기다린다.</p></div>
+      <div class="test">
+        <p class="stem">A number <i>f</i> is 120% greater than a positive number <i>g</i>. A number <i>h</i> is 10% less than the number <i>f</i>. The number <i>h</i> is how many times the number <i>g</i>?</p>
+        <ol class="choices">
+          <li><span class="bub">A</span><span>0.12</span></li>
+          <li><span class="bub">B</span><span>0.22</span></li>
+          <li><span class="bub">C</span><span>1.08</span></li>
+          <li class="right"><span class="bub">D</span><span>1.98</span></li>
+        </ol>
+      </div>
+      <p class="answer reveal"><span class="tag">ANSWER</span>D</p>
+      <dl class="parts reveal">
+        <div><dt>핵심 이론</dt><dd>"<i>x</i>% greater than <i>g</i>"는 <i>g</i>에 <i>g</i>의 <i>x</i>%를 더한 값, "<i>x</i>% less than <i>f</i>"는 <i>f</i>에서 <i>f</i>의 <i>x</i>%를 뺀 값이다.</dd></div>
+        <div><dt>풀이</dt><dd><i>f</i> = <i>g</i> + 1.2<i>g</i> = 2.2<i>g</i>이고, <i>h</i> = 0.9<i>f</i> = 0.9 × 2.2<i>g</i> = 1.98<i>g</i>다.</dd></div>
+        <div><dt>함정</dt><dd>120% greater를 "120% of", 곧 1.2배로 읽으면 0.9 × 1.2 = 1.08, C가 나온다. 문제가 노리는 오해가 바로 이것이다.</dd></div>
+        <div><dt>선정 이유</dt><dd>최근 시험들에 연이어 나왔고, 퍼센트를 두 번 거치는 같은 뼈대가 숫자만 바뀌어 반복된다.</dd></div>
+      </dl>
+    </article>
+
+    <article class="q">
+      <div class="q-top"><span class="q-no">MATH 03</span><span class="q-skill">Algebra · Linear functions</span></div>
+      <div class="ad"><h3>함숫값 두 개면 식이 나온다</h3><p>f(4) = 17을 점 (4, 17)로 읽는 순간 풀린다.</p></div>
+      <div class="test">
+        <p class="stem">For the linear function <i>f</i>, <i>f</i>(4) = 17 and <i>f</i>(8) = 1. Which equation defines <i>f</i>?</p>
+        <ol class="choices">
+          <li><span class="bub">A</span><span><i>f</i>(<i>x</i>) = −<span class="frac"><span>1</span><span>4</span></span><i>x</i> + 18</span></li>
+          <li><span class="bub">B</span><span><i>f</i>(<i>x</i>) = <span class="frac"><span>1</span><span>4</span></span><i>x</i> − 1</span></li>
+          <li><span class="bub">C</span><span><i>f</i>(<i>x</i>) = −4<i>x</i> + 21</span></li>
+          <li class="right"><span class="bub">D</span><span><i>f</i>(<i>x</i>) = −4<i>x</i> + 33</span></li>
+        </ol>
+      </div>
+      <p class="answer reveal"><span class="tag">ANSWER</span>D</p>
+      <dl class="parts reveal">
+        <div><dt>핵심 이론</dt><dd>함숫값 <i>f</i>(<i>a</i>) = <i>b</i>는 그래프 위의 점 (<i>a</i>, <i>b</i>)다. 점 두 개로 기울기를 구하고, 한 점을 넣어 <i>y</i>절편을 구한다.</dd></div>
+        <div><dt>풀이</dt><dd>기울기 = (1 − 17) ÷ (8 − 4) = −4. 점 (4, 17)을 넣으면 17 = −16 + <i>b</i>, <i>b</i> = 33. 그래서 <i>f</i>(<i>x</i>) = −4<i>x</i> + 33이다.</dd></div>
+        <div><dt>함정</dt><dd>기울기를 거꾸로(Δ<i>x</i> ÷ Δ<i>y</i>) 세우면 A, 절편을 구할 때 부호를 놓치면 C다. 마지막에 두 점을 넣어 확인하면 둘 다 걸러진다.</dd></div>
+        <div><dt>선정 이유</dt><dd>2026년 들어 최근 시험들에 잇달아 나온 유형이다. 함수 표기를 점으로 바꿔 읽는 힘을 묻는다.</dd></div>
+      </dl>
+    </article>
+
+    <article class="q">
+      <div class="q-top"><span class="q-no">MATH 04</span><span class="q-skill">Geometry and Trigonometry · Right triangle trigonometry</span></div>
+      <div class="ad"><h3>sin과 cos가 같으면, 두 각의 합은 90°</h3><p>계산기도, 표도 필요 없다. 한 줄이면 끝나는 삼각비 문제.</p></div>
+      <div class="test">
+        <p class="stem">For two acute angles <i>X</i> and <i>Y</i>, the measure of angle <i>Y</i> is 32° and <span class="frac"><span>sin <i>X</i></span><span>cos <i>Y</i></span></span> = 1. What is the measure, in degrees, of angle <i>X</i>?</p>
+        <ol class="choices">
+          <li><span class="bub">A</span><span>77</span></li>
+          <li class="right"><span class="bub">B</span><span>58</span></li>
+          <li><span class="bub">C</span><span>45</span></li>
+          <li><span class="bub">D</span><span>32</span></li>
+        </ol>
+      </div>
+      <p class="answer reveal"><span class="tag">ANSWER</span>B</p>
+      <dl class="parts reveal">
+        <div><dt>핵심 이론</dt><dd>cos θ = sin(90° − θ). 그래서 두 예각에서 sin <i>X</i> = cos <i>Y</i>이면 <i>X</i> + <i>Y</i> = 90°(여각)다.</dd></div>
+        <div><dt>풀이</dt><dd>분수가 1이므로 sin <i>X</i> = cos <i>Y</i>다. <i>X</i> = 90° − 32° = 58°.</dd></div>
+        <div><dt>함정</dt><dd><i>X</i> = <i>Y</i>로 놓으면 D(32)가 나온다. sin과 cos는 서로 다른 함수라는 것을 놓친 답이다.</dd></div>
+        <div><dt>선정 이유</dt><dd>2023년에 처음 보였고, 2025년 여름부터 2026년 가을까지 각의 이름과 크기만 바꿔 꾸준히 나온 삼각비 유형이다.</dd></div>
+      </dl>
+    </article>
+  </section>
+
+  <section class="group" data-sec="rw">
+    <div class="group-head"><h2>읽기·쓰기</h2><span>READING AND WRITING · 4</span></div>
+
+    <article class="q">
+      <div class="q-top"><span class="q-no">RW 01</span><span class="q-skill">Expression of Ideas · Rhetorical Synthesis</span></div>
+      <div class="ad"><h3>노트 문제는 지문이 아니라 목표를 읽는다</h3><p>'언제'를 묻는데 '어디'를 고르지 마라.</p></div>
+      <div class="test">
+        <p>While researching a topic, a student has taken the following notes:</p>
+        <ul class="notes">
+          <li>The Chacoan peccary is a mammal species.</li>
+          <li>It was believed to be extinct until a living Chacoan peccary was identified in Argentina in 1974.</li>
+          <li>The jellyfish tree is a tree species.</li>
+          <li>It was believed to be extinct until a living jellyfish tree was identified in the Seychelles in 1978.</li>
+          <li>They are considered Lazarus species.</li>
+          <li>"Lazarus species" is a term for living species of organisms that were once believed to be extinct.</li>
+        </ul>
+        <p class="stem">The student wants to specify when the Chacoan peccary was identified. Which choice most effectively uses relevant information from the notes to accomplish this goal?</p>
+        <ol class="choices">
+          <li><span class="bub">A</span><span>Previously believed to be extinct, a living Chacoan peccary was identified in Argentina.</span></li>
+          <li><span class="bub">B</span><span>Identified in the Seychelles, a living jellyfish tree was found in 1978.</span></li>
+          <li><span class="bub">C</span><span>An example of a Lazarus species was found in 1978.</span></li>
+          <li class="right"><span class="bub">D</span><span>A living Chacoan peccary, once believed to be extinct, was identified in 1974.</span></li>
+        </ol>
+      </div>
+      <p class="answer reveal"><span class="tag">ANSWER</span>D</p>
+      <dl class="parts reveal">
+        <div><dt>핵심 이론</dt><dd>노트 문제는 발문의 목표(goal)가 답을 정한다. 목표를 조건으로 쪼개고, 조건을 모두 채운 선지만 남긴다.</dd></div>
+        <div><dt>풀이</dt><dd>조건은 둘이다. ① Chacoan peccary에 대해 ② 언제(when) 발견됐는지. 두 조건을 다 담은 것은 1974년을 밝힌 D뿐이다.</dd></div>
+        <div><dt>함정</dt><dd>A는 대상은 맞지만 '언제' 대신 '어디'(Argentina)를 말한다. B와 C는 다른 생물의 연도(1978)를 준다.</dd></div>
+        <div><dt>선정 이유</dt><dd>2024년 봄부터 최근까지 같은 노트가 거듭 나온, RW에서 가장 오래 반복된 문제 가운데 하나다.</dd></div>
+      </dl>
+    </article>
+
+    <article class="q">
+      <div class="q-top"><span class="q-no">RW 02</span><span class="q-skill">Standard English Conventions · Boundaries</span></div>
+      <div class="ad"><h3>이름 앞 쉼표 하나가 오답을 만든다</h3><p>쉼표는 빼도 되는 말에만 찍는다.</p></div>
+      <div class="test">
+        <p>The editors of <i>Home Ground: A Guide to the American Landscape</i> turned to Pamela Frierson, an essayist, to craft the entry for "pahoehoe," a term referring to a form of lava with a smooth or ropy surface. For "arroyo," however, the editors chose the nonfiction <span class="blank"></span> author of <i>Adios to the Brushlands</i>.</p>
+        <p class="stem">Which choice completes the text so that it conforms to the conventions of Standard English?</p>
+        <ol class="choices">
+          <li><span class="bub">A</span><span>writer, Arturo Longoria,</span></li>
+          <li class="right"><span class="bub">B</span><span>writer Arturo Longoria,</span></li>
+          <li><span class="bub">C</span><span>writer Arturo Longoria</span></li>
+          <li><span class="bub">D</span><span>writer, Arturo Longoria</span></li>
+        </ol>
+      </div>
+      <p class="answer reveal"><span class="tag">ANSWER</span>B</p>
+      <dl class="parts reveal">
+        <div><dt>핵심 이론</dt><dd>이름이 "어느 작가인지"를 가려 주는 꼭 필요한 정보면 앞에 쉼표를 찍지 않는다. 뒤에 붙는 설명(author of …)은 덧붙이는 말이라 쉼표로 연다.</dd></div>
+        <div><dt>풀이</dt><dd>"the nonfiction writer Arturo Longoria"는 한 덩어리다. 이어지는 "author of <i>Adios to the Brushlands</i>"는 그를 덧붙여 설명하므로 이름 뒤에 쉼표를 찍는다. 그래서 B다.</dd></div>
+        <div><dt>함정</dt><dd>이름 앞뒤에 쉼표를 다 찍은 A를 가장 많이 고른다. 이름을 빼면 어느 작가인지 알 수 없으니, 이름은 빼도 되는 말이 아니다.</dd></div>
+        <div><dt>선정 이유</dt><dd>사람 이름과 책 제목만 바꿔 최근 시험까지 반복된 문장부호 유형이다.</dd></div>
+      </dl>
+    </article>
+
+    <article class="q">
+      <div class="q-top"><span class="q-no">RW 03</span><span class="q-skill">Standard English Conventions · Boundaries</span></div>
+      <div class="ad"><h3>문장 끝까지 읽어야 마침표 자리가 보인다</h3><p>주어와 동사를 세면 답이 나온다.</p></div>
+      <div class="test">
+        <p>The shesep, which is written as a long, horizontal hieroglyph shaped like a thumbless hand, and the heqat, which is written as a hieroglyph that looks like four oval items pouring out of a barrel, were ancient Egyptian units of <span class="blank"></span> to record length and volume, respectively, the shesep and heqat have since fallen out of use.</p>
+        <p class="stem">Which choice completes the text so that it conforms to the conventions of Standard English?</p>
+        <ol class="choices">
+          <li><span class="bub">A</span><span>measurement, used</span></li>
+          <li><span class="bub">B</span><span>measurement and used</span></li>
+          <li><span class="bub">C</span><span>measurement used</span></li>
+          <li class="right"><span class="bub">D</span><span>measurement. Used</span></li>
+        </ol>
+      </div>
+      <p class="answer reveal"><span class="tag">ANSWER</span>D</p>
+      <dl class="parts reveal">
+        <div><dt>핵심 이론</dt><dd>완전한 절 둘은 쉼표 하나로 이을 수 없다(comma splice). 마침표로 끊거나 접속사를 써야 한다.</dd></div>
+        <div><dt>풀이</dt><dd>빈칸 앞은 "The shesep … and the heqat … were ancient Egyptian units of measurement"로 이미 완전한 문장이다. 빈칸 뒤 "the shesep and heqat have since fallen out of use"도 완전한 절이다. 그래서 앞 문장을 마침표로 닫고, "Used to record …" 분사구가 다음 문장의 주어를 꾸미게 한다.</dd></div>
+        <div><dt>함정</dt><dd>A는 완전한 절 둘을 쉼표 하나로 이은 comma splice다. 빈칸 근처만 보면 자연스러워 보여서 고르기 쉽다.</dd></div>
+        <div><dt>선정 이유</dt><dd>고대 단위 이름만 바꿔(khefa 등) 꾸준히 나온 문장 경계 유형이다.</dd></div>
+      </dl>
+    </article>
+
+    <article class="q">
+      <div class="q-top"><span class="q-no">RW 04</span><span class="q-skill">Information and Ideas · Command of Evidence (Textual)</span></div>
+      <div class="ad"><h3>증거 문제는 조건 두 개를 다 채운 인용</h3><p>독자에게 말 걸기, 그리고 관습 설명. 둘 다 있어야 정답이다.</p></div>
+      <div class="test">
+        <p><i>Life Among the Paiutes</i> is an 1882 autobiographical narrative by Sarah Winnemucca Hopkins, a Northern Paiute author, educator, and activist. In the work, Winnemucca directly addresses the reader to explain certain customs, writing <span class="blank"></span></p>
+        <p class="stem">Which quotation from <i>Life Among the Paiutes</i> most effectively illustrates the claim?</p>
+        <ol class="choices">
+          <li><span class="bub">A</span><span>"But how can I describe the scene that followed? Some of you, dear readers, can imagine."</span></li>
+          <li class="right"><span class="bub">B</span><span>"Now, my dear reader, there is no word so endearing as the word father, and that is why [my people] call all good people father or mother."</span></li>
+          <li><span class="bub">C</span><span>"During the time my grandfather was away in California, where he [stayed] till after the Mexican war, there was a girl-baby born in our family."</span></li>
+          <li><span class="bub">D</span><span>"We would all go in company to see if the flowers we were named for were yet in bloom, for almost all the girls are named for flowers."</span></li>
+        </ol>
+      </div>
+      <p class="answer reveal"><span class="tag">ANSWER</span>B</p>
+      <dl class="parts reveal">
+        <div><dt>핵심 이론</dt><dd>주장을 조건으로 나누고, 조건을 하나씩 확인해 지운다. 하나라도 빠진 인용은 정답이 아니다.</dd></div>
+        <div><dt>풀이</dt><dd>주장은 ① 독자에게 직접 말을 건다 ② 관습을 설명한다. B는 "my dear reader"(①)와 "that is why … call all good people father or mother"(②)를 함께 갖췄다.</dd></div>
+        <div><dt>함정</dt><dd>A는 독자에게 말을 걸지만 관습 설명이 없다. D는 관습(꽃 이름)을 설명하지만 독자에게 말을 걸지 않는다.</dd></div>
+        <div><dt>선정 이유</dt><dd>2025년 봄에 처음 나왔고, 2026년 3월 이후로는 거의 모든 시험에 다시 나온 단골 문제다.</dd></div>
+      </dl>
+    </article>
+  </section>
+
+  <section class="trends">
+    <h2>요즘 SAT, 이렇게 나온다</h2>
+    <ol class="trend-list">
+      <li><div><h3>같은 문제를 그대로가 아니라 "바꿔서" 다시 낸다</h3><p>글자까지 같은 문제가 다시 나오는 일은 드물다. 대신 같은 뼈대에 숫자·이름·소재만 바꾼 문제가 반복된다. 답을 외우는 공부는 통하지 않고, 유형의 원리를 익힌 학생이 반복 문제를 확실히 가져간다.</p></div></li>
+      <li><div><h3>수학이 읽기·쓰기보다 훨씬 자주 반복된다</h3><p>일차함수·일차방정식, 퍼센트, 연립방정식처럼 시험의 기본 뼈대를 이루는 단원에서 반복이 특히 많다. 자주 나오는 틀을 빠르게 알아보는 연습이 점수로 바로 이어진다.</p></div></li>
+      <li><div><h3>문장 형태·글 구조는 새 문장으로, 증거 문제는 반복으로</h3><p>문장 형태(Form, Structure, and Sense)와 글의 구조를 묻는 문제는 대부분 새 지문이라 규칙으로 풀어야 한다. 반대로 증거(Command of Evidence) 문제는 같은 자료가 거듭 나오는 편이다.</p></div></li>
+      <li><div><h3>바로 전 시험만이 아니라, 2년 전 문제까지 돌아온다</h3><p>최근 1년 안의 시험 문제가 가장 잘 돌아오고, 2년 전 문제도 크게 줄지 않고 다시 나온다. 최근 시험에 다시 나온 문제 가운데에는 2023~2024년에 처음 나온 문제가 가장 많다. 최근 기출만이 아니라 지난 2년치 기출을 함께 봐야 하는 이유다.</p></div></li>
+      <li><div><h3>영역 비중은 안정적이다</h3><p>큰 틀의 출제 비중은 거의 그대로다. 그 안에서 원(Circles)이 조금 늘고, 일차부등식이 최근 들어 조금 줄었다.</p></div></li>
+    </ol>
+  </section>
+
+  <section class="copybank">
+    <h2>바로 쓰는 광고 문구</h2>
+    <div class="copy-row"><p id="c1">다시 나오는 문제에는 이유가 있다. 최근 SAT에서 모양만 바꿔 반복된 유형, 원리로 끝낸다.</p><button type="button" data-copy="c1">복사</button></div>
+    <div class="copy-row"><p id="c2">답을 외우면 숫자가 바뀔 때 무너진다. 원리를 잡으면 11월에도 가져간다.</p><button type="button" data-copy="c2">복사</button></div>
+    <div class="copy-row"><p id="c3">120% greater는 1.2배가 아니다. 이런 함정, 시험장에서 처음 보면 늦다.</p><button type="button" data-copy="c3">복사</button></div>
+    <div class="copy-row"><p id="c4">노트 문제는 지문이 아니라 목표를 읽는다. 최근 시험에 거듭 나온 RW 유형을 한 번에 정리한다.</p><button type="button" data-copy="c4">복사</button></div>
+  </section>
+
+  <footer>
+    <p>문제는 실제 SAT 기출에 나온 영어 그대로다. 정답은 다시 풀어 확인했다.</p>
+    <p>"반복 출제"는 2023년 3월부터 2026년 10월까지의 시험을 비교한 결과다. 앞으로의 출제를 보장하지 않는다.</p>
+  </footer>
+  </div>
+
+  <div class="tabpane" id="tab-hard" role="tabpanel" aria-labelledby="t-hard" hidden>
+    <div class="toolbar" role="toolbar" aria-label="고난도 보기 설정">
+      <p style="font-size:15px;color:var(--muted)">11월에 다시 나올 가능성이 높은 무리 가운데, 어려운 판본만 골랐다.</p>
+      <button type="button" data-toggle-ans aria-pressed="false">정답 가리기</button>
+    </div>
+    <p class="note"><b>왜 어려운 문제인가.</b> 쉬운 유형은 미리 알아도 점수 차이가 작다. 시험장에서 시간을 잡아먹고 점수를 가르는 것은 어려운 문제다. 아래 26문제는 최근 시험에서 숫자·이름만 바꿔 반복된 무리 가운데 다시 나올 가능성이 높은 쪽(위에서부터)에서, 난이도가 높은 판본만 모았다. 광고용 탭의 RW 02·03도 고난도 문제다. 광고 문구는 광고용 탭과 같은 규칙을 따른다(출제 확률·횟수 같은 숫자는 내세우지 않는다).</p>
+
+    <section class="group" data-sec="math">
+      <div class="group-head"><h2>수학 고난도</h2><span>MATH · HARD · 11</span></div>
+
+      <article class="q" data-item="qn7uv7s47z">
+        <div class="q-top"><span class="q-no">HARD MATH 01<span class="hard-chip">HARD</span></span><span class="q-skill">Problem-Solving and Data Analysis · Percentages</span></div>
+        <div class="ad"><h3>퍼센트 세 번, 기준도 세 번 바뀐다</h3><p>광고용 MATH 02의 어려운 판. 단계가 하나 더 붙고 함정도 하나 더 늘었다.</p></div>
+        <div class="test">
+          <p class="stem">A number <i>p</i> is 160% greater than a positive number <i>q</i>. A number <i>r</i> is 35% less than <i>p</i>. A number <i>s</i> is 20% greater than <i>r</i>. The number <i>s</i> is how many times the number <i>q</i>?</p>
+          <ol class="choices">
+            <li><span class="bub">A</span><span>1.248</span></li>
+            <li><span class="bub">B</span><span>1.690</span></li>
+            <li class="right"><span class="bub">C</span><span>2.028</span></li>
+            <li><span class="bub">D</span><span>2.450</span></li>
+          </ol>
+        </div>
+        <p class="answer reveal"><span class="tag">ANSWER</span>C</p>
+        <dl class="parts reveal">
+          <div><dt>핵심 이론</dt><dd>"<i>x</i>% greater than"은 × (1 + <i>x</i>/100), "<i>x</i>% less than"은 × (1 − <i>x</i>/100)이다. 단계마다 기준이 바로 앞의 수로 바뀌므로 배수를 차례로 곱한다.</dd></div>
+          <div><dt>풀이</dt><dd><i>p</i> = 2.6<i>q</i>, <i>r</i> = 0.65<i>p</i> = 1.69<i>q</i>, <i>s</i> = 1.2<i>r</i> = 2.028<i>q</i>. 그래서 C다.</dd></div>
+          <div><dt>함정</dt><dd>160% greater를 1.6배로 읽으면 1.6 × 0.65 × 1.2 = 1.248, A가 나온다. <i>r</i>에서 멈추면 B(1.69)다. 퍼센트를 그냥 더하고 빼면(2.6 − 0.35 + 0.2) D(2.45)가 나온다.</dd></div>
+          <div><dt>선정 이유</dt><dd>최근 거의 매번 나온 퍼센트 연쇄 문제(광고용 MATH 02와 같은 무리)의 어려운 판본이다. 두 단계 판을 맞히는 학생도 세 단계 판에서는 자주 무너진다.</dd></div>
+        </dl>
+      </article>
+
+      <article class="q" data-item="qyfk9wxfvx">
+        <div class="q-top"><span class="q-no">HARD MATH 02<span class="hard-chip">HARD</span></span><span class="q-skill">Advanced Math · Nonlinear functions</span></div>
+        <div class="ad"><h3>표의 세 점으로 이차함수 식 세우기</h3><p><i>x</i> = 0 줄이 상수항을 바로 알려 준다.</p></div>
+        <div class="test">
+          <div class="t-wrap"><table><caption>Values of <i>x</i> and <i>f</i>(<i>x</i>)</caption><thead><tr><th><i>x</i></th><th><i>f</i>(<i>x</i>)</th></tr></thead><tbody><tr><td>−1</td><td>5</td></tr><tr><td>0</td><td>15</td></tr><tr><td>1</td><td>27</td></tr></tbody></table></div>
+          <p class="stem">For the quadratic function <i>f</i>, the table shows three values of <i>x</i> and their corresponding values of <i>f</i>(<i>x</i>). Which equation defines <i>f</i>?</p>
+          <ol class="choices">
+            <li><span class="bub">A</span><span><i>f</i>(<i>x</i>) = 11<i>x</i><sup>2</sup> + <i>x</i> + 15</span></li>
+            <li><span class="bub">B</span><span><i>f</i>(<i>x</i>) = 6<i>x</i><sup>2</sup> + 6<i>x</i> + 15</span></li>
+            <li><span class="bub">C</span><span><i>f</i>(<i>x</i>) = 9<i>x</i><sup>2</sup> − <i>x</i> + 15</span></li>
+            <li class="right"><span class="bub">D</span><span><i>f</i>(<i>x</i>) = <i>x</i><sup>2</sup> + 11<i>x</i> + 15</span></li>
+          </ol>
+        </div>
+        <p class="answer reveal"><span class="tag">ANSWER</span>D</p>
+        <dl class="parts reveal">
+          <div><dt>핵심 이론</dt><dd><i>f</i>(<i>x</i>) = <i>ax</i><sup>2</sup> + <i>bx</i> + <i>c</i>에서 <i>f</i>(0) = <i>c</i>다. 나머지 두 점을 넣으면 <i>a</i>, <i>b</i>에 대한 연립방정식이 된다.</dd></div>
+          <div><dt>풀이</dt><dd><i>f</i>(0) = 15이니 <i>c</i> = 15. <i>f</i>(1) = 27에서 <i>a</i> + <i>b</i> = 12, <i>f</i>(−1) = 5에서 <i>a</i> − <i>b</i> = −10. 두 식을 더하면 2<i>a</i> = 2, <i>a</i> = 1, <i>b</i> = 11. 그래서 D다.</dd></div>
+          <div><dt>함정</dt><dd>A는 <i>a</i>와 <i>b</i>를 바꿔 쓴 식이다. A, B, C는 <i>x</i> = 1은 맞아도 <i>x</i> = −1에서 어긋난다. 마지막에 세 점을 모두 넣어 확인하면 D만 남는다.</dd></div>
+          <div><dt>선정 이유</dt><dd>2024년부터 표의 숫자만 바꿔 거듭 나왔고, 8·9·10월 시험에 잇달아 나왔다.</dd></div>
+        </dl>
+      </article>
+
+      <article class="q" data-item="q6czq99ban">
+  <div class="q-top"><span class="q-no">HARD MATH 03<span class="hard-chip">HARD</span></span><span class="q-skill">Algebra · Systems of two linear equations</span></div>
+  <div class="ad"><h3>분수 계수는 먼저 지운다</h3><p>10을 곱하는 순간 y가 저절로 사라진다.</p></div>
+  <div class="test">
+    <p class="stem" style="text-align:center"><span class="frac"><span>5</span><span>2</span></span><i>x</i> − <span class="frac"><span>1</span><span>5</span></span><i>y</i> = 48<br><i>x</i> + 2<i>y</i> = −12</p>
+    <p class="stem">The solution to the given system of equations is (<i>x</i>, <i>y</i>). What is the value of <i>x</i> + <i>y</i>?</p>
+    <ol class="choices">
+      <li><span class="bub">A</span><span>−12</span></li>
+      <li><span class="bub">B</span><span>−3</span></li>
+      <li class="right"><span class="bub">C</span><span>3</span></li>
+      <li><span class="bub">D</span><span>12</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>C</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>분수 계수가 있는 연립방정식은 분모의 최소공배수를 곱해 정수로 바꾼 뒤 소거한다.</dd></div>
+    <div><dt>풀이</dt><dd>첫 식에 10을 곱하면 25<i>x</i> − 2<i>y</i> = 480. 둘째 식과 더하면 26<i>x</i> = 468, <i>x</i> = 18. 둘째 식에 넣으면 18 + 2<i>y</i> = −12, <i>y</i> = −15. 그래서 <i>x</i> + <i>y</i> = 3, C다.</dd></div>
+    <div><dt>함정</dt><dd>묻는 것은 <i>x</i>도 <i>y</i>도 아닌 <i>x</i> + <i>y</i>다. 분수에 10을 곱할 때 오른쪽 48에도 곱하는 것을 빠뜨리면 처음부터 틀어진다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2025년 여름부터 계수만 바꿔 나왔고, 3·8·9월 시험에도 나왔다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qgmaezr2wk">
+  <div class="q-top"><span class="q-no">HARD MATH 04<span class="hard-chip">HARD</span></span><span class="q-skill">Geometry and Trigonometry · Area and volume</span></div>
+  <div class="ad"><h3>직사각뿔의 옆면은 두 종류다</h3><p>빗높이가 두 개라는 것을 놓치면 보기가 다 그럴듯해 보인다.</p></div>
+  <div class="test">
+    <figure style="margin:0;max-width:320px"><img alt="Right rectangular pyramid with base length l, base width w and height h. Note: Figure not drawn to scale." style="width:100%;height:auto;display:block" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMjAgMjYwIiB3aWR0aD0iMzIwIiBoZWlnaHQ9IjI2MCIgcm9sZT0iaW1nIj48bGluZSB4MT0iMzguMCIgeTE9IjIyMi4wIiB4Mj0iMjQ4LjAiIHkyPSIxODIuMCIgc3Ryb2tlPSIjOGE4YThhIiBzdHJva2Utd2lkdGg9IjEuMCIgc3Ryb2tlLWRhc2hhcnJheT0iNSw0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTk2LjAiIHkxPSIyMjYuMCIgeDI9IjkyLjAiIHkyPSIxNzguMCIgc3Ryb2tlPSIjOGE4YThhIiBzdHJva2Utd2lkdGg9IjEuMCIgc3Ryb2tlLWRhc2hhcnJheT0iNSw0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMzguMCIgeTE9IjIyMi4wIiB4Mj0iMTk2LjAiIHkyPSIyMjYuMCIgc3Ryb2tlPSIjMWExYTFhIiBzdHJva2Utd2lkdGg9IjEuMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE5Ni4wIiB5MT0iMjI2LjAiIHgyPSIyNDguMCIgeTI9IjE4Mi4wIiBzdHJva2U9IiMxYTFhMWEiIHN0cm9rZS13aWR0aD0iMS4zIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMjQ4LjAiIHkxPSIxODIuMCIgeDI9IjkyLjAiIHkyPSIxNzguMCIgc3Ryb2tlPSIjOGE4YThhIiBzdHJva2Utd2lkdGg9IjEuMyIgc3Ryb2tlLWRhc2hhcnJheT0iNSw0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iOTIuMCIgeTE9IjE3OC4wIiB4Mj0iMzguMCIgeTI9IjIyMi4wIiBzdHJva2U9IiM4YThhOGEiIHN0cm9rZS13aWR0aD0iMS4zIiBzdHJva2UtZGFzaGFycmF5PSI1LDQiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNTAuMCIgeTE9IjU4LjAiIHgyPSIzOC4wIiB5Mj0iMjIyLjAiIHN0cm9rZT0iIzFhMWExYSIgc3Ryb2tlLXdpZHRoPSIxLjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNTAuMCIgeTE9IjU4LjAiIHgyPSIxOTYuMCIgeTI9IjIyNi4wIiBzdHJva2U9IiMxYTFhMWEiIHN0cm9rZS13aWR0aD0iMS4zIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTUwLjAiIHkxPSI1OC4wIiB4Mj0iMjQ4LjAiIHkyPSIxODIuMCIgc3Ryb2tlPSIjMWExYTFhIiBzdHJva2Utd2lkdGg9IjEuMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE1MC4wIiB5MT0iNTguMCIgeDI9IjkyLjAiIHkyPSIxNzguMCIgc3Ryb2tlPSIjOGE4YThhIiBzdHJva2Utd2lkdGg9IjEuMyIgc3Ryb2tlLWRhc2hhcnJheT0iNSw0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTUwLjAiIHkxPSI1OC4wIiB4Mj0iMTQzLjAiIHkyPSIyMDIuMCIgc3Ryb2tlPSIjMWExYTFhIiBzdHJva2Utd2lkdGg9IjEuMSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHRleHQgeD0iMTUzLjAiIHk9IjEzNC4wIiB0ZXh0LWFuY2hvcj0ic3RhcnQiIGZvbnQtZmFtaWx5PSInVGltZXMgTmV3IFJvbWFuJywgVGltZXMsIEdlb3JnaWEsIHNlcmlmIiBmb250LXNpemU9IjE0IiBmb250LXN0eWxlPSJpdGFsaWMiIGZpbGw9IiMxYTFhMWEiPmg8L3RleHQ+PHRleHQgeD0iMTE3LjAiIHk9IjIzMy4wIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iJ1RpbWVzIE5ldyBSb21hbicsIFRpbWVzLCBHZW9yZ2lhLCBzZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC1zdHlsZT0iaXRhbGljIiBmaWxsPSIjMWExYTFhIj5sPC90ZXh0Pjx0ZXh0IHg9IjIzOC4wIiB5PSIyMTAuMCIgdGV4dC1hbmNob3I9InN0YXJ0IiBmb250LWZhbWlseT0iJ1RpbWVzIE5ldyBSb21hbicsIFRpbWVzLCBHZW9yZ2lhLCBzZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC1zdHlsZT0iaXRhbGljIiBmaWxsPSIjMWExYTFhIj53PC90ZXh0Pjx0ZXh0IHg9IjE2MC4wIiB5PSIyNTIuMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IidUaW1lcyBOZXcgUm9tYW4nLCBUaW1lcywgR2VvcmdpYSwgc2VyaWYiIGZvbnQtc2l6ZT0iMTEuNSIgZm9udC1zdHlsZT0iaXRhbGljIiBmaWxsPSIjNjY2Ij5Ob3RlOiBGaWd1cmUgbm90IGRyYXduIHRvIHNjYWxlLjwvdGV4dD48L3N2Zz4="></figure>
+    <p class="stem">The figure shown is a right rectangular pyramid, where <i>l</i> = 18 units, <i>w</i> = 9 units, and <i>h</i> = 12 units. What is the surface area, in square units, of the pyramid?</p>
+    <ol class="choices">
+      <li class="right"><span class="bub">A</span><span>297 + 27√73</span></li>
+      <li><span class="bub">B</span><span>162 + 54√73</span></li>
+      <li><span class="bub">C</span><span>162 + 27√193</span></li>
+      <li><span class="bub">D</span><span>324 + 18√73</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>A</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>겉넓이 = 밑면 + 옆면 넷. 직사각뿔은 옆면이 두 종류라 빗높이(옆면 삼각형의 높이)도 두 개다. 빗높이 = √(높이² + (그 옆면에서 밑면 중심까지의 거리)²).</dd></div>
+    <div><dt>풀이</dt><dd>밑면 18 × 9 = 162. 밑변이 9인 옆면의 빗높이는 √(12² + 9²) = 15라 두 면의 넓이는 2 × ½ × 9 × 15 = 135. 밑변이 18인 옆면의 빗높이는 √(12² + 4.5²) = 1.5√73이라 두 면의 넓이는 2 × ½ × 18 × 1.5√73 = 27√73. 합은 297 + 27√73, A다.</dd></div>
+    <div><dt>함정</dt><dd>빗높이를 하나로 계산하면 옆면 넷을 같은 크기로 보게 된다. 높이 12를 그대로 옆면 삼각형의 높이로 쓰는 실수도 흔하다. 보기 넷이 모두 "정수 + 루트" 꼴이라 어림으로는 고를 수 없다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2025년 봄부터 길이 세 개만 바꿔 거듭 나왔고, 최근 1년 시험에 특히 자주 나왔다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qsdrf3sdgk">
+        <div class="q-top"><span class="q-no">HARD MATH 05<span class="hard-chip">HARD</span></span><span class="q-skill">Geometry and Trigonometry · Area and volume</span></div>
+        <div class="ad"><h3>부피에서 거꾸로 밑변 둘레까지</h3><p>뿔의 ⅓을 잊으면 끝까지 틀린다.</p></div>
+        <div class="test">
+          <p class="stem">A right square pyramid has a height of 18 inches and a volume of 864 cubic inches. What is the perimeter, in inches, of the base of this pyramid?</p>
+          <p class="spr">Student-produced response <b>48</b></p>
+        </div>
+        <p class="answer reveal"><span class="tag">ANSWER</span>48</p>
+        <dl class="parts reveal">
+          <div><dt>핵심 이론</dt><dd>뿔의 부피 = <span class="frac"><span>1</span><span>3</span></span> × 밑넓이 × 높이. 정사각뿔이면 밑넓이는 한 변의 제곱 <i>s</i><sup>2</sup>이다.</dd></div>
+          <div><dt>풀이</dt><dd>864 = <span class="frac"><span>1</span><span>3</span></span> × <i>s</i><sup>2</sup> × 18이니 <i>s</i><sup>2</sup> = 144, <i>s</i> = 12. 둘레는 4 × 12 = 48이다.</dd></div>
+          <div><dt>함정</dt><dd>⅓을 빼먹으면 <i>s</i><sup>2</sup> = 48이 되어 깔끔한 값이 안 나온다. <i>s</i> = 12에서 멈추고 한 변을 답으로 쓰는 실수도 흔하다. 묻는 것은 둘레다.</dd></div>
+          <div><dt>선정 이유</dt><dd>2025년 봄부터 높이와 부피 숫자만 바꿔 꾸준히 나왔고, 9·10월에도 나왔다. 단답형이라 보기로 거꾸로 확인할 수 없다.</dd></div>
+        </dl>
+      </article>
+
+      <article class="q" data-item="qagzcmxexq">
+  <div class="q-top"><span class="q-no">HARD MATH 06<span class="hard-chip">HARD</span></span><span class="q-skill">Algebra · Linear equations in two variables</span></div>
+  <div class="ad"><h3>"3온스에 1"을 "1온스에 얼마"로 바꿔라</h3><p>문제의 숫자를 그대로 계수에 넣으면 거꾸로 된다.</p></div>
+  <div class="test">
+    <p class="stem">Each 3.0-ounce serving of cheddar cheese and each 1.2-ounce serving of tuna provides about 1 microgram of vitamin B<sub>12</sub>. If a total of 3.6 micrograms of vitamin B<sub>12</sub> are consumed from eating <i>x</i> ounces of cheese and <i>y</i> ounces of tuna, which equation best represents this situation?</p>
+    <ol class="choices">
+      <li><span class="bub">A</span><span>3.0<i>x</i> + 1.2<i>y</i> = 3.6</span></li>
+      <li class="right"><span class="bub">B</span><span>0.33<i>x</i> + 0.83<i>y</i> = 3.6</span></li>
+      <li><span class="bub">C</span><span>1.2<i>x</i> + 3.0<i>y</i> = 3.6</span></li>
+      <li><span class="bub">D</span><span>0.83<i>x</i> + 0.33<i>y</i> = 3.6</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>B</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>식의 계수는 "단위 하나당 양"이다. <i>x</i>가 온스 수라면 계수는 1온스당 비타민 양이어야 한다.</dd></div>
+    <div><dt>풀이</dt><dd>치즈는 3.0온스에 1마이크로그램이니 1온스당 1 ÷ 3.0 ≈ 0.33, 참치는 1.2온스에 1이니 1온스당 1 ÷ 1.2 ≈ 0.83. 그래서 0.33<i>x</i> + 0.83<i>y</i> = 3.6, B다.</dd></div>
+    <div><dt>함정</dt><dd>A는 "3.0온스"를 그대로 계수로 넣은 식이다. D는 나눗셈까지 했지만 치즈와 참치의 값을 바꿔 붙였다. 단위를 끝까지 따라가면 둘 다 걸러진다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2025년 가을부터 음식과 영양소만 바꿔 나왔고, 5·8·9월 시험에도 나왔다. 판본이 많다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="q35dwz8t3h">
+  <div class="q-top"><span class="q-no">HARD MATH 07<span class="hard-chip">HARD</span></span><span class="q-skill">Problem-Solving and Data Analysis · Percentages</span></div>
+  <div class="ad"><h3>"1400% 늘었다"는 15배다</h3><p>늘어난 양과 결과를 헷갈리면 답이 미묘하게 어긋난다.</p></div>
+  <div class="test">
+    <p class="stem">A researcher investigated two species of mites: a predator and its prey. At the start of a week, there was an equal number of the two species. At the end of the week, the number of prey had increased by 1400% of the number of prey at the start of the week, and the number of predators had increased by 170% of the number of predators at the start of the week. The number of predators at the end of the week was <i>p</i>% less than the number of prey at the end of the week. What is the value of <i>p</i>?</p>
+    <p class="spr">Student-produced response <b>82</b></p>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>82</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>"<i>x</i>% 증가"는 원래 값에 <i>x</i>%를 더한 것이라 × (1 + <i>x</i>/100)이다. "A가 B보다 <i>p</i>% 적다"의 기준은 B다.</dd></div>
+    <div><dt>풀이</dt><dd>처음을 100마리씩으로 놓는다. 먹이는 100 + 1400 = 1500, 포식자는 100 + 170 = 270. 차이 1230을 먹이 수 1500으로 나누면 0.82라 <i>p</i> = 82다.</dd></div>
+    <div><dt>함정</dt><dd>1400% 증가를 ×14로 계산하면 먹이가 1400이 되어 <i>p</i>가 약 80.7로 나온다. 차이를 포식자 수 270으로 나누는 실수도 있다. "less than the number of prey"가 기준을 정한다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2024년 말부터 동물 이름과 퍼센트만 바꿔 나왔고, 5·8·9월 시험에도 나왔다. 단답형이다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qv8annf64n">
+        <div class="q-top"><span class="q-no">HARD MATH 08<span class="hard-chip">HARD</span></span><span class="q-skill">Advanced Math · Equivalent expressions</span></div>
+        <div class="ad"><h3>대입하기 전에 약분부터</h3><p><i>k</i>가 끝까지 남아 보여도 답은 숫자 하나다.</p></div>
+        <div class="test">
+          <p class="stem">The function <i>h</i> is defined by <i>h</i>(<i>x</i>) = <span class="frac"><span>10<i>x</i><sup>2</sup></span><span><i>x</i><sup>2</sup> − 9<i>k</i><sup>2</sup></span></span> − <span class="frac"><span>5<i>x</i></span><span><i>x</i> + 3<i>k</i></span></span>, where <i>k</i> is a positive constant. What is the value of <i>h</i>(<span class="frac"><span>21<i>k</i></span><span>8</span></span>)?</p>
+          <ol class="choices">
+            <li><span class="bub">A</span><span>−<span class="frac"><span>5</span><span>3</span></span></span></li>
+            <li><span class="bub">B</span><span>−<span class="frac"><span>35</span><span>12</span></span></span></li>
+            <li><span class="bub">C</span><span>−14</span></li>
+            <li class="right"><span class="bub">D</span><span>−35</span></li>
+          </ol>
+        </div>
+        <p class="answer reveal"><span class="tag">ANSWER</span>D</p>
+        <dl class="parts reveal">
+          <div><dt>핵심 이론</dt><dd><i>x</i><sup>2</sup> − 9<i>k</i><sup>2</sup> = (<i>x</i> − 3<i>k</i>)(<i>x</i> + 3<i>k</i>)(제곱의 차). 분모를 맞춘 뒤 약분하면 식이 짧아지고, 그다음에 대입한다.</dd></div>
+          <div><dt>풀이</dt><dd>통분하면 분자는 10<i>x</i><sup>2</sup> − 5<i>x</i>(<i>x</i> − 3<i>k</i>) = 5<i>x</i><sup>2</sup> + 15<i>kx</i> = 5<i>x</i>(<i>x</i> + 3<i>k</i>)다. (<i>x</i> + 3<i>k</i>)가 약분되어 <i>h</i>(<i>x</i>) = <span class="frac"><span>5<i>x</i></span><span><i>x</i> − 3<i>k</i></span></span>. <i>x</i> = <span class="frac"><span>21<i>k</i></span><span>8</span></span>를 넣으면 분자 <span class="frac"><span>105<i>k</i></span><span>8</span></span>, 분모 −<span class="frac"><span>3<i>k</i></span><span>8</span></span>이라 −35, D다.</dd></div>
+          <div><dt>함정</dt><dd>원래 식에 바로 대입하면 분수가 겹겹이 쌓여 계산에서 무너지기 쉽다. −5<i>x</i> × (−3<i>k</i>) = +15<i>kx</i>의 부호를 놓치면 (<i>x</i> + 3<i>k</i>)가 나오지 않아 약분도 되지 않는다.</dd></div>
+          <div><dt>선정 이유</dt><dd>2025년 가을부터 계수와 대입 값만 바꿔 거듭 나왔고, 8·9월 시험에도 나왔다.</dd></div>
+        </dl>
+      </article>
+
+      <article class="q" data-item="qmct7d29xt">
+  <div class="q-top"><span class="q-no">HARD MATH 09<span class="hard-chip">HARD</span></span><span class="q-skill">Advanced Math · Nonlinear equations and systems</span></div>
+  <div class="ad"><h3>(<i>s</i> + 47)을 한 덩어리로 본다</h3><p>전개하면 숫자가 커지고, 묶어서 보면 두 줄이다.</p></div>
+  <div class="test">
+    <p class="stem" style="text-align:center"><span class="frac"><span>1</span><span>4</span></span><i>t</i> = (<i>s</i> + 47)<sup>2</sup><br><i>t</i> = 2<i>s</i> + 94</p>
+    <p class="stem">A solution to the given system of equations is (<i>s</i>, <i>t</i>). What is the value of <i>s</i> when <i>t</i> &gt; 0?</p>
+    <p class="spr">Student-produced response <b>−46.5</b></p>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>−46.5 (또는 −93/2)</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>같은 식이 되풀이되면 한 글자로 바꿔 놓는다(치환). 2<i>s</i> + 94 = 2(<i>s</i> + 47)이 열쇠다.</dd></div>
+    <div><dt>풀이</dt><dd><i>u</i> = <i>s</i> + 47로 놓으면 <i>t</i> = 2<i>u</i>이고, 첫 식은 <span class="frac"><span>2<i>u</i></span><span>4</span></span> = <i>u</i><sup>2</sup>, 곧 <i>u</i>(2<i>u</i> − 1) = 0. <i>u</i> = 0이면 <i>t</i> = 0이라 조건 <i>t</i> &gt; 0에 어긋난다. <i>u</i> = ½이면 <i>s</i> = −46.5, <i>t</i> = 1이다.</dd></div>
+    <div><dt>함정</dt><dd><i>u</i>로 양변을 나누면 <i>u</i> = 0인 해를 잃는다. 이 문제는 그 해를 조건으로 버리게 만들었으니 결과는 같지만, 나누는 습관은 다른 판본에서 틀린다. <i>s</i> = −47을 그대로 쓰면 <i>t</i> = 0이라 틀린다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2024년에 처음 나왔고 2026년 3·8·9월 시험에 다시 나왔다. 단답형이다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="q7hfynn8zm">
+  <div class="q-top"><span class="q-no">HARD MATH 10<span class="hard-chip">HARD</span></span><span class="q-skill">Advanced Math · Nonlinear functions</span></div>
+  <div class="ad"><h3>루트 함수의 0은 루트 안의 0이다</h3><p>두 점으로 <i>c</i>와 <i>b</i>를 차례로 잡으면 인수분해가 끝난다.</p></div>
+  <div class="test">
+    <p class="stem" style="text-align:center"><i>g</i>(<i>x</i>) = −√(<i>x</i><sup>2</sup> + <i>bx</i> + <i>c</i>)</p>
+    <p class="stem">The function <i>g</i> is defined by the given equation, where <i>b</i> and <i>c</i> are integers. In the <i>xy</i>-plane, the graph of <i>y</i> = <i>g</i>(<i>x</i>) passes through the points (2, 0) and (0, −√298). If <i>m</i> is a value for which <i>g</i>(<i>m</i>) = 0, what is the greatest possible value of <i>m</i>?</p>
+    <ol class="choices">
+      <li><span class="bub">A</span><span>−150</span></li>
+      <li><span class="bub">B</span><span>2</span></li>
+      <li class="right"><span class="bub">C</span><span>149</span></li>
+      <li><span class="bub">D</span><span>150</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>C</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd><i>g</i>(<i>x</i>) = 0이 되는 것은 루트 안이 0일 때다. 그래서 문제는 이차방정식 <i>x</i><sup>2</sup> + <i>bx</i> + <i>c</i> = 0의 해를 찾는 것으로 바뀐다.</dd></div>
+    <div><dt>풀이</dt><dd><i>g</i>(0) = −√<i>c</i> = −√298이니 <i>c</i> = 298. <i>g</i>(2) = 0이니 4 + 2<i>b</i> + 298 = 0, <i>b</i> = −151. <i>m</i><sup>2</sup> − 151<i>m</i> + 298 = (<i>m</i> − 2)(<i>m</i> − 149) = 0이라 가장 큰 값은 149, C다.</dd></div>
+    <div><dt>함정</dt><dd>이미 주어진 점 (2, 0)의 2를 답으로 고르면 B다. 두 근의 곱이 298 = 2 × 149라는 것을 이용하면 계산 없이 149가 나온다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2025년 봄에 처음 나왔고 2026년 8·9월 시험에 다시 나왔다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qqvhyw2ir2">
+  <div class="q-top"><span class="q-no">HARD MATH 11<span class="hard-chip">HARD</span></span><span class="q-skill">Algebra · Systems of two linear equations</span></div>
+  <div class="ad"><h3>"해가 적어도 하나"는 평행만 피하면 된다</h3><p>같은 직선도 해가 있는 것이다.</p></div>
+  <div class="test">
+    <p class="stem" style="text-align:center">5<i>x</i> + 9<i>y</i> = 8</p>
+    <p class="stem">The given equation is one equation in a system of two linear equations. If the system of equations has at least one solution, which of the following equations could be the other equation in the system?<br>I. 7.5<i>x</i> + 13.5<i>y</i> = 12<br>II. 7.5<i>x</i> − 13.5<i>y</i> = 12</p>
+    <ol class="choices">
+      <li><span class="bub">A</span><span>I only</span></li>
+      <li><span class="bub">B</span><span>II only</span></li>
+      <li class="right"><span class="bub">C</span><span>I and II</span></li>
+      <li><span class="bub">D</span><span>Neither I nor II</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>C</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>두 직선의 연립방정식은 기울기가 같고 절편이 다를 때(평행)만 해가 없다. 기울기가 다르면 해가 하나, 완전히 같은 직선이면 해가 무수히 많다.</dd></div>
+    <div><dt>풀이</dt><dd>I은 주어진 식에 1.5를 곱한 것이라 같은 직선이다. 해가 무수히 많으니 "적어도 하나"에 맞는다. II는 <i>y</i>의 계수 부호가 달라 기울기가 다르다. 두 직선이 한 점에서 만나니 해가 하나다. 그래서 둘 다, C다.</dd></div>
+    <div><dt>함정</dt><dd>"같은 직선"을 해가 없는 경우로 착각하면 B를, <i>x</i> 계수 비율만 보고 II도 평행이라고 여기면 A를 고른다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2024년 가을에 처음 나왔고 2026년 8·9월 시험에 다시 나왔다.</dd></div>
+  </dl>
+</article>
+    </section>
+
+    <section class="group" data-sec="rw">
+      <div class="group-head"><h2>읽기·쓰기 고난도</h2><span>READING AND WRITING · HARD · 15</span></div>
+
+      <article class="q" data-item="qg6nt3mh5k">
+        <div class="q-top"><span class="q-no">HARD RW 01<span class="hard-chip">HARD</span></span><span class="q-skill">Information and Ideas · Command of Evidence (Quantitative)</span></div>
+        <div class="ad"><h3>표에서 고를 것은 '주장에 맞는 비교'</h3><p>국제선이 국내선보다 많았던 한 쌍을 찾는다.</p></div>
+        <div class="test">
+          <div class="t-wrap"><table><caption>Airline Routes: Distance and Passengers, 2017–2018</caption><thead><tr><th>Location 1</th><th>Location 2</th><th>Distance (kilometers)</th><th>2018 passengers</th><th>2017 passengers</th><th>Domestic or international</th></tr></thead><tbody><tr><td>Mexico City</td><td>Guadalajara</td><td>466</td><td>3,170,177</td><td>2,996,806</td><td>domestic</td></tr><tr><td>Hong Kong</td><td>Seoul–Incheon</td><td>2,080</td><td>3,081,942</td><td>3,198,132</td><td>international</td></tr><tr><td>Kuala Lumpur</td><td>Singapore</td><td>296</td><td>4,490,463</td><td>4,108,824</td><td>international</td></tr><tr><td>Hanoi</td><td>Ho Chi Minh City</td><td>1,171</td><td>6,867,114</td><td>6,769,823</td><td>domestic</td></tr></tbody></table></div>
+          <p>A study of commercial airline routes that carried the greatest number of passengers in 2017 and 2018 shows that, in general, domestic routes (routes within a single country) carried many more passengers than international routes. However, a few international routes were so popular that they carried more travelers than some of the most highly traveled domestic routes, as can be seen when comparing the <span class="blank"></span></p>
+          <p class="stem">Which choice most effectively uses data from the table to complete the example?</p>
+          <ol class="choices">
+            <li><span class="bub">A</span><span>number of passengers who traveled between Kuala Lumpur and Singapore in 2017 with the number who traveled that same route in 2018.</span></li>
+            <li class="right"><span class="bub">B</span><span>number of passengers who traveled between Kuala Lumpur and Singapore in 2018 with the number who traveled between Mexico City and Guadalajara during that same year.</span></li>
+            <li><span class="bub">C</span><span>distance between Mexico City and Guadalajara with the distance between Kuala Lumpur and Singapore.</span></li>
+            <li><span class="bub">D</span><span>number of passengers who traveled between Hanoi and Ho Chi Minh City in 2017 with the number who traveled between Hong Kong and Seoul–Incheon during that same year.</span></li>
+          </ol>
+        </div>
+        <p class="answer reveal"><span class="tag">ANSWER</span>B</p>
+        <dl class="parts reveal">
+          <div><dt>핵심 이론</dt><dd>빈칸 문장의 주장부터 정리한다. 여기서 주장은 "몇몇 국제선이 손꼽히는 국내선보다 승객이 많았다"이다. 그러면 필요한 것은 같은 해에 국제선이 국내선보다 많은 한 쌍이다.</dd></div>
+          <div><dt>풀이</dt><dd>B는 2018년 Kuala Lumpur–Singapore(국제선, 4,490,463명)와 같은 해 Mexico City–Guadalajara(국내선, 3,170,177명)를 견준다. 국제선이 더 많으니 주장을 그대로 보여 준다.</dd></div>
+          <div><dt>함정</dt><dd>A는 한 노선의 두 해를 견주어 국내·국제 비교가 아니다. C는 승객이 아니라 거리다. D는 국내선(Hanoi–Ho Chi Minh City)이 국제선보다 많은 쌍이라 주장과 반대다. 표와 맞는 숫자라고 다 답이 아니다.</dd></div>
+          <div><dt>선정 이유</dt><dd>최근 RW에서 가장 꾸준히 반복된 자료 문제 가운데 하나다. 2026년 5월 이후 모든 시험에 나왔다.</dd></div>
+        </dl>
+      </article>
+
+      <article class="q" data-item="qi8wuzt9zc">
+  <div class="q-top"><span class="q-no">HARD RW 02<span class="hard-chip">HARD</span></span><span class="q-skill">Craft and Structure · Words in Context</span></div>
+  <div class="ad"><h3>빈칸 뒤 예시가 단어를 정한다</h3><p>"최초"를 이길 수 있는 것은 거의 없다.</p></div>
+  <div class="test">
+    <p>Jessica Watson, who was the youngest person to sail nonstop and unassisted around the world, undoubtedly accomplished much, but to gain a lasting place in our historical memory, there is little that can <span class="blank"></span> being the first to do something. For example, people will always remember that Jeanne Baré was the first woman to circumnavigate the world.</p>
+    <p class="stem">Which choice completes the text with the most logical and precise word or phrase?</p>
+    <ol class="choices">
+      <li><span class="bub">A</span><span>overreach by</span></li>
+      <li class="right"><span class="bub">B</span><span>prevail over</span></li>
+      <li><span class="bub">C</span><span>fluctuate with</span></li>
+      <li><span class="bub">D</span><span>constrain within</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>B</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>빈칸에 들어갈 뜻을 먼저 우리말로 정하고 보기를 본다. 앞뒤 문장의 논리(but, For example)가 그 뜻을 알려 준다.</dd></div>
+    <div><dt>풀이</dt><dd>Watson은 많은 것을 이뤘지만(but) 역사에 오래 남는 데는 "최초"를 넘어서는 것이 거의 없다는 흐름이다. 예시(Baré는 최초라 기억된다)도 이를 받친다. 그래서 "이기다, 앞서다"의 prevail over, B다.</dd></div>
+    <div><dt>함정</dt><dd>A(overreach by)는 "한도를 넘다"라 경쟁에서 이긴다는 뜻이 아니다. C(fluctuate with)는 "함께 오르내리다", D(constrain within)는 "안에 가두다"라 흐름과 맞지 않는다. 어려운 단어가 섞여 있어도 뜻 하나만 맞추면 된다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2024년에 처음 나왔고 2026년 5·9·10월 시험에 다시 나왔다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qsmywnwp6r">
+  <div class="q-top"><span class="q-no">HARD RW 03<span class="hard-chip">HARD</span></span><span class="q-skill">Information and Ideas · Command of Evidence (Textual)</span></div>
+  <div class="ad"><h3>"결말을 더 좋아했다"를 보여 주는 숫자</h3><p>마지막 회에 사람이 가장 많이 몰렸다면 그것이 증거다.</p></div>
+  <div class="test">
+    <p>A film studies student is researching early 20th-century film serials, which consisted of individual episodes of a single long story that were shown weekly in theaters. <i>The Mystery Squadron</i> is a 1933 serial that, over its 12 episodes, kept its audience interested with the suspense and drama that are typical of the aviation genre. The student, however, claims that ultimately audiences of the time preferred resolution and closure over ongoing tension.</p>
+    <p class="stem">Which finding, if true, would most directly support the student's claim?</p>
+    <ol class="choices">
+      <li><span class="bub">A</span><span>The 12th episode of <i>The Mystery Squadron</i> was the most expensive episode of the series to produce.</span></li>
+      <li><span class="bub">B</span><span>Audiences of the time considered <i>The Mystery Squadron</i> to belong to a genre other than the aviation genre.</span></li>
+      <li class="right"><span class="bub">C</span><span>The 12th episode of <i>The Mystery Squadron</i> was viewed by more people than was any previous episode in the series.</span></li>
+      <li><span class="bub">D</span><span>Modern critics generally regard the first episode as the best installment of <i>The Mystery Squadron</i>.</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>C</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>주장의 주어와 시점을 정확히 잡는다. 여기서는 "그 시대 관객"이 "결말을 더 좋아했다"는 주장이다. 증거도 그 시대 관객의 행동이어야 한다.</dd></div>
+    <div><dt>풀이</dt><dd>12회는 이야기가 끝나는 마지막 회다. 그 회를 가장 많은 사람이 봤다면 관객이 결말을 원했다는 주장을 바로 받친다. C다.</dd></div>
+    <div><dt>함정</dt><dd>A는 제작비라 관객의 선호와 상관없다. D는 "현대 비평가"라 시대와 사람이 다르다. B는 장르 문제라 결말 선호와 이어지지 않는다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2024년에 처음 나왔고 2026년에는 5·6·8·10월 시험에 나왔다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qcr238f8g6">
+  <div class="q-top"><span class="q-no">HARD RW 04<span class="hard-chip">HARD</span></span><span class="q-skill">Standard English Conventions · Form, Structure, and Sense</span></div>
+  <div class="ad"><h3>"Having ~," 다음에는 그 일을 한 주인공</h3><p>쉼표 바로 뒤 명사가 누구인지만 보면 된다.</p></div>
+  <div class="test">
+    <p>Topographical prominence is a measure of a mountain's independence from other mountains. Having 16,024 feet of prominence, <span class="blank"></span></p>
+    <p class="stem">Which choice completes the text so that it conforms to the conventions of Standard English?</p>
+    <ol class="choices">
+      <li class="right"><span class="bub">A</span><span>Puncak Jaya, a peak located in Indonesia, is ranked by geographers as the world's 9th most prominent mountain.</span></li>
+      <li><span class="bub">B</span><span>the ranking given by geographers to Puncak Jaya, a peak located in Indonesia, is 9th most prominent mountain in the world.</span></li>
+      <li><span class="bub">C</span><span>the list of mountains geographers rank as the world's most prominent includes Puncak Jaya, a peak located in Indonesia, at number 9.</span></li>
+      <li><span class="bub">D</span><span>geographers have ranked Puncak Jaya, a peak in Indonesia, as the world's 9th most prominent mountain.</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>A</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>문장 앞의 분사구(Having …)는 쉼표 바로 뒤의 주어를 꾸민다. 그 주어가 분사구의 행동을 실제로 하는 대상이어야 한다(dangling modifier 금지).</dd></div>
+    <div><dt>풀이</dt><dd>16,024피트의 prominence를 가진 것은 산이다. 쉼표 바로 뒤에 Puncak Jaya가 오는 것은 A뿐이다.</dd></div>
+    <div><dt>함정</dt><dd>D는 문장으로는 가장 자연스러워 보이지만 쉼표 뒤가 geographers라 "지리학자가 prominence를 가졌다"가 된다. B(the ranking)와 C(the list)도 산이 아니다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2024년 가을부터 산 이름과 숫자만 바꿔 나왔고, 6·8·9월 시험에도 나왔다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qdb6g4imfh">
+        <div class="q-top"><span class="q-no">HARD RW 05<span class="hard-chip">HARD</span></span><span class="q-skill">Information and Ideas · Inferences</span></div>
+        <div class="ad"><h3>"neither"의 결론은 두 종의 공통점에서 나온다</h3><p>한쪽만의 특징을 고르면 틀린다.</p></div>
+        <div class="test">
+          <p>The great egret and the white ibis are long-legged birds that live in wetlands, like the Everglades in Florida. Laura D'Acunto and colleagues wanted to know how these birds choose an area in which to live. They looked at features of the birds' habitats, such as the extent of tree-canopy coverage in the area and how deep the water is during breeding season. They found that although only great egrets prefer areas with deep water during breeding season, both great egrets and white ibises prefer areas that have standing water for more than 60 days per year. The researchers therefore concluded that neither species is very drawn to areas where <span class="blank"></span></p>
+          <p class="stem">Which choice most logically completes the text?</p>
+          <ol class="choices">
+            <li><span class="bub">A</span><span>species with breeding seasons longer than 60 days are likely to be present.</span></li>
+            <li><span class="bub">B</span><span>there are any features that attract the other species.</span></li>
+            <li class="right"><span class="bub">C</span><span>there is standing water for far fewer than 60 days per year.</span></li>
+            <li><span class="bub">D</span><span>there is relatively deep water during the breeding season.</span></li>
+          </ol>
+        </div>
+        <p class="answer reveal"><span class="tag">ANSWER</span>C</p>
+        <dl class="parts reveal">
+          <div><dt>핵심 이론</dt><dd>결론의 주어가 "neither species(두 종 모두 아니다)"이면 근거도 두 종의 공통점이어야 한다.</dd></div>
+          <div><dt>풀이</dt><dd>두 종이 함께 좋아하는 것은 고인 물이 1년에 60일 넘게 있는 곳이다. 그러니 두 종 모두 끌리지 않는 곳은 고인 물이 60일보다 훨씬 짧은 곳, C다.</dd></div>
+          <div><dt>함정</dt><dd>D(번식기의 깊은 물)는 great egret만의 특징이다. egret은 오히려 깊은 물을 좋아하니 "두 종 모두 끌리지 않는다"가 될 수 없다. A는 이야기를 번식기 길이로 바꿨고, B는 지문에서 나오지 않는다.</dd></div>
+          <div><dt>선정 이유</dt><dd>2025년 봄부터 나왔고 8·9월 시험에 잇달아 나왔다. 결론이 미치는 범위를 읽어야 하는 고난도 추론의 전형이다.</dd></div>
+        </dl>
+      </article>
+
+      <article class="q" data-item="qwgmvbx5ar">
+  <div class="q-top"><span class="q-no">HARD RW 06<span class="hard-chip">HARD</span></span><span class="q-skill">Information and Ideas · Command of Evidence (Textual)</span></div>
+  <div class="ad"><h3>"대중의 행동 변화"를 말하는 인용은 하나다</h3><p>배양육 이야기가 많은 보기에 끌리면 틀린다.</p></div>
+  <div class="test">
+    <p>A student is writing an essay on the subject of cultured meat, which is grown in a laboratory and is intended to help reduce the number of livestock harvested for food. The student wants to make the case that cultured meat production may be useful in responding to an expected widespread change in the public's behavior.</p>
+    <p class="stem">Which quotation from a publication by a researcher would most effectively support the student's claim?</p>
+    <ol class="choices">
+      <li class="right"><span class="bub">A</span><span>"A growing population that is including significantly more meat in its diet will contribute to an increasing demand for meat products in the 21st century."</span></li>
+      <li><span class="bub">B</span><span>"Consumers tend to believe that using less packaging when selling meat products in stores would have a significant effect on the environment."</span></li>
+      <li><span class="bub">C</span><span>"A difficulty in developing lab-grown meat that successfully imitates meat from livestock is in mimicking the way oxygen spreads through tissue in living animals."</span></li>
+      <li><span class="bub">D</span><span>"Researchers who advocate for the development of lab-grown meat claim that it's safer than conventional meat because it doesn't come from animals raised in spaces that make them more vulnerable to illness."</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>A</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>주장의 핵심어를 하나씩 확인한다. 여기서는 ① 앞으로 예상되는 ② 널리 퍼진 ③ 대중의 행동 변화다. 셋을 다 가진 인용을 고른다.</dd></div>
+    <div><dt>풀이</dt><dd>A는 인구가 고기를 훨씬 더 많이 먹게 되어 수요가 늘 것이라는 예상이다. 앞으로의, 대중 전체의 행동 변화이고, 배양육이 그 수요에 대응할 수 있다. A다.</dd></div>
+    <div><dt>함정</dt><dd>D는 배양육의 장점이라 끌리지만 대중의 행동 변화가 없다. C는 기술적 어려움이라 오히려 주장을 약하게 한다. B는 포장과 환경 이야기다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2025년 봄에 처음 나왔고 2026년 8·9월 시험에 다시 나왔다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qb9vcxntzs">
+        <div class="q-top"><span class="q-no">HARD RW 07<span class="hard-chip">HARD</span></span><span class="q-skill">Standard English Conventions · Boundaries</span></div>
+        <div class="ad"><h3>'for example'은 앞 문장에 붙는다</h3><p>삽입구가 어느 절에 속하는지 정해야 마침표 자리가 보인다.</p></div>
+        <div class="test">
+          <p>Within Earth's biomes, there are four main types of desert: arid, semiarid, coastal, and cold. The Atacama Desert in South America is a coastal desert, for <span class="blank"></span> a total area of about 140,000 km², it is also one of the largest deserts of any type.</p>
+          <p class="stem">Which choice completes the text so that it conforms to the conventions of Standard English?</p>
+          <ol class="choices">
+            <li class="right"><span class="bub">A</span><span>example. With</span></li>
+            <li><span class="bub">B</span><span>example and with</span></li>
+            <li><span class="bub">C</span><span>example with</span></li>
+            <li><span class="bub">D</span><span>example, with</span></li>
+          </ol>
+        </div>
+        <p class="answer reveal"><span class="tag">ANSWER</span>A</p>
+        <dl class="parts reveal">
+          <div><dt>핵심 이론</dt><dd>삽입구(for example)가 어느 절에 속하는지 먼저 정한다. 완전한 절 둘 사이에는 마침표(또는 세미콜론)가 필요하다.</dd></div>
+          <div><dt>풀이</dt><dd>"The Atacama Desert … is a coastal desert, for example"이 이미 완전한 문장이다. 뒤의 "With a total area of about 140,000 km², it is also one of the largest deserts of any type"도 주어 it과 동사 is를 가진 완전한 문장이다. 그래서 example 뒤에서 마침표로 끊는 A다.</dd></div>
+          <div><dt>함정</dt><dd>for example을 뒤 문장의 시작으로 읽으면 D가 자연스러워 보인다. 하지만 그러면 완전한 절 둘이 쉼표 하나로 이어진다(comma splice). B와 C도 두 절을 제대로 잇지 못한다.</dd></div>
+          <div><dt>선정 이유</dt><dd>사막·화산 이름만 바꿔 2023년부터 나왔고, 9·10월 시험에 다시 나왔다. 바뀐 판본이 특히 많다.</dd></div>
+        </dl>
+      </article>
+
+      <article class="q" data-item="q8x2g4s876">
+  <div class="q-top"><span class="q-no">HARD RW 08<span class="hard-chip">HARD</span></span><span class="q-skill">Craft and Structure · Words in Context</span></div>
+  <div class="ad"><h3>콜론 뒤가 "산업마다 다르다"를 보여 준다</h3><p>어려운 단어는 문장 구조로 푼다.</p></div>
+  <div class="test">
+    <p>Although the clustering of information technology firms in Northern California is often cited as typical of industrial agglomeration, Giulia Faggio et al. use UK data to show that the mix of factors driving the phenomenon is <span class="blank"></span> across industries: while the potential for knowledge spillovers can prompt agglomeration, collocation among tube manufacturers occurs for different reasons.</p>
+    <p class="stem">Which choice completes the text with a logical and precise word or phrase?</p>
+    <ol class="choices">
+      <li><span class="bub">A</span><span>credible</span></li>
+      <li class="right"><span class="bub">B</span><span>heterogeneous</span></li>
+      <li><span class="bub">C</span><span>imperative</span></li>
+      <li><span class="bub">D</span><span>decisive</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>B</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>콜론(:) 뒤는 앞 말을 풀어 주는 설명이다. 빈칸의 뜻은 콜론 뒤에서 찾는다.</dd></div>
+    <div><dt>풀이</dt><dd>콜론 뒤는 어떤 산업은 지식 파급 때문에, 튜브 제조업체는 다른 이유로 모인다는 내용이다. 이유가 산업마다 다르다는 뜻이니 "여러 가지로 다른"의 heterogeneous, B다. Although도 "흔히 대표 사례로 꼽히지만 실은 다르다"는 흐름을 만든다.</dd></div>
+    <div><dt>함정</dt><dd>credible(믿을 만한), imperative(꼭 필요한), decisive(결정적인)는 학술 글에 자주 나와 그럴듯하지만 "다르다"는 뜻이 없다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2024년에 처음 나왔고 2026년 9·10월 시험에 다시 나왔다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qxf8avawav">
+        <div class="q-top"><span class="q-no">HARD RW 09<span class="hard-chip">HARD</span></span><span class="q-skill">Information and Ideas · Command of Evidence (Textual)</span></div>
+        <div class="ad"><h3>'보편적'이라는 주장은 반례 하나로 무너진다</h3><p>내 몸이 기준인지, 땅이 기준인지 가려야 풀린다.</p></div>
+        <div class="test">
+          <p>Rafael Núñez and colleagues studied how members of the Yupno, an Indigenous group in Papua New Guinea, conceptualize time. The researchers recorded Yupno speakers explaining certain temporal words and phrases, such as <i>apma bilak</i>, a past-oriented expression that translates to "last year," and coded each speaker's manual gestures. Previous research has found a tendency in many cultures to make temporal distinctions using spatial concepts and gestures, particularly along egocentric axes (i.e., relative to the orientation of the speaker): for instance, Hebrew speakers often refer to the right/left axis to describe events in time. In an anthropology paper, a student claims that the tendency toward ego-based conceptualizations of time is universal.</p>
+          <p class="stem">Which finding, if true, would most directly weaken the student's claim?</p>
+          <ol class="choices">
+            <li class="right"><span class="bub">A</span><span>A Yupno speaker using gestures to refer to a past event points in the same geographical direction regardless of which direction the speaker faces.</span></li>
+            <li><span class="bub">B</span><span>Although Yupno speakers and Hebrew speakers both use gestures to indicate orientation in time, Yupno speakers tend to use fewer gestures overall when speaking than Hebrew speakers do.</span></li>
+            <li><span class="bub">C</span><span>Some Yupno grammatical structures used when talking about time are also used in Hebrew.</span></li>
+            <li><span class="bub">D</span><span>A Yupno speaker points in opposite directions when indicating a past event versus a future event.</span></li>
+          </ol>
+        </div>
+        <p class="answer reveal"><span class="tag">ANSWER</span>A</p>
+        <dl class="parts reveal">
+          <div><dt>핵심 이론</dt><dd>"universal(모든 문화에 있다)"이라는 주장은 그렇지 않은 사례 하나로 약해진다. ego-based는 말하는 사람의 몸 방향(앞뒤·좌우)을 기준으로 삼는다는 뜻이다.</dd></div>
+          <div><dt>풀이</dt><dd>A의 화자는 어느 쪽을 보고 서 있든 같은 지리적 방향을 가리킨다. 몸이 아니라 땅을 기준으로 시간을 나타낸 것이니, 몸 기준이 보편적이라는 주장의 반례다.</dd></div>
+          <div><dt>함정</dt><dd>D(과거와 미래를 반대 방향으로 가리킨다)는 몸 기준 축으로도 그대로 설명되어 오히려 주장과 맞는다. B는 몸짓의 양, C는 문법의 공통점이라 기준이 몸인지 땅인지와 상관없다.</dd></div>
+          <div><dt>선정 이유</dt><dd>2023년 말부터 RW에서 가장 오래, 가장 자주 반복된 문제 가운데 하나다. 9·10월에도 나왔다.</dd></div>
+        </dl>
+      </article>
+
+      <article class="q" data-item="qxtzi6vhgd">
+  <div class="q-top"><span class="q-no">HARD RW 10<span class="hard-chip">HARD</span></span><span class="q-skill">Expression of Ideas · Transitions</span></div>
+  <div class="ad"><h3>같은 말을 바꿔 하면 "in other words"</h3><p>부정으로 말한 것을 긍정으로 다시 말했다.</p></div>
+  <div class="test">
+    <p>In a 1998 study by Smith et al., the researchers used microhistological fecal analysis to determine the ratio of three plant subtypes (graminoids, forbs, and browse) within the diets of North American ungulates. The researchers did not perform this analysis on all such ungulates, <span class="blank"></span> they focused exclusively on pronghorns and wild horses in New Mexico.</p>
+    <p class="stem">Which choice completes the text with the most logical transition?</p>
+    <ol class="choices">
+      <li><span class="bub">A</span><span>regardless;</span></li>
+      <li class="right"><span class="bub">B</span><span>in other words;</span></li>
+      <li><span class="bub">C</span><span>for instance;</span></li>
+      <li><span class="bub">D</span><span>however;</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>B</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>연결어는 앞뒤 두 문장의 관계(대조·예시·재진술·결과)를 먼저 정하고 고른다.</dd></div>
+    <div><dt>풀이</dt><dd>"모든 유제류를 분석하지 않았다"와 "pronghorn과 야생마만 분석했다"는 같은 사실을 부정과 긍정으로 말한 것이다. 재진술이라 in other words, B다.</dd></div>
+    <div><dt>함정</dt><dd>for instance는 뒤 문장을 앞 문장의 한 예로 만든다. 하지만 두 종이 연구 대상 전부라 예가 아니다. however는 대조인데 두 문장은 같은 말이다. not … 뒤라 대조처럼 느껴지는 것이 함정이다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2025년 여름부터 거의 매 시험 나왔다. 2026년에는 3·5·6·8·10월에 나왔다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qrvzkedjma">
+  <div class="q-top"><span class="q-no">HARD RW 11<span class="hard-chip">HARD</span></span><span class="q-skill">Information and Ideas · Command of Evidence (Quantitative)</span></div>
+  <div class="ad"><h3>"더 서늘한 달 = 더 작은 날개"를 보여 주는 한 쌍</h3><p>표의 숫자가 맞아도 주장과 짝이 안 맞으면 오답이다.</p></div>
+  <div class="test">
+    <div class="t-wrap"><table><caption>Monthly Temperatures and Wing Centroid Sizes of Fruit Fly Specimens</caption><thead><tr><th>Month</th><th>Average high (°F)</th><th>Average low (°F)</th><th>Average male wing centroid size (mm)</th><th>Average female wing centroid size (mm)</th></tr></thead><tbody><tr><td>June</td><td>80</td><td>56</td><td>2.01</td><td>2.31</td></tr><tr><td>May</td><td>73</td><td>50</td><td>1.98</td><td>2.27</td></tr><tr><td>July</td><td>87</td><td>62</td><td>2.02</td><td>2.31</td></tr><tr><td>October</td><td>67</td><td>44</td><td>1.98</td><td>2.29</td></tr></tbody></table></div>
+    <p><i>Drosophila</i> (fruit flies) have generation times of 10–12 days, so seasonal changes in rainfall and other environmental conditions can drive seasonal fluctuations in chromosome rearrangements in species such as <i>D. persimilis</i> and <i>D. subobscura</i>. <i>Drosophila</i> body size (for which wing centroid size serves as a proxy measure) correlates with reproductive fitness. Banu Şebnem Önder and Cansu Fidan Aksoy measured the wing sizes of members of a <i>D. melanogaster</i> population in Yeşilöz, Turkey, that were collected monthly between May and October over three years. Their research suggests that <i>Drosophila</i> collected in relatively cooler months should tend to have lower reproductive fitness, as is illustrated by the finding that <span class="blank"></span></p>
+    <p class="stem">Which choice most effectively uses data from the table to complete the assertion?</p>
+    <ol class="choices">
+      <li><span class="bub">A</span><span>the average male wing centroid size was 1.98 mm in May but was 2.31 mm in June.</span></li>
+      <li class="right"><span class="bub">B</span><span>the average female wing centroid size was smaller in May than in July.</span></li>
+      <li><span class="bub">C</span><span>the average male wing centroid size was consistently smaller than the average female wing centroid size in all four months in the table.</span></li>
+      <li><span class="bub">D</span><span>the average monthly low temperature was lower in May than in June.</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>B</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>주장을 표의 열로 바꾼다. "서늘한 달 → 번식력 낮음"에서 번식력은 날개 크기로 잰다. 그러니 기온이 낮은 달과 날개가 작은 달이 짝지어진 비교가 필요하다.</dd></div>
+    <div><dt>풀이</dt><dd>5월(73/50°F)은 7월(87/62°F)보다 서늘하고, 암컷 날개는 5월 2.27mm, 7월 2.31mm로 5월이 작다. 서늘한 달과 작은 날개가 짝이 맞으니 B다.</dd></div>
+    <div><dt>함정</dt><dd>A는 6월 수컷 값을 2.31로 잘못 읽었다(실제 2.01, 2.31은 암컷 값). C는 사실이지만 수컷과 암컷 비교라 기온과 상관없다. D는 기온만 있고 날개가 없다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2023년부터 표의 숫자와 생물만 바꿔 나왔고, 9·10월 시험에도 나왔다. 판본이 많다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qhmick7ejr">
+  <div class="q-top"><span class="q-no">HARD RW 12<span class="hard-chip">HARD</span></span><span class="q-skill">Expression of Ideas · Rhetorical Synthesis</span></div>
+  <div class="ad"><h3>"처음 듣는 사람에게 설명하라"는 정의를 담으라는 말</h3><p>사람 이야기보다 규칙 설명이 먼저다.</p></div>
+  <div class="test">
+    <p>While researching a topic, a student has taken the following notes:</p>
+    <ul class="notes">
+      <li>The Highpointers Club is a hiking club.</li>
+      <li>One of the main goals among club members is to reach the highest points in all fifty US states.</li>
+      <li>Those who achieve this are called 50 Completers.</li>
+      <li>In Suk Han became a 50 Completer on November 15, 2013.</li>
+      <li>The highest point in Michigan is Mount Arvon, at 1,979 ft.</li>
+      <li>The highest point in New Mexico is Wheeler Peak, at 13,167 ft.</li>
+    </ul>
+    <p class="stem">Which choice most effectively uses information from the given sentences to explain the 50 Completers hiking challenge to a new audience?</p>
+    <ol class="choices">
+      <li><span class="bub">A</span><span>Hikers aiming to count themselves among the 50 Completers must reach not only Michigan's Mount Arvon but also the even higher peak of Wheeler Peak in New Mexico.</span></li>
+      <li class="right"><span class="bub">B</span><span>Not until after you have reached the highest points in all fifty US states—including Mount Arvon in Michigan and Wheeler Peak in New Mexico—can you include yourself among the 50 Completers of the Highpointers Club.</span></li>
+      <li><span class="bub">C</span><span>If you are looking for a new hiking challenge, consider joining the Highpointers Club, as did In Suk Han, a hiker who successfully reached the highest point in every US state.</span></li>
+      <li><span class="bub">D</span><span>On November 15, 2013, In Suk Han finally completed the feat of reaching the highest point in all fifty US states, including Mount Arvon in Michigan and Wheeler Peak in New Mexico.</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>B</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>목표가 "새로운 독자에게 설명"이면 그 말을 처음 듣는 사람이 알아야 할 것, 곧 정의와 조건을 다 담아야 한다.</dd></div>
+    <div><dt>풀이</dt><dd>50 Completers를 설명하려면 ① 50개 주의 최고점을 모두 오른다 ② Highpointers Club의 칭호다, 이 둘이 필요하다. 둘을 다 담은 것은 B뿐이다.</dd></div>
+    <div><dt>함정</dt><dd>A는 두 산만 오르면 되는 것처럼 말한다. C와 D는 In Suk Han이라는 사람 이야기라 "50 Completers"라는 말의 뜻을 설명하지 않는다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2024년 가을부터 같은 노트로 나왔고, 최근 1년 시험에 거의 매번 나왔다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="q8zdt9bmxi">
+  <div class="q-top"><span class="q-no">HARD RW 13<span class="hard-chip">HARD</span></span><span class="q-skill">Craft and Structure · Words in Context</span></div>
+  <div class="ad"><h3>안개가 지우는 것은 풍경이 아니라 "보이는 흔적"</h3><p>사전 뜻 여럿 가운데 문맥 하나를 고른다.</p></div>
+  <div class="test">
+    <p>The following text is adapted from John Matheus's 1925 short story "Fog."</p>
+    <p>The fog extended its tentacles over city and river, gradually obliterating traces of familiar landscapes. At five-thirty the old Panhandle bridge, supported by massive sandstone pillars, stalwart, as when erected fifty years before to serve a generation now passed behind the portals of life, had become a spectral outline against the sky.</p>
+    <p class="stem">As used in the text, what does the word "traces" most nearly mean?</p>
+    <ol class="choices">
+      <li><span class="bub">A</span><span>Debris</span></li>
+      <li><span class="bub">B</span><span>Copies</span></li>
+      <li class="right"><span class="bub">C</span><span>Indications</span></li>
+      <li><span class="bub">D</span><span>Remembrances</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>C</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>여러 뜻을 가진 단어는 그 문장에서 하는 일을 보고 뜻을 고른다. 보기 넷이 모두 trace의 사전 뜻일 수 있다는 것이 이 유형의 어려움이다.</dd></div>
+    <div><dt>풀이</dt><dd>안개가 익숙한 풍경의 traces를 지우고, 다리는 희미한 윤곽만 남는다. 풍경은 그대로 있고 그것을 알아보게 하는 "보이는 표시"가 사라진 것이다. 그래서 Indications, C다.</dd></div>
+    <div><dt>함정</dt><dd>D(Remembrances)는 "흔적 = 기억"으로 연결되어 끌리지만, 안개가 지우는 것은 사람의 기억이 아니라 눈앞의 장면이다. A(잔해)는 무언가 부서졌어야 하고, B(복사본)는 날씨 묘사와 상관없다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2024년에 처음 나왔고 2026년 5·8·10월 시험에 다시 나왔다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qd7gvtrvav">
+  <div class="q-top"><span class="q-no">HARD RW 14<span class="hard-chip">HARD</span></span><span class="q-skill">Information and Ideas · Inferences</span></div>
+  <div class="ad"><h3>피로가 둘째 날을 깎았다면, 빠른 노래의 효과는 더 컸다</h3><p>방해 요인이 결과를 어느 쪽으로 기울였는지 따진다.</p></div>
+  <div class="test">
+    <p>In a study of the effects of music tempo (as measured in beats per minute, or bpm) during exercise, participants jogged outdoors for 30 minutes while listening to Beyoncé's "Irreplaceable" (88 bpm) continuously. Researchers anticipated that when participants performed the same activity the following day while listening to Aerosmith's "Livin' on the Edge" (169 bpm), they would jog more quickly. Participants' performance on the second day, however, may have been negatively affected by tiredness from the first day. Thus, <span class="blank"></span></p>
+    <p class="stem">Which choice most logically completes the text?</p>
+    <ol class="choices">
+      <li class="right"><span class="bub">A</span><span>the results from the second day may lead to an underestimation of the effect of the faster song.</span></li>
+      <li><span class="bub">B</span><span>participants demonstrated a preference for one song over the other.</span></li>
+      <li><span class="bub">C</span><span>the researchers were unable to accurately measure how quickly participants jogged on the second day.</span></li>
+      <li><span class="bub">D</span><span>participants' prior familiarity with the songs may have contributed to differences in performance over the two days.</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>A</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>실험의 방해 요인(혼동 변수)이 나오면 그것이 결과를 크게 보이게 했는지, 작게 보이게 했는지를 따진다.</dd></div>
+    <div><dt>풀이</dt><dd>빠른 노래는 둘째 날에 들었고, 둘째 날은 피로 때문에 기록이 나빠졌을 수 있다. 그러면 빠른 노래의 효과는 실제보다 작게 측정된다. "과소평가"의 A다.</dd></div>
+    <div><dt>함정</dt><dd>C는 "속도를 정확히 잴 수 없었다"인데, 피로는 측정이 아니라 성과에 영향을 준 것이다. B(노래 선호)와 D(노래 친숙도)는 지문에 없는 새 이야기다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2025년 여름부터 나왔고 2026년 6·9·10월 시험에 나왔다.</dd></div>
+  </dl>
+</article>
+
+      <article class="q" data-item="qj2s6bik48">
+  <div class="q-top"><span class="q-no">HARD RW 15<span class="hard-chip">HARD</span></span><span class="q-skill">Information and Ideas · Inferences</span></div>
+  <div class="ad"><h3>"비교" 연구에서 쓸모없는 자료는 짝이 없는 자료</h3><p>야생 자료는 실험실 자료가 있어야 의미가 생긴다.</p></div>
+  <div class="test">
+    <p>Studying animals in a laboratory allows variables to be systematically controlled, but removing animals from their wild habitats can affect their behavior and biology in unforeseen ways. Given this, biologists Rebecca M. Calisi-Rodríguez and George E. Bentley examined research on brown-throated three-toed sloths and white-throated sparrows to see whether results from studies in the wild were consistent with the results of studies in the laboratory. Therefore, data showing that brown-throated three-toed sloths tend to sleep fewer than 10 hours per day in the wild would be irrelevant to Calisi-Rodríguez and Bentley's investigation if <span class="blank"></span></p>
+    <p class="stem">Which choice most logically completes the text?</p>
+    <ol class="choices">
+      <li><span class="bub">A</span><span>they tend to sleep more than 15 hours per day in the lab.</span></li>
+      <li><span class="bub">B</span><span>white-throated sparrows have low levels of corticosterone hormones outside of the breeding season in the wild.</span></li>
+      <li class="right"><span class="bub">C</span><span>this behavior pattern has not been studied in the lab.</span></li>
+      <li><span class="bub">D</span><span>such data have been collected for white-throated sparrows in laboratory settings but not in the wild.</span></li>
+    </ol>
+  </div>
+  <p class="answer reveal"><span class="tag">ANSWER</span>C</p>
+  <dl class="parts reveal">
+    <div><dt>핵심 이론</dt><dd>연구의 방법을 먼저 정리한다. 이 연구는 야생 결과와 실험실 결과를 견준다. 견줄 짝이 없는 자료는 쓸모가 없다.</dd></div>
+    <div><dt>풀이</dt><dd>나무늘보의 야생 수면 자료는 같은 행동의 실험실 자료가 있어야 비교에 쓰인다. 실험실에서 연구된 적이 없다면 쓸모없다. C다.</dd></div>
+    <div><dt>함정</dt><dd>A는 오히려 실험실 짝을 주어 야생 자료를 쓸모 있게 만든다(10시간 대 15시간이라는 차이). B와 D는 참새 이야기라 나무늘보 자료의 쓸모를 정하지 못한다.</dd></div>
+    <div><dt>선정 이유</dt><dd>2025년 가을부터 나왔고, 최근 1년 시험에 자주 나왔다.</dd></div>
+  </dl>
+</article>
+    </section>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var filters = document.querySelectorAll('.filters button');
+  var groups = document.querySelectorAll('#tab-ad section.group');
+  filters.forEach(function (b) {
+    b.addEventListener('click', function () {
+      filters.forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      groups.forEach(function (g) { g.hidden = !(b.dataset.f === 'all' || g.dataset.sec === b.dataset.f); });
+    });
+  });
+  var ts = document.querySelectorAll('#toggle-ans, [data-toggle-ans]');
+  ts.forEach(function (t) {
+    t.addEventListener('click', function () {
+      var on = document.body.classList.toggle('hide-answers');
+      ts.forEach(function (x) { x.setAttribute('aria-pressed', on ? 'true' : 'false'); x.textContent = on ? '정답 보이기' : '정답 가리기'; });
+    });
+  });
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var el = document.getElementById(b.dataset.copy), text = el.textContent;
+      var done = function () { b.textContent = '복사됨'; setTimeout(function () { b.textContent = '복사'; }, 1500); };
+      var fallback = function () { var r = document.createRange(); r.selectNodeContents(el); var s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = '선택됨'; };
+      try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+    });
+  });
+
+  // Tabs: #hard in the link opens the hard tab
+  var tabs = [['t-ad', 'tab-ad'], ['t-hard', 'tab-hard']];
+  function show(id) {
+    tabs.forEach(function (p) {
+      var on = p[0] === id;
+      document.getElementById(p[0]).setAttribute('aria-selected', on ? 'true' : 'false');
+      document.getElementById(p[0]).setAttribute('aria-pressed', on ? 'true' : 'false');
+      document.getElementById(p[1]).hidden = !on;
+    });
+  }
+  tabs.forEach(function (p) { document.getElementById(p[0]).addEventListener('click', function () { show(p[0]); }); });
+  if (location.hash === '#hard') show('t-hard');
+
+  // Exam-month strips: the 27 exam months we hold, filled where the group appeared
+  var EXAMS = ['2023-03','2023-05','2023-06','2023-10','2023-11','2023-12','2024-03','2024-05','2024-06','2024-08','2024-10','2024-11','2024-12',
+    '2025-03','2025-05','2025-06','2025-08','2025-09','2025-10','2025-11','2025-12','2026-03','2026-05','2026-06','2026-08','2026-09','2026-10'];
+  var THIN = ['2023-03','2023-05','2023-06','2023-10','2023-11'], LAST3 = ['2026-08','2026-09','2026-10'];
+  document.querySelectorAll('.strip').forEach(function (s) {
+    var seen = s.dataset.m.split(' '), years = {};
+    EXAMS.forEach(function (m) { (years[m.slice(0, 4)] = years[m.slice(0, 4)] || []).push(m); });
+    s.setAttribute('aria-label', '나온 시험: ' + seen.join(', '));
+    Object.keys(years).forEach(function (y) {
+      var row = document.createElement('div'); row.className = 'yr';
+      var b = document.createElement('b'); b.textContent = y; row.appendChild(b);
+      years[y].forEach(function (m) {
+        var d = document.createElement('i'); d.className = 'dot' + (seen.indexOf(m) >= 0 ? ' on' : '') +
+          (THIN.indexOf(m) >= 0 ? ' thin' : '') + (LAST3.indexOf(m) >= 0 ? ' last3' : '');
+        d.textContent = String(+m.slice(5)); d.title = m; row.appendChild(d);
+      });
+      s.appendChild(row);
+    });
+  });
+
+  // Backtest bars, scaled so 40% fills the cell
+  document.querySelectorAll('td.bt').forEach(function (td) {
+    var w = document.createElement('div'); w.className = 'bars';
+    [['top', td.dataset.t], ['', td.dataset.b]].forEach(function (p) {
+      var s = document.createElement('span'); if (p[0]) s.className = p[0];
+      s.style.width = Math.min(100, +p[1] / 40 * 100) + '%'; w.appendChild(s);
+    });
+    td.appendChild(w);
+  });
+})();
+</script>
+
+</body></html>
