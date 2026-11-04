@@ -10,6 +10,7 @@ import { createChecklist } from '@/lib/assignment-checklist-store';
 import type { Topic } from './blog-writer';
 
 const LEAD_CHANNEL = 'C07FK85V9PD';
+const DEFAULT_TOPIC_COUNT = 2;
 
 function parsePlatform(word: string | undefined): Platform {
   if (!word) return 'both';
@@ -127,9 +128,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // 0b. 주제 추천해줘 (개수 미지정 → 5개)
+  // 0b. 주제 추천해줘 (개수 미지정 → DEFAULT_TOPIC_COUNT개)
   if (/주제\s*(?:추천해줘|뽑아줘|알려줘|추천)/.test(text) && !topicCountMatch) {
-    after(() => handleTopicSuggest(5, channel, threadTs).catch(async err => {
+    after(() => handleTopicSuggest(DEFAULT_TOPIC_COUNT, channel, threadTs).catch(async err => {
       await postSlack(channel, `주제 생성 오류: ${err.message}`, threadTs);
     }));
     return NextResponse.json({ ok: true });
