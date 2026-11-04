@@ -34,6 +34,8 @@ const EXPECTED_CRONS: Record<string, string> = {
   '/api/cron/first-lesson-notice': '*/10 * * * *',
   // 미완료 학생 배정 체크리스트 DM 알림 (3시간마다)
   '/api/cron/assignment-checklist-reminder': '0 */3 * * *',
+  // Plaud 토큰 자동 갱신 (매일 10:00 KST = 01:00 UTC)
+  '/api/cron/plaud-token-keepalive': '0 1 * * *',
 };
 
 function readCrons(): { path: string; schedule: string }[] {
