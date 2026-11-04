@@ -56,3 +56,10 @@ describe('중복 이벤트 처리', () => {
     expect(generateTopics).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('기본 주제 개수', () => {
+  it('REQ-005: 개수 없이 "주제 추천해줘"하면 2개를 생성한다', async () => {
+    await POST(eventRequest({ type: 'message', channel: BLOG_CHANNEL, ts: '500.1', text: '<@UBOT> 블로그 주제 추천해줘' }));
+    expect(postSlack).toHaveBeenCalledWith(BLOG_CHANNEL, '주제 2개를 생성 중입니다...', '500.1');
+  });
+});
