@@ -108,7 +108,7 @@ describe('CoachResponseForm — 옵션 1·2', () => {
 
 describe('CoachResponseForm — 학생 가능 시간 제한', () => {
   // 2099-02-02는 월요일. 학생 현지(UTC) 월요일 01:00~03:00만 가능 -> KST 월요일 10:00~12:00
-  const slots = [{ weekday: 0, start_minute_local: 60, end_minute_local: 180, tz: 'UTC', effective_from: null, effective_until: null, notes: null }];
+  const slots = [{ weekday: 1, start_minute_local: 60, end_minute_local: 180, tz: 'UTC', effective_from: null, effective_until: null, notes: null }];
 
   it('가능 시간 밖이면 입력칸에 경고를 보이고 보내지 않는다', async () => {
     render(<CoachResponseForm info={info()} slots={slots} />);
