@@ -49,4 +49,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add blog-agent/data/posted-topics.json blog-agent/data/today-topics.json
           git diff --staged --quiet || git commit -m "chore: daily topic suggestions $(date -u +%Y-%m-%d)"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git push

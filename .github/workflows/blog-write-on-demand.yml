@@ -35,8 +35,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # 최신 today-topics.json 포함
-          fetch-depth: 1
+          # 최신 today-topics.json 포함 + push 전 rebase를 위해 전체 히스토리
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -69,4 +69,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add content/posts/ blog-agent/data/today-topics.json
           git diff --staged --quiet || git commit -m "feat(blog): auto-publish topic ${{ inputs.topic_n }} to ${{ inputs.platform }} [skip ci]"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git push
