@@ -45,7 +45,7 @@
 ### Architecture
 - 입력: 아티팩트 HTML 사본 `content/posts/data/nov-sat-artifact-source.html`
 - `scripts/blog/nov-sat-lib.mjs`: jsdom으로 `article.q` 34개를 추출(`extractProblems`)하고 블로그용 HTML 카드로 변환(`renderProblem`), 원고의 마커 자리에 끼워 본문 완성(`buildPostHtml`)
-- `scripts/blog/nov-sat-voice.mjs`: 핵심 이론/함정/왜 이 문제인가를 합니다체로 옮긴 텍스트(아티팩트 원문은 "~다" 체)
+- `scripts/blog/nov-sat-voice.mjs`: 핵심 이론/함정을 합니다체로 옮긴 텍스트(아티팩트 원문은 "~다" 체)
 - `content/posts/2026-11-04-nov-sat-recurring-34-problems-landing.md`: 원고. 문제 자리에는 `<!--PROBLEMS:math-->`, `<!--PROBLEMS:rw-->` 마커
 - `scripts/blog/build-nov-sat-post.mjs`: 로컬 미리보기용으로 `content/posts/data/nov-sat-34.html` 생성(커밋 안 함)
 - `scripts/blog/publish-nov-sat-34.js`: 발행 시 본문을 즉석 빌드해 Supabase에 upsert. 기본 draft, 이미 공개된 글을 draft로 덮어쓰려 하면 중단

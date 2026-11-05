@@ -24,22 +24,23 @@ async function isAlreadyPublished() {
 
 async function main() {
   if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY 가 .env.local 에 없습니다');
-  const { buildPostHtml, extractProblems, parsePublishArgs } = await import('./nov-sat-lib.mjs');
+  const { buildPostHtml, extractProblems, parsePublishArgs, extractPostTitle } = await import('./nov-sat-lib.mjs');
   const { isDraft } = parsePublishArgs(process.argv.slice(2));
   if (isDraft && (await isAlreadyPublished())) {
     throw new Error('이미 공개된 글입니다. draft로 덮어쓰면 비공개로 바뀌므로 중단합니다. 내용을 갱신하려면 --publish 를 쓰세요.');
   }
-  const content = buildPostHtml(fs.readFileSync(MD, 'utf8'), extractProblems(fs.readFileSync(SOURCE, 'utf8')));
+  const md = fs.readFileSync(MD, 'utf8');
+  const content = buildPostHtml(md, extractProblems(fs.readFileSync(SOURCE, 'utf8')));
   const post = {
     id: ID,
-    title: '11월 SAT 전에 풀어 볼 반복 출제 유형 34문항 — 숫자만 바뀌어 돌아온 문제들',
+    title: extractPostTitle(md),
     content,
     excerpt: '2023년 3월부터 2026년 10월까지 SAT를 비교하니 글자가 같은 문제는 드물었고, 같은 뼈대에 숫자·이름·소재만 바꾼 문제가 반복됐습니다. Math 15문항, RW 19문항을 핵심 이론과 함정까지 정리했습니다.',
     description: '2023년 3월~2026년 10월 SAT를 비교한 결과, 반복된 것은 문제가 아니라 뼈대였습니다. Math 15문항, RW 19문항을 핵심 이론과 함정까지 정리했습니다.',
     featured_image: 'https://ualucbrrfvysmfytkdew.supabase.co/storage/v1/object/public/uploads/2026/11/1793776809145-3ed49a47-2026-11-04-nov-sat-recurring-34-problems-thumbnail.png',
     category: 'SAT학습팁',
     tags: ['SAT', '11월 SAT', 'SAT 기출 문제', 'SAT Math', 'SAT RW'],
-    author: '배병윤',
+    author: 'SuperfastSAT',
     date: '2026-11-04',
     focus_keyword: 'SAT 반복 출제 유형',
     cta_featured: false,
