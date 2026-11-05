@@ -69,15 +69,23 @@ describe('groupByRecipient (REQ-002)', () => {
   const tagged = row({ message_ts: '300.3', request_text: '<@U09KUDME9NW>\n박서진 배정' });
   const plain = row({ message_ts: '400.4', request_text: '정민채 배정' });
 
-  it('고정 담당자는 전 건, 태그된 사용자는 자신이 태그된 건만 받는다', () => {
+  it('태그가 있는 건은 태그된 사람에게만, 태그가 없는 건은 고정 담당자에게 간다', () => {
     const g = groupByRecipient([tagged, plain]);
-    expect(g.get(fixedA)).toEqual([tagged, plain]);
-    expect(g.get(fixedB)).toEqual([tagged, plain]);
     expect(g.get('U09KUDME9NW')).toEqual([tagged]);
+    expect(g.get(fixedA)).toEqual([plain]);
+    expect(g.get(fixedB)).toEqual([plain]);
   });
 
-  it('고정 담당자가 태그돼도 그 건이 중복되지 않는다', () => {
-    const self = row({ request_text: `<@${fixedA}>\n강민재 배정` });
-    expect(groupByRecipient([self]).get(fixedA)).toEqual([self]);
+  it('고정 담당자라도 다른 사람만 태그된 건은 받지 않는다', () => {
+    const forB = row({ request_text: `<@${fixedB}>\n강민재 배정` });
+    const g = groupByRecipient([forB]);
+    expect(g.get(fixedB)).toEqual([forB]);
+    expect(g.has(fixedA)).toBe(false);
+  });
+
+  it('여러 명을 태그하면 각자 1통씩 받는다', () => {
+    const two = row({ request_text: '<@U09KUDME9NW> <@U07FMTVHYBX>\n박서진 배정' });
+    const g = groupByRecipient([two]);
+    expect([...g.keys()].sort()).toEqual(['U07FMTVHYBX', 'U09KUDME9NW']);
   });
 });

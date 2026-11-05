@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchOpenChecklists, markReminded } from '@/lib/assignment-checklist-store';
-import { buildReminderText, groupByRecipient, pickDueChecklists, recipientsOf, sendDirectMessage } from '@/lib/assignment-checklist-reminder';
+import { fetchOpenChecklists, markReminded, saveChecked } from '@/lib/assignment-checklist-store';
+import { buildReminderText, groupByRecipient, pickDueChecklists, recipientsOf, sendDirectMessage, type OpenChecklist } from '@/lib/assignment-checklist-reminder';
+import { fetchLiveChecklist } from '@/lib/slack-assignment-checklist';
+
+/** Slack 의 현재 상태를 반영한 행. 다 체크됐거나 글이 지워졌으면 닫고 null. 조회 실패 시에는 DB 기준으로 알린다 */
+async function refresh(row: OpenChecklist): Promise<OpenChecklist | null> {
+  let live;
+  try {
+    live = await fetchLiveChecklist(row.channel, row.message_ts);
+  } catch (err) {
+    console.error(`[assignment-checklist-reminder] ${row.message_ts} 조회 실패:`, err);
+    return row;
+  }
+  if (live && live.checkedIds.length < live.total) return { ...row, checked_ids: live.checkedIds };
+  await saveChecked(row.channel, row.message_ts, live?.checkedIds ?? row.checked_ids, true)
+    .catch((err) => console.error(`[assignment-checklist-reminder] ${row.message_ts} 닫기 실패:`, err));
+  return null;
+}
 
 export async function GET(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET;
@@ -10,7 +26,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const now = new Date();
-    const due = pickDueChecklists(await fetchOpenChecklists(), now);
+    const refreshed = await Promise.all(pickDueChecklists(await fetchOpenChecklists(), now).map(refresh));
+    const due = refreshed.filter((r): r is OpenChecklist => r !== null);
     if (due.length === 0) return NextResponse.json({ ok: true, reminded: 0 });
 
     // 한 수신자의 전송 실패가 다른 수신자 DM 을 막지 않게 하고, 수신자 전원에게 간 건만 알림 시각을 갱신한다
