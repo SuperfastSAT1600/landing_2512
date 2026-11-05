@@ -46,13 +46,7 @@ function convertTest(test, doc) {
     });
     ol.replaceWith(wrap);
   });
-  root.querySelectorAll('p.spr').forEach((p) => {
-    const q = p.querySelector('b');
-    q.remove();
-    p.replaceWith(Object.assign(doc.createElement('p'), {
-      innerHTML: '<em>Student-produced response</em> (보기 없이 답을 직접 구하는 문항)',
-    }));
-  });
+  root.querySelectorAll('p.spr').forEach((p) => p.remove());
   root.querySelectorAll('.t-wrap').forEach((w) => w.setAttribute('style', 'overflow-x:auto'));
   root.querySelectorAll('table').forEach((t) => {
     t.classList.add('nsat-table');
@@ -104,7 +98,7 @@ export function extractProblems(htmlSource) {
       testHtml: escDollar(converted.innerHTML.replace(/\s*\n\s*/g, ' ').trim()),
       choices,
       answer,
-      parts: { theory: part('핵심 이론'), solution: part('풀이'), trap: part('함정'), reason: part('선정 이유') },
+      parts: { theory: part('핵심 이론'), solution: part('풀이'), trap: part('함정') },
     };
   });
 }
@@ -127,7 +121,6 @@ export function renderProblem(p) {
     `<p><strong>정답</strong> ${p.answer}</p>`,
     `<p><strong>핵심 이론</strong><br>${v.theory}</p>`,
     `<p><strong>함정</strong><br>${v.trap}</p>`,
-    `<p><strong>왜 이 문제인가</strong><br>${v.reason}</p>`,
     `</div></details>`,
     `</div>`,
   ].join('');
@@ -156,6 +149,11 @@ export const TABLE_CSS = `<style>
 .nsat-table td::before{content:attr(data-label);font-weight:600;color:#6b7280;text-align:left;flex:none;max-width:48%}
 }
 </style>`;
+
+// 원고 첫 줄의 H1이 글 제목이다(발행 스크립트가 DB title로 쓴다).
+export function extractPostTitle(md) {
+  return md.match(/^#\s+(.+)$/m)[1].trim();
+}
 
 export function parsePublishArgs(argv) {
   return { isDraft: !argv.includes('--publish') };

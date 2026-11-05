@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { extractProblems, renderProblem, fracToLatex, buildPostHtml, parsePublishArgs } from '../nov-sat-lib.mjs';
+import { extractProblems, renderProblem, fracToLatex, buildPostHtml, parsePublishArgs, extractPostTitle } from '../nov-sat-lib.mjs';
 import { JSDOM } from 'jsdom';
 import { VOICE } from '../nov-sat-voice.mjs';
 
@@ -21,7 +21,7 @@ test('34 problems: 15 Math, 19 RW', () => {
 test('every problem has id, skill, answer and all four parts', () => {
   for (const p of problems) {
     assert.ok(p.id && p.skill && p.answer, `missing basics in ${p.id}`);
-    for (const k of ['theory', 'solution', 'trap', 'reason']) assert.ok(p.parts[k], `${p.id} missing ${k}`);
+    for (const k of ['theory', 'solution', 'trap']) assert.ok(p.parts[k], `${p.id} missing ${k}`);
   }
 });
 
@@ -69,6 +69,27 @@ test('answers are always inside a details block, problem text is outside', () =>
 });
 
 // REQ-003 / REQ-005
+test('student-produced response notice is not rendered', () => {
+  for (const p of problems) assert.ok(!/Student-produced response/.test(renderProblem(p)), p.id);
+});
+
+test('each problem marker sits under its own section heading', () => {
+  const md = fs.readFileSync(path.join(here, '../../../content/posts/2026-11-04-nov-sat-recurring-34-problems-landing.md'), 'utf8');
+  const at = (re) => md.search(re);
+  assert.ok(at(/## Math 15문항/) < at(/PROBLEMS:math/) && at(/PROBLEMS:math/) < at(/## RW 19문항/), 'Math marker must follow the Math heading');
+  assert.ok(at(/## RW 19문항/) < at(/PROBLEMS:rw/) && at(/PROBLEMS:rw/) < at(/## 이것 기억하세요/), 'RW marker must follow the RW heading');
+});
+
+test('manuscript _meta titles agree with the H1', () => {
+  const md = fs.readFileSync(path.join(here, '../../../content/posts/2026-11-04-nov-sat-recurring-34-problems-landing.md'), 'utf8');
+  const title = extractPostTitle(md);
+  assert.equal([...md.matchAll(/^\s*(?:title|headline): "(.+)"$/gm)].filter((m) => m[1] !== title).length, 0, 'stale title in _meta');
+});
+
+test('extractPostTitle reads the first h1 of the manuscript', () => {
+  assert.equal(extractPostTitle('# 제목입니다\n\n본문'), '제목입니다');
+});
+
 test('buildPostHtml inlines all 34 problems and strips the _meta block', () => {
   const md = fs.readFileSync(path.join(here, '../../../content/posts/2026-11-04-nov-sat-recurring-34-problems-landing.md'), 'utf8');
   const html = buildPostHtml(md, problems);
@@ -111,14 +132,15 @@ test('the answer is hidden until the details block is opened', () => {
     const inner = html.slice(html.indexOf('</summary>'));
     assert.match(inner, /정답/);
     assert.ok(!/<strong>풀이<\/strong>/.test(inner), `${p.id} still shows 풀이`);
-    for (const label of ['핵심 이론', '함정', '왜 이 문제인가']) assert.ok(inner.includes(`<strong>${label}</strong>`), `${p.id} missing ${label}`);
+    for (const label of ['핵심 이론', '함정']) assert.ok(inner.includes(`<strong>${label}</strong>`), `${p.id} missing ${label}`);
+    assert.ok(!inner.includes('왜 이 문제인가'), `${p.id} still shows 왜 이 문제인가`);
   }
 });
 
 test('every explanation is written in 합니다체 (each sentence ends with 니다.)', () => {
   assert.deepEqual(Object.keys(VOICE).sort(), problems.map((p) => p.id).sort());
   for (const [id, v] of Object.entries(VOICE)) {
-    for (const k of ['theory', 'trap', 'reason']) {
+    for (const k of ['theory', 'trap']) {
       assert.ok(v[k], `${id}.${k} empty`);
       for (const s of plain(v[k]).split(/(?<=[.])\s+/)) assert.match(s, /니다\.$/, `${id}.${k}: "${s}"`);
     }
