@@ -47,7 +47,7 @@ describe('buildChecklistBlocks (REQ-002)', () => {
     expect(el.action_id).toBe('assignment_checklist');
     expect(el.options).toHaveLength(ASSIGNMENT_TASKS.length);
     expect(el.initial_options).toBeUndefined();
-    expect(JSON.stringify(blocks)).toContain('0/9');
+    expect(JSON.stringify(blocks)).toContain('0/10');
   });
 
   it('체크된 항목은 initial_options 와 설명을 가진다', () => {
@@ -56,7 +56,7 @@ describe('buildChecklistBlocks (REQ-002)', () => {
     expect(el.initial_options).toHaveLength(1);
     expect(el.initial_options![0].value).toBe('t1');
     expect(el.options![0].description?.text).toBe('✔ 홍길동 10/27 14:03');
-    expect(JSON.stringify(blocks)).toContain('1/9');
+    expect(JSON.stringify(blocks)).toContain('1/10');
   });
 
   it('전부 체크되면 완료 문구가 붙는다', () => {

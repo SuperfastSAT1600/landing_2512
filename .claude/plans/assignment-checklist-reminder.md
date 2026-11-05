@@ -26,6 +26,12 @@ Slack 메시지만으로는 "진행 중인 체크리스트"를 찾을 수 없어
 - **Acceptance Criteria**: CRON_SECRET 불일치 401. 대상이 없으면 전송하지 않음. SLACK_BOT_TOKEN 없으면 아무것도 하지 않음. `vercel.json` 크론과 cron 설정 테스트 일치. 마이그레이션 162.
 - **Verification**: (TEST) `src/app/api/cron/assignment-checklist-reminder/__tests__/route.test.ts`, `src/__tests__/vercel-cron-config.test.ts`, (MANUAL) 마이그레이션 적용 후 실제 DM 수신
 
+### REQ-004: 보내기 전 Slack 상태 확인
+- **Priority**: Must
+- **Description**: 수신자는 요청 글에서 태그된 사람이고, 태그가 없으면 담당자 2명이다. 보내기 직전에 `conversations.replies` 로 체크리스트를 다시 읽어 다 체크됐거나 글이 지워진 건은 닫고 알리지 않는다.
+- **Acceptance Criteria**: 조회가 실패하면 DB 기준으로 알린다. 남은 항목은 Slack 체크 상태로 계산한다.
+- **Verification**: (TEST) `src/app/api/cron/assignment-checklist-reminder/__tests__/route.test.ts`
+
 ## Technical Design
 
 ### Architecture
@@ -45,6 +51,7 @@ Slack 메시지만으로는 "진행 중인 체크리스트"를 찾을 수 없어
 | REQ-001 | 체크리스트 추적 저장     | (TEST)       | `src/lib/__tests__/assignment-checklist-reminder.test.ts`                   | Passing |
 | REQ-002 | 대상 선별·문구           | (TEST)       | `src/lib/__tests__/assignment-checklist-reminder.test.ts`                   | Passing |
 | REQ-003 | cron·DM 전송             | (TEST)       | `src/app/api/cron/assignment-checklist-reminder/__tests__/route.test.ts`    | Passing |
+| REQ-004 | 보내기 전 Slack 상태 확인 | (TEST)       | `src/app/api/cron/assignment-checklist-reminder/__tests__/route.test.ts`    | Passing |
 
 ## Implementation Order
 

@@ -15,6 +15,7 @@ export const ASSIGNMENT_TASKS = [
   { id: 't7', label: '코치와 학생 매칭' },
   { id: 't8', label: '코치가 스케줄 등록' },
   { id: 't9', label: '단톡방에 학생 스케줄 링크 공지사항에 올려주기' },
+  { id: 't10', label: '단톡방에 출결관리 매니저 초대하기' },
 ] as const;
 
 /** 체크된 항목 id → 설명("✔ 사용자 MM/DD HH:mm"). 없으면 미체크 */
@@ -99,6 +100,29 @@ export function postChecklist(channel: string, threadTs: string): Promise<string
 
 export function updateChecklist(channel: string, ts: string, checked: CheckedMap): Promise<string | undefined> {
   return slackCall('chat.update', { channel, ts, text: '학생 배정 업무 체크리스트', blocks: buildChecklistBlocks(checked) });
+}
+
+export interface LiveChecklist {
+  checkedIds: string[];
+  total: number;
+}
+
+/** Slack 에 남아 있는 체크리스트의 현재 상태. 글이나 체크리스트가 지워졌으면 null, 그 밖의 조회 실패는 던진다 */
+export async function fetchLiveChecklist(channel: string, ts: string): Promise<LiveChecklist | null> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) throw new Error('SLACK_BOT_TOKEN not set');
+  const params = new URLSearchParams({ channel, ts, limit: '1', inclusive: 'true' });
+  const res = await fetch(`https://slack.com/api/conversations.replies?${params}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(5000),
+  });
+  const data = (await res.json()) as { ok?: boolean; error?: string; messages?: { ts?: string; blocks?: ChecklistBlock[] }[] };
+  if (data.error === 'thread_not_found' || data.error === 'message_not_found') return null;
+  if (!data.ok) throw new Error(`Slack API error: ${data.error}`);
+  const blocks = data.messages?.find((m) => m.ts === ts)?.blocks;
+  const element = blocks?.find((b) => b.type === 'actions')?.elements?.find((e) => e.action_id === CHECKLIST_ACTION_ID);
+  if (!element) return null;
+  return { checkedIds: Object.keys(readCheckedMap(blocks)), total: element.options?.length ?? 0 };
 }
 
 /** 메시지의 기존 체크박스(initial_options)에서 이전 체크 상태를 읽는다 */

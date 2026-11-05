@@ -1,7 +1,7 @@
 /** 미완료 배정 체크리스트 DM 알림: 대상 선별과 문구 (순수) + 전송 */
 import { ASSIGNMENT_TASKS } from '@/lib/slack-assignment-checklist';
 
-/** 모든 건을 받는 고정 담당자 (2017newshcoach, minjae.lee90). 요청 글에서 태그된 사용자는 그 건만 추가로 받는다 */
+/** 태그가 없는 요청 글을 받는 기본 담당자 (2017newshcoach, minjae.lee90). 태그가 있으면 태그된 사람만 받는다 */
 export const REMINDER_RECIPIENTS = ['U07FK6LSK7C', 'U07FMTVHYBX'];
 
 /** cron 이 3시간마다 도는 시각 오차를 감안해 3시간보다 조금 짧게 잡는다 */
@@ -34,9 +34,10 @@ export function extractMentionedUserIds(text: string): string[] {
   return [...new Set([...text.matchAll(MENTION)].map((m) => m[1]))];
 }
 
-/** 고정 담당자 + 요청 글에서 태그된 사용자 */
+/** 요청 글에서 태그된 사용자. 태그가 없으면 고정 담당자 */
 export function recipientsOf(row: OpenChecklist): string[] {
-  return [...new Set([...REMINDER_RECIPIENTS, ...extractMentionedUserIds(row.request_text)])];
+  const tagged = extractMentionedUserIds(row.request_text);
+  return tagged.length > 0 ? tagged : REMINDER_RECIPIENTS;
 }
 
 /** 수신자별로 자기가 받을 건만 모은다 (한 사람에게 DM 1통) */
