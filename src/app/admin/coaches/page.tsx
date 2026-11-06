@@ -123,33 +123,33 @@ export default function AdminCoachesPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#151719] flex items-center justify-center text-gray-500">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-500">
                 Loading...
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#151719] text-gray-100 font-sans">
+        <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
             <main className="p-8 pb-20 max-w-4xl space-y-6">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold text-white">Coach Management</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">Coach Management</h1>
                     <div className="flex items-center gap-2">
                         <Link
                             href="/admin/coaches/status"
-                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold text-gray-300 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-100 rounded-lg text-sm font-bold text-gray-700 transition-colors"
                         >
                             <ToggleRight size={15} /> 상태 관리
                         </Link>
                         <Link
                             href="/admin/coaches/onboarding"
-                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold text-gray-300 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-100 rounded-lg text-sm font-bold text-gray-700 transition-colors"
                         >
                             <ClipboardList size={15} /> 프로필 작성 현황
                         </Link>
                         <button
                             onClick={() => setShowOnboardingModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold text-gray-300 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-100 rounded-lg text-sm font-bold text-gray-700 transition-colors"
                         >
                             <LinkIcon size={15} /> 링크 재발급
                         </button>
@@ -169,20 +169,20 @@ export default function AdminCoachesPage() {
                 )}
 
                 {showAddForm && (
-                    <div className="p-5 bg-[#1e2023] rounded-xl border border-white/5 space-y-3">
+                    <div className="p-5 bg-white rounded-xl border border-gray-200 space-y-3">
                         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">새 코치 추가</p>
                         <div className="flex gap-3">
                             <input
                                 value={newCoach.name}
                                 onChange={e => setNewCoach(s => ({ ...s, name: e.target.value }))}
                                 placeholder="이름"
-                                className="flex-1 bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
+                                className="flex-1 bg-gray-50 border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-gray-900 outline-none"
                             />
                             <input
                                 value={newCoach.slug}
                                 onChange={e => setNewCoach(s => ({ ...s, slug: e.target.value }))}
                                 placeholder="slug (영문, 소문자)"
-                                className="flex-1 bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none font-mono"
+                                className="flex-1 bg-gray-50 border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-gray-900 outline-none font-mono"
                             />
                         </div>
                         <input
@@ -190,7 +190,7 @@ export default function AdminCoachesPage() {
                             value={newCoach.email}
                             onChange={e => setNewCoach(s => ({ ...s, email: e.target.value }))}
                             placeholder="이메일 (온보딩 링크 발송용, 선택)"
-                            className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
+                            className="w-full bg-gray-50 border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-gray-900 outline-none"
                         />
                         <div className="flex gap-2">
                             <button
@@ -202,16 +202,16 @@ export default function AdminCoachesPage() {
                             </button>
                             <button
                                 onClick={() => { setShowAddForm(false); setOnboardingUrl(null); setNewCoach({ name: '', slug: '', email: '' }); }}
-                                className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold text-gray-400 transition-colors"
+                                className="px-4 py-2 bg-gray-100 hover:bg-gray-100 rounded-lg text-sm font-bold text-gray-500 transition-colors"
                             >
                                 취소
                             </button>
                         </div>
                         {onboardingUrl && (
                             <div className="mt-1 p-3 bg-green-500/10 border border-green-500/20 rounded-lg space-y-2">
-                                <p className="text-xs font-medium text-green-400">코치가 추가됐습니다. 아래 링크를 코치에게 전달해주세요.</p>
+                                <p className="text-xs font-medium text-green-600">코치가 추가됐습니다. 아래 링크를 코치에게 전달해주세요.</p>
                                 <div className="flex items-center gap-2">
-                                    <code className="flex-1 text-xs text-gray-300 bg-black/30 px-2 py-1.5 rounded truncate">{onboardingUrl}</code>
+                                    <code className="flex-1 text-xs text-gray-700 bg-black/30 px-2 py-1.5 rounded truncate">{onboardingUrl}</code>
                                     <button
                                         onClick={handleCopyUrl}
                                         className="shrink-0 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 rounded text-xs font-bold text-white transition-colors"
