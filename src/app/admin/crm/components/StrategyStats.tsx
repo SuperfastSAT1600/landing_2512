@@ -36,8 +36,8 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
   // 탭 = 전략 라이브러리 카테고리. 라이브러리에서 추가·개명하면 그대로 반영된다 (146).
   const { categories } = useStrategyCategories(segment ?? 'b2c', adminKey);
   const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [preset, setPreset] = useState<Preset>('last_6m');
-  const [range, setRange] = useState(() => getPresetRange('last_6m'));
+  const [preset, setPreset] = useState<Preset>('this_month');
+  const [range, setRange] = useState(() => getPresetRange('this_month'));
   const [data, setData] = useState<StrategyTypeStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
