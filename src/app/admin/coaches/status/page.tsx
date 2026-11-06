@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ArrowLeft, ToggleLeft, ToggleRight, ChevronUp, ChevronDown, ChevronsUpDown, Search, X } from 'lucide-react';
 import Link from 'next/link';
 import { CoachData } from '@/lib/coaches-data';
-import type { CoachStat } from '@/app/api/admin/coaches/stats/route';
 import { groupSubjectDetails } from '@/lib/coach-subject-details';
 import { broadSubjectsFor } from '@/lib/coach-subject-options';
 import { SubjectEditorModal } from './SubjectEditorModal';
@@ -13,7 +12,7 @@ function getAdminKey(): string {
     return localStorage.getItem('admin_key') || '';
 }
 
-type SortKey = 'name' | 'hours';
+type SortKey = 'name';
 type SortDir = 'asc' | 'desc';
 type StatusFilter = 'all' | 'active' | 'inactive';
 
@@ -77,9 +76,7 @@ function SubjectCell({ coach }: { coach: CoachData }) {
 
 export default function CoachStatusPage() {
     const [coaches, setCoaches] = useState<CoachData[]>([]);
-    const [stats, setStats] = useState<Record<string, CoachStat>>({});
     const [loading, setLoading] = useState(true);
-    const [statLoading, setStatLoading] = useState(true);
     const [togglingSlug, setTogglingSlug] = useState<string | null>(null);
     const [editingSlug, setEditingSlug] = useState<string | null>(null);
     const [savingSubjects, setSavingSubjects] = useState(false);
@@ -107,25 +104,9 @@ export default function CoachStatusPage() {
         }
     }, []);
 
-    const fetchStats = useCallback(async () => {
-        setStatLoading(true);
-        try {
-            const res = await fetch('/api/admin/coaches/stats', {
-                headers: { 'x-admin-key': getAdminKey() },
-            });
-            const data: { stats?: Record<string, CoachStat> } = await res.json();
-            if (data.stats) setStats(data.stats);
-        } catch {
-            // non-fatal
-        } finally {
-            setStatLoading(false);
-        }
-    }, []);
-
     useEffect(() => {
         fetchCoaches();
-        fetchStats();
-    }, [fetchCoaches, fetchStats]);
+    }, [fetchCoaches]);
 
     const handleToggle = async (slug: string, currentActive: boolean) => {
         setTogglingSlug(slug);
@@ -193,9 +174,7 @@ export default function CoachStatusPage() {
         });
 
         const valueOf = (c: CoachData) => {
-            const s = stats[c.slug];
             if (sortKey === 'name') return c.name.toLowerCase();
-            if (sortKey === 'hours') return s?.totalHours ?? 0;
             return 0;
         };
 
@@ -211,11 +190,10 @@ export default function CoachStatusPage() {
                 : (va as number) - (vb as number);
             return sortDir === 'asc' ? cmp : -cmp;
         });
-    }, [coaches, stats, search, statusFilter, subjectFilter, sortKey, sortDir]);
+    }, [coaches, search, statusFilter, subjectFilter, sortKey, sortDir]);
 
     // 요약 집계 (활성 코치 기준)
     const activeCoaches = coaches.filter(c => c.isActive);
-    const summaryHours = activeCoaches.reduce((s, c) => s + (stats[c.slug]?.totalHours ?? 0), 0);
 
     if (loading) {
         return (
@@ -239,23 +217,6 @@ export default function CoachStatusPage() {
                         활성 {activeCoaches.length} · 전체 {coaches.length}
                     </span>
                 </div>
-
-                {/* 요약 카드 (활성 코치 기준) */}
-                {!statLoading && (
-                    <div className="grid grid-cols-3 gap-3">
-                        {[
-                            { label: '누적 수업 시간', value: Math.round(summaryHours * 10) / 10, unit: 'h', color: 'text-blue-700', desc: '활성 코치 contracted' },
-                        ].map(item => (
-                            <div key={item.label} className="bg-white rounded-xl border border-gray-200 px-5 py-4">
-                                <p className="text-[11px] text-gray-500 mb-1">{item.label}</p>
-                                <p className={`text-2xl font-bold ${item.color}`}>
-                                    {item.value}<span className="text-sm font-normal ml-1 text-gray-500">{item.unit}</span>
-                                </p>
-                                <p className="text-[11px] text-gray-400 mt-1">{item.desc}</p>
-                            </div>
-                        ))}
-                    </div>
-                )}
 
                 {error && (
                     <div className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600">
@@ -325,15 +286,12 @@ export default function CoachStatusPage() {
                             <tr>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 w-8">#</th>
                                 <Th label="코치" col="name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[160px]" />
-                                <Th label="누적 시간" col="hours" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">과목</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">상태</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {sorted.map((coach, idx) => {
-                                const stat = stats[coach.slug];
-                                const hours = stat?.totalHours ?? 0;
                                 const initials = coach.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
                                 const isInactive = !coach.isActive;
 
@@ -365,18 +323,6 @@ export default function CoachStatusPage() {
                                                     <p className="text-[10px] text-gray-400 font-mono">/{coach.slug}</p>
                                                 </div>
                                             </div>
-                                        </td>
-
-                                        {/* 누적 시간 */}
-                                        <td className="px-4 py-3">
-                                            {statLoading ? (
-                                                <span className="h-4 w-12 bg-gray-100 rounded animate-pulse inline-block" />
-                                            ) : (
-                                                <span className={`text-sm font-semibold ${hours > 0 ? 'text-blue-700' : 'text-gray-400'}`}>
-                                                    {hours}
-                                                    <span className="text-[11px] font-normal text-gray-500 ml-0.5">h</span>
-                                                </span>
-                                            )}
                                         </td>
 
                                         {/* 과목 */}
@@ -416,7 +362,7 @@ export default function CoachStatusPage() {
 
                             {sorted.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-400">
+                                    <td colSpan={4} className="px-4 py-12 text-center text-sm text-gray-400">
                                         조건에 맞는 코치가 없습니다.
                                     </td>
                                 </tr>
