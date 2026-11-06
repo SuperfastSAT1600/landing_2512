@@ -5,6 +5,7 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import type { CoachRoster as Roster } from '@/lib/coach-roster';
 import { RosterRow, StudentList } from './CoachCard';
 import { SubjectColumns } from './SubjectColumns';
+import { sortForSubject, type RosterSubject } from '@/lib/coach-roster-subject';
 import { CoachOrderEditor } from './CoachOrderEditor';
 import { MatchingCleanupPanel } from './MatchingCleanupPanel';
 
@@ -23,12 +24,12 @@ async function fetchRoster(adminKey: string): Promise<Loaded> {
   }
 }
 
-async function saveOrder(adminKey: string, slugs: string[]): Promise<string | null> {
+async function saveOrder(adminKey: string, subject: RosterSubject, slugs: string[]): Promise<string | null> {
   try {
     const res = await fetch('/api/admin/coaches/order', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-      body: JSON.stringify({ slugs }),
+      body: JSON.stringify({ subject, slugs }),
     });
     if (res.ok) return null;
     const json = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
@@ -51,12 +52,12 @@ function Summary({ roster }: { roster: Roster }) {
   );
 }
 
-// 리드 허브 '코치 현황' 탭 — 미배정 맨 위, 코치는 가능 과목별(SAT 왼쪽 · AP 오른쪽) 칸에 직접 정한 순서(API: sort_order → 등록순, CRM 미등록은 뒤)로 재원 학생 수와 명단
+// 리드 허브 '코치 현황' 탭 — 미배정 맨 위, 코치는 가능 과목별(SAT 왼쪽 · AP 오른쪽) 칸에 칸마다 직접 정한 순서(sort_order_sat/ap → sort_order → 등록순, CRM 미등록은 뒤)로 재원 학생 수와 명단
 export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
   const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [roster, setRoster] = useState<Roster | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState<RosterSubject | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -73,12 +74,13 @@ export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
   const reload = () => { setState('loading'); setReloadKey((k) => k + 1); };
 
   async function handleSave(slugs: string[]) {
+    if (!editing) return;
     setSaving(true);
     setSaveError(null);
-    const err = await saveOrder(adminKey, slugs);
+    const err = await saveOrder(adminKey, editing, slugs);
     setSaving(false);
     if (err) { setSaveError(err); return; }
-    setEditing(false);
+    setEditing(null);
     reload();
   }
 
@@ -94,23 +96,24 @@ export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
     );
   }
 
-  const registered = roster.coaches.filter((c) => c.registered && c.slug).map((c) => ({ slug: c.slug!, name: c.name }));
+  // 편집 중인 과목 칸의 CRM 등록 코치 — 그 칸 순서대로
+  const editItems = editing
+    ? sortForSubject(roster.coaches.filter((c) => c.registered && c.slug && c.subjects.includes(editing)), editing).map((c) => ({ slug: c.slug!, name: c.name }))
+    : [];
+  const startEdit = (s: RosterSubject) => { setSaveError(null); setEditing(s); };
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <Summary roster={roster} />
         <div className="ml-auto flex gap-2">
-          {!editing && (
-            <button onClick={() => { setSaveError(null); setEditing(true); }} title="코치 목록에 보일 순서" className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50">순서 편집</button>
-          )}
-          <button onClick={reload} disabled={state === 'loading' || editing} className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50">
+          <button onClick={reload} disabled={state === 'loading' || !!editing} className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50">
             <RefreshCw size={12} className={state === 'loading' ? 'animate-spin' : ''} /> 새로고침
           </button>
         </div>
       </div>
 
       {editing ? (
-        <CoachOrderEditor initial={registered} saving={saving} error={saveError} onSave={handleSave} onCancel={() => setEditing(false)} />
+        <CoachOrderEditor key={editing} subject={editing} initial={editItems} saving={saving} error={saveError} onSave={handleSave} onCancel={() => setEditing(null)} />
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1 space-y-4">
@@ -128,7 +131,7 @@ export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
               </RosterRow>
             </div>
           )}
-          <SubjectColumns coaches={roster.coaches} onOpen={onSelectStudentById} />
+          <SubjectColumns coaches={roster.coaches} onOpen={onSelectStudentById} onEditOrder={startEdit} />
         </div>
         <div className="lg:w-[400px] lg:shrink-0">
           <MatchingCleanupPanel adminKey={adminKey} reloadKey={reloadKey} onSelectStudentById={onSelectStudentById} />

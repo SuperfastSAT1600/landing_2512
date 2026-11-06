@@ -6,7 +6,7 @@ const student = (profileId: string, status: RosterStudent['status']): RosterStud
   ({ profileId, crmStudentId: null, name: profileId, status, subjects: [] });
 
 const coach = (key: string, name: string, students: RosterStudent[]): RosterCoach => ({
-  key, slug: key, name, subjects: [], linked: true, registered: true,
+  key, slug: key, name, subjects: [], isHeadCoach: false, order: { SAT: null, AP: null }, linked: true, registered: true,
   activeCount: 0, onboardingCount: 0, pausedCount: 0, students,
 });
 
