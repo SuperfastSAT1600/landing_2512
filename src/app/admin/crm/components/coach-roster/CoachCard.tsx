@@ -76,6 +76,7 @@ export function RosterRow({ label, count, hint, tone = 'default', testId, countT
 export function CoachCard({ coach, onOpen }: { coach: RosterCoach; onOpen: (crmStudentId: string) => void }) {
   const label = (
     <>
+      {coach.isHeadCoach && <span role="img" aria-label="대표 코치" title="대표 코치" className="shrink-0 text-amber-400">★</span>}
       <span data-testid="coach-name" className="truncate text-sm font-semibold text-gray-900">{coach.name}</span>
       {!coach.registered && <span className="shrink-0 rounded bg-amber-50 px-1 text-[10px] text-amber-700">CRM 미등록</span>}
       {coach.registered && !coach.linked && <span className="shrink-0 rounded bg-gray-100 px-1 text-[10px] text-gray-500">SRM 미연결</span>}

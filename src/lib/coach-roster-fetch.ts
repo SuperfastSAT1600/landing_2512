@@ -25,6 +25,10 @@ async function fetchCoaches(): Promise<RosterInput['coaches']> {
     is_active: c.is_active !== false, sort_order: typeof c.sort_order === 'number' ? c.sort_order : null,
     created_at: String(c.created_at ?? ''),
     subjects: Array.isArray(c.subjects) ? c.subjects.filter((s): s is string => typeof s === 'string') : [],
+    is_head_coach: c.is_head_coach === true,
+    // 과목별 순서는 마이그레이션 164 전에는 없다 — 없으면 null(sort_order 순서 유지)
+    sort_order_sat: typeof c.sort_order_sat === 'number' ? c.sort_order_sat : null,
+    sort_order_ap: typeof c.sort_order_ap === 'number' ? c.sort_order_ap : null,
   }));
 }
 

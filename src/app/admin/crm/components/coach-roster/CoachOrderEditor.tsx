@@ -26,10 +26,10 @@ function Row({ item, index, last, move }: RowProps) {
   );
 }
 
-interface Props { initial: OrderItem[]; saving: boolean; error: string | null; onSave: (slugs: string[]) => void; onCancel: () => void }
+interface Props { subject: string; initial: OrderItem[]; saving: boolean; error: string | null; onSave: (slugs: string[]) => void; onCancel: () => void }
 
-// 코치 순서 편집 — 끌거나 화살표로 옮기고 저장한다(coaches.sort_order)
-export function CoachOrderEditor({ initial, saving, error, onSave, onCancel }: Props) {
+// 과목 칸 코치 순서 편집 — 끌거나 화살표로 옮기고 저장한다(coaches.sort_order_sat / sort_order_ap)
+export function CoachOrderEditor({ subject, initial, saving, error, onSave, onCancel }: Props) {
   const [items, setItems] = useState(initial);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const move = (from: number, to: number) => setItems((xs) => arrayMove(xs, from, to));
@@ -40,7 +40,7 @@ export function CoachOrderEditor({ initial, saving, error, onSave, onCancel }: P
 
   return (
     <div className="max-w-md space-y-3">
-      <p className="text-[12px] text-gray-500">이 순서대로 목록에 보입니다. (코치 미배정은 항상 맨 위, CRM 미등록 코치는 맨 아래)</p>
+      <p className="text-[12px] text-gray-500"><b className="font-semibold text-gray-700">{subject}</b> 칸에 이 순서대로 보입니다. (다른 과목 칸 순서는 그대로, CRM 미등록 코치는 과목 미지정 칸)</p>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={items.map((x) => x.slug)} strategy={verticalListSortingStrategy}>
           <ol className="space-y-1">
