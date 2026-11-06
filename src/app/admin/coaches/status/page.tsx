@@ -6,12 +6,14 @@ import Link from 'next/link';
 import { CoachData } from '@/lib/coaches-data';
 import type { CoachStat } from '@/app/api/admin/coaches/stats/route';
 import { groupSubjectDetails } from '@/lib/coach-subject-details';
+import { broadSubjectsFor } from '@/lib/coach-subject-options';
+import { SubjectEditorModal } from './SubjectEditorModal';
 
 function getAdminKey(): string {
     return localStorage.getItem('admin_key') || '';
 }
 
-type SortKey = 'name' | 'enrolled' | 'total' | 'hours';
+type SortKey = 'name' | 'hours';
 type SortDir = 'asc' | 'desc';
 type StatusFilter = 'all' | 'active' | 'inactive';
 
@@ -76,18 +78,20 @@ function SubjectCell({ coach }: { coach: CoachData }) {
 export default function CoachStatusPage() {
     const [coaches, setCoaches] = useState<CoachData[]>([]);
     const [stats, setStats] = useState<Record<string, CoachStat>>({});
-    const [uniqueActiveStudentCount, setUniqueActiveStudentCount] = useState(0);
     const [loading, setLoading] = useState(true);
     const [statLoading, setStatLoading] = useState(true);
     const [togglingSlug, setTogglingSlug] = useState<string | null>(null);
+    const [editingSlug, setEditingSlug] = useState<string | null>(null);
+    const [savingSubjects, setSavingSubjects] = useState(false);
+    const [subjectError, setSubjectError] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     // 필터 & 정렬 상태
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [subjectFilter, setSubjectFilter] = useState<string>('all');
-    const [sortKey, setSortKey] = useState<SortKey>('enrolled');
-    const [sortDir, setSortDir] = useState<SortDir>('desc');
+    const [sortKey, setSortKey] = useState<SortKey>('name');
+    const [sortDir, setSortDir] = useState<SortDir>('asc');
 
     const fetchCoaches = useCallback(async () => {
         try {
@@ -109,9 +113,8 @@ export default function CoachStatusPage() {
             const res = await fetch('/api/admin/coaches/stats', {
                 headers: { 'x-admin-key': getAdminKey() },
             });
-            const data: { stats?: Record<string, CoachStat>; uniqueActiveStudentCount?: number } = await res.json();
+            const data: { stats?: Record<string, CoachStat> } = await res.json();
             if (data.stats) setStats(data.stats);
-            if (data.uniqueActiveStudentCount != null) setUniqueActiveStudentCount(data.uniqueActiveStudentCount);
         } catch {
             // non-fatal
         } finally {
@@ -144,6 +147,28 @@ export default function CoachStatusPage() {
         if (!currentActive) fetchCoaches(); // 활성화 시 서버가 채운 상세 과목 반영
     };
 
+    const handleSaveSubjects = async (slug: string, details: string[]) => {
+        setSavingSubjects(true);
+        setSubjectError(null);
+        const broad = broadSubjectsFor(details);
+        try {
+            const res = await fetch('/api/admin/coaches', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'x-admin-key': getAdminKey() },
+                body: JSON.stringify({ slug, subjectDetails: details, ...(broad ? { subjects: broad } : {}) }),
+            });
+            if (!res.ok) throw new Error('저장 실패');
+            setCoaches(prev => prev.map(c => c.slug === slug
+                ? { ...c, subjectDetails: details, subjects: broad ?? c.subjects }
+                : c));
+            setEditingSlug(null);
+        } catch {
+            setSubjectError('저장하지 못했습니다. 다시 시도해 주세요.');
+        } finally {
+            setSavingSubjects(false);
+        }
+    };
+
     const handleSort = (col: SortKey) => {
         if (col === sortKey) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
         else { setSortKey(col); setSortDir('desc'); }
@@ -170,8 +195,6 @@ export default function CoachStatusPage() {
         const valueOf = (c: CoachData) => {
             const s = stats[c.slug];
             if (sortKey === 'name') return c.name.toLowerCase();
-            if (sortKey === 'enrolled') return s?.activeStudentCount ?? 0;
-            if (sortKey === 'total') return s?.studentCount ?? 0;
             if (sortKey === 'hours') return s?.totalHours ?? 0;
             return 0;
         };
@@ -192,8 +215,6 @@ export default function CoachStatusPage() {
 
     // 요약 집계 (활성 코치 기준)
     const activeCoaches = coaches.filter(c => c.isActive);
-    const summaryEnrolled = uniqueActiveStudentCount; // 유니크 재원생 (중복 제거)
-    const summaryTotal = activeCoaches.reduce((s, c) => s + (stats[c.slug]?.studentCount ?? 0), 0);
     const summaryHours = activeCoaches.reduce((s, c) => s + (stats[c.slug]?.totalHours ?? 0), 0);
 
     if (loading) {
@@ -223,8 +244,6 @@ export default function CoachStatusPage() {
                 {!statLoading && (
                     <div className="grid grid-cols-3 gap-3">
                         {[
-                            { label: '재원생 합계', value: summaryEnrolled, unit: '명', color: 'text-emerald-700', desc: '유니크 재원생 (중복 제거)' },
-                            { label: '전체 학생 합계', value: summaryTotal, unit: '명', color: 'text-gray-900', desc: '활성 코치 누적 담당' },
                             { label: '누적 수업 시간', value: Math.round(summaryHours * 10) / 10, unit: 'h', color: 'text-blue-700', desc: '활성 코치 contracted' },
                         ].map(item => (
                             <div key={item.label} className="bg-white rounded-xl border border-gray-200 px-5 py-4">
@@ -306,8 +325,6 @@ export default function CoachStatusPage() {
                             <tr>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 w-8">#</th>
                                 <Th label="코치" col="name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} className="min-w-[160px]" />
-                                <Th label="재원생" col="enrolled" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                                <Th label="전체 학생" col="total" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                                 <Th label="누적 시간" col="hours" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">과목</th>
                                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">상태</th>
@@ -316,8 +333,6 @@ export default function CoachStatusPage() {
                         <tbody className="divide-y divide-gray-100">
                             {sorted.map((coach, idx) => {
                                 const stat = stats[coach.slug];
-                                const enrolled = stat?.activeStudentCount ?? 0;
-                                const total = stat?.studentCount ?? 0;
                                 const hours = stat?.totalHours ?? 0;
                                 const initials = coach.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
                                 const isInactive = !coach.isActive;
@@ -329,7 +344,11 @@ export default function CoachStatusPage() {
 
                                         {/* 코치 */}
                                         <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2.5">
+                                            <div
+                                                className="flex items-center gap-2.5 cursor-pointer group"
+                                                onClick={() => { setSubjectError(null); setEditingSlug(coach.slug); }}
+                                                title="수업 가능 과목 편집"
+                                            >
                                                 {coach.photo ? (
                                                     // eslint-disable-next-line @next/next/no-img-element
                                                     <img src={coach.photo} alt={coach.name} className="w-7 h-7 rounded-full object-cover shrink-0 border border-gray-200" />
@@ -339,37 +358,13 @@ export default function CoachStatusPage() {
                                                     </div>
                                                 )}
                                                 <div className="min-w-0">
-                                                    <p className="font-semibold text-gray-900 text-[13px] truncate">
+                                                    <p className="font-semibold text-gray-900 text-[13px] truncate group-hover:text-blue-600 transition-colors">
                                                         {coach.isHeadCoach && <span className="mr-1 text-[11px]">⭐</span>}
                                                         {coach.name}
                                                     </p>
                                                     <p className="text-[10px] text-gray-400 font-mono">/{coach.slug}</p>
                                                 </div>
                                             </div>
-                                        </td>
-
-                                        {/* 재원생 */}
-                                        <td className="px-4 py-3">
-                                            {statLoading ? (
-                                                <span className="h-4 w-10 bg-gray-100 rounded animate-pulse inline-block" />
-                                            ) : (
-                                                <span className={`text-sm font-bold ${enrolled > 0 ? 'text-emerald-600' : 'text-gray-400'}`}>
-                                                    {enrolled}
-                                                    <span className="text-[11px] font-normal text-gray-500 ml-0.5">명</span>
-                                                </span>
-                                            )}
-                                        </td>
-
-                                        {/* 전체 학생 */}
-                                        <td className="px-4 py-3">
-                                            {statLoading ? (
-                                                <span className="h-4 w-10 bg-gray-100 rounded animate-pulse inline-block" />
-                                            ) : (
-                                                <span className="text-sm font-semibold text-gray-700">
-                                                    {total}
-                                                    <span className="text-[11px] font-normal text-gray-500 ml-0.5">명</span>
-                                                </span>
-                                            )}
                                         </td>
 
                                         {/* 누적 시간 */}
@@ -386,7 +381,12 @@ export default function CoachStatusPage() {
 
                                         {/* 과목 */}
                                         <td className="px-4 py-3">
-                                            <SubjectCell coach={coach} />
+                                            <div
+                                                className="cursor-pointer"
+                                                onClick={() => { setSubjectError(null); setEditingSlug(coach.slug); }}
+                                            >
+                                                <SubjectCell coach={coach} />
+                                            </div>
                                         </td>
 
                                         {/* 상태 토글 */}
@@ -416,7 +416,7 @@ export default function CoachStatusPage() {
 
                             {sorted.length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-400">
+                                    <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-400">
                                         조건에 맞는 코치가 없습니다.
                                     </td>
                                 </tr>
@@ -426,6 +426,21 @@ export default function CoachStatusPage() {
                 </div>
 
             </main>
+
+            {editingSlug && (() => {
+                const target = coaches.find(c => c.slug === editingSlug);
+                return target && (
+                    <SubjectEditorModal
+                        key={target.slug}
+                        coachName={target.name}
+                        initial={target.subjectDetails ?? []}
+                        saving={savingSubjects}
+                        error={subjectError}
+                        onSave={details => handleSaveSubjects(target.slug, details)}
+                        onClose={() => setEditingSlug(null)}
+                    />
+                );
+            })()}
         </div>
     );
 }

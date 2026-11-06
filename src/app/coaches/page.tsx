@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getActiveCoaches, getCoachesBySubject } from '@/lib/coaches-data';
+import { getListedCoaches, getCoachesBySubject } from '@/lib/coaches-data';
 import Footer from '../components/Footer';
 
 export const revalidate = 86400;
@@ -22,7 +22,7 @@ export default async function CoachesPage({ searchParams }: Props) {
 
     const coaches = subject
         ? await getCoachesBySubject(subject)
-        : await getActiveCoaches();
+        : await getListedCoaches();
 
     const SUBJECTS = ['SAT', 'AP'] as const;
 

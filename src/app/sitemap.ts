@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { headers } from 'next/headers';
 import { getSortedPostsData } from '../lib/posts';
 import { excludeHiddenCategories } from '../lib/posts-filter';
-import { getActiveCoaches } from '../lib/coaches-data';
+import { getListedCoaches } from '../lib/coaches-data';
 import { PRACTICE_SLUGS } from '../lib/practice-catalog';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -11,7 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const baseUrl = `https://${host}`;
 
     if (host.startsWith('tutoring.')) {
-        const [posts, coaches] = await Promise.all([getSortedPostsData(), getActiveCoaches()]);
+        const [posts, coaches] = await Promise.all([getSortedPostsData(), getListedCoaches()]);
 
         // 학습코치 글은 목록에서 가려져 있고 /coaches/[slug] 로 영구 리다이렉트된다.
         // 사이트맵에 남겨두면 Google이 크롤만 하고 색인하지 않아 크롤 예산만 쓴다.

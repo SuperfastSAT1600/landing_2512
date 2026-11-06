@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
             introPostSlug: body.introPostSlug ?? '',
             curriculumPostSlug: body.curriculumPostSlug ?? '',
             isActive: body.isActive ?? true,
+            isListed: body.isListed ?? true,
             reelUrls: Array.isArray(body.reelUrls)
                 ? body.reelUrls.filter((u: string) => isValidInstagramUrl(u))
                 : [],
@@ -91,6 +92,7 @@ export async function PATCH(request: NextRequest) {
         if (updates.introPostSlug !== undefined) safeUpdates.introPostSlug = updates.introPostSlug;
         if (updates.curriculumPostSlug !== undefined) safeUpdates.curriculumPostSlug = updates.curriculumPostSlug;
         if (updates.isActive !== undefined) safeUpdates.isActive = updates.isActive;
+        if (updates.isListed !== undefined) safeUpdates.isListed = updates.isListed;
         if (updates.reelUrls !== undefined) {
             if (!Array.isArray(updates.reelUrls)) {
                 return NextResponse.json({ success: false, error: 'reelUrls must be an array' }, { status: 400 });
