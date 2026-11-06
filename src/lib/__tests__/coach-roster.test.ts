@@ -179,6 +179,17 @@ describe('buildCoachRoster', () => {
     expect(r.unassigned.map((s) => s.profileId)).toEqual(['p-c']);
   });
 
+  it('코치마다 Coach Management의 가능 과목을 담는다(없으면 [], CRM 미등록 교사도 [])', () => {
+    const r = buildCoachRoster(input({
+      coaches: [coach('ben', 'Ben', 't-ben', { subjects: ['SAT', 'AP'] }), coach('julie', 'Julie', 't-julie', { subjects: null })],
+      matchingTeachers: [
+        { matching_id: 'm1', teacher_id: 't-ben', response: 'accepted' },
+        { matching_id: 'm2', teacher_id: 't-x', response: 'accepted' },
+      ],
+    }));
+    expect(r.coaches.map((c) => [c.name, c.subjects])).toEqual([['Ben', ['SAT', 'AP']], ['Julie', []], ['(이름 없음)', []]]);
+  });
+
   it('CRM에 있지만 SRM 미연결인 활동 코치는 linked=false로 남긴다', () => {
     const r = buildCoachRoster(input({ coaches: [coach('ben', 'Ben', 't-ben'), coach('new', 'New', null)] }));
     expect(r.coaches.find((c) => c.slug === 'new')).toMatchObject({ linked: false, registered: true, students: [] });

@@ -6,14 +6,14 @@ import type { CoachRoster as Roster } from '@/lib/coach-roster';
 const roster: Roster = {
   coaches: [
     {
-      key: 'ben', slug: 'ben', name: 'Ben', linked: true, registered: true, activeCount: 1, onboardingCount: 0, pausedCount: 1,
+      key: 'ben', slug: 'ben', name: 'Ben', subjects: ['SAT', 'AP'], linked: true, registered: true, activeCount: 1, onboardingCount: 0, pausedCount: 1,
       students: [
         { profileId: 'p1', crmStudentId: 'crm-1', name: '김주하', status: 'active', subjects: [{ subject: 'SAT', status: 'active' }] },
         { profileId: 'p2', crmStudentId: null, name: '에이든', status: 'paused', subjects: [{ subject: 'SAT', status: 'paused' }] },
       ],
     },
-    { key: 'julie', slug: 'julie', name: 'Julie', linked: true, registered: true, activeCount: 0, onboardingCount: 0, pausedCount: 0, students: [] },
-    { key: 'v2:t9', slug: null, name: '배병윤', linked: true, registered: false, activeCount: 1, onboardingCount: 0, pausedCount: 0,
+    { key: 'julie', slug: 'julie', name: 'Julie', subjects: ['SAT'], linked: true, registered: true, activeCount: 0, onboardingCount: 0, pausedCount: 0, students: [] },
+    { key: 'v2:t9', slug: null, name: '배병윤', subjects: [], linked: true, registered: false, activeCount: 1, onboardingCount: 0, pausedCount: 0,
       students: [{ profileId: 'p1', crmStudentId: 'crm-1', name: '김주하', status: 'active', subjects: [{ subject: 'SAT', status: 'active' }] }] },
   ],
   unassigned: [{ profileId: 'p3', crmStudentId: 'crm-3', name: '조유인', status: 'active', subjects: [] }],
@@ -30,21 +30,38 @@ const json = (body: unknown, status = 200) => Promise.resolve(new Response(JSON.
 describe('CoachRoster', () => {
   beforeEach(() => fetchMock.mockReset());
 
-  it('미배정 맨 위, 코치는 직접 정한 순서(API 순서) 그대로 — 학생 수로 다시 정렬하지 않는다 — 재원 수와 명단, 요약(중복 없는 재원 수)을 보여 준다', async () => {
+  it('미배정 맨 위, 그 아래 SAT 가능 · AP 가능 코치를 좌우 칸에 직접 정한 순서로, 과목 없는 코치는 과목 미지정 칸', async () => {
     fetchMock.mockReturnValueOnce(json({ data: roster }));
     render(<CoachRoster adminKey="k" onSelectStudentById={vi.fn()} />);
-    const cards = await screen.findAllByTestId('coach-card');
-    // Julie(0명)가 배병윤(1명)보다 학생은 적어도 API 순서대로 앞
-    expect(cards.map((c) => within(c).getByTestId('coach-name').textContent)).toEqual(['Ben', 'Julie', '배병윤']);
-    expect(within(cards[0]).getByTestId('coach-active').textContent).toBe('1');
-    expect(within(cards[0]).queryByText('김주하')).toBeNull();
-    expect(within(cards[2]).getByText('CRM 미등록')).toBeTruthy();
+    const names = (testId: string) => within(screen.getByTestId(testId)).getAllByTestId('coach-name').map((n) => n.textContent);
+    await screen.findAllByTestId('coach-card');
+    // 둘 다 가능한 Ben은 양쪽에, Julie(0명)는 학생 수와 상관없이 정한 순서 그대로
+    expect(names('subject-col-SAT')).toEqual(['Ben', 'Julie']);
+    expect(names('subject-col-AP')).toEqual(['Ben']);
+    expect(names('subject-col-none')).toEqual(['배병윤']);
+    expect(within(screen.getByTestId('subject-col-SAT')).getByText('SAT 가능 코치')).toBeTruthy();
+    expect(within(screen.getByTestId('subject-col-SAT')).getByTestId('subject-col-count').textContent).toBe('2');
+    expect(within(screen.getByTestId('subject-col-AP')).getByTestId('subject-col-count').textContent).toBe('1');
+    const ben = within(screen.getByTestId('subject-col-SAT')).getAllByTestId('coach-card')[0];
+    expect(within(ben).getByTestId('coach-active').textContent).toBe('1');
+    expect(within(ben).queryByText('김주하')).toBeNull();
+    expect(within(screen.getByTestId('subject-col-none')).getByText('CRM 미등록')).toBeTruthy();
+    // AP 칸의 Ben은 AP 학생이 없으니 0명, SAT 칸은 SAT 재원 1명
+    expect(within(within(screen.getByTestId('subject-col-AP')).getAllByTestId('coach-card')[0]).getByTestId('coach-active').textContent).toBe('0');
+    expect(within(within(screen.getByTestId('subject-col-SAT')).getAllByTestId('coach-card')[0]).getByTestId('coach-active').textContent).toBe('1');
     // 미배정 줄이 맨 위
     const unassigned = screen.getByTestId('unassigned-row');
-    expect(unassigned.compareDocumentPosition(cards[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(unassigned.compareDocumentPosition(screen.getByTestId('subject-col-SAT')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByTestId('roster-summary').textContent).toContain('재원 학생 2명');
     expect(screen.getByTestId('roster-summary').textContent).toContain('미배정 1명');
     expect(fetchMock).toHaveBeenCalledWith('/api/crm/coach-roster', expect.objectContaining({ headers: { 'x-admin-key': 'k' } }));
+  });
+
+  it('가능 과목이 없는 코치가 없으면 과목 미지정 칸을 그리지 않는다', async () => {
+    fetchMock.mockReturnValueOnce(json({ data: { ...roster, coaches: roster.coaches.slice(0, 2) } }));
+    render(<CoachRoster adminKey="k" onSelectStudentById={vi.fn()} />);
+    await screen.findAllByTestId('coach-card');
+    expect(screen.queryByTestId('subject-col-none')).toBeNull();
   });
 
   it('CRM 학생을 누르면 패널을 연다(미연결 학생은 버튼이 아니다)', async () => {

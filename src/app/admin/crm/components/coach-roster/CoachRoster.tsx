@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import type { CoachRoster as Roster } from '@/lib/coach-roster';
-import { CoachCard, RosterRow, StudentList } from './CoachCard';
+import { RosterRow, StudentList } from './CoachCard';
+import { SubjectColumns } from './SubjectColumns';
 import { CoachOrderEditor } from './CoachOrderEditor';
 import { MatchingCleanupPanel } from './MatchingCleanupPanel';
 
@@ -50,7 +51,7 @@ function Summary({ roster }: { roster: Roster }) {
   );
 }
 
-// 리드 허브 '코치 현황' 탭 — 미배정 맨 위, 코치는 직접 정한 순서(API: sort_order → 등록순, CRM 미등록은 뒤)로 재원 학생 수와 명단
+// 리드 허브 '코치 현황' 탭 — 미배정 맨 위, 코치는 가능 과목별(SAT 왼쪽 · AP 오른쪽) 칸에 직접 정한 순서(API: sort_order → 등록순, CRM 미등록은 뒤)로 재원 학생 수와 명단
 export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
   const [state, setState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [roster, setRoster] = useState<Roster | null>(null);
@@ -112,20 +113,22 @@ export function CoachRoster({ adminKey, onSelectStudentById }: Props) {
         <CoachOrderEditor initial={registered} saving={saving} error={saveError} onSave={handleSave} onCancel={() => setEditing(false)} />
       ) : (
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <div className="min-w-0 flex-1 divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 bg-white lg:max-w-3xl">
+        <div className="min-w-0 flex-1 space-y-4">
           {roster.unassigned.length > 0 && (
-            <RosterRow
-              testId="unassigned-row"
-              countTestId="unassigned-count"
-              tone="amber"
-              count={roster.unassigned.length}
-              label={<span className="whitespace-nowrap text-sm font-semibold text-amber-800">코치 미배정</span>}
-              hint={<span className="min-w-0 flex-1 truncate text-[11px] text-amber-700">재원·온보딩·휴원이지만 SRM에 진행 중인 코치 매칭이 없음</span>}
-            >
-              <StudentList students={roster.unassigned} onOpen={onSelectStudentById} />
-            </RosterRow>
+            <div className="overflow-hidden rounded-xl border border-amber-200">
+              <RosterRow
+                testId="unassigned-row"
+                countTestId="unassigned-count"
+                tone="amber"
+                count={roster.unassigned.length}
+                label={<span className="whitespace-nowrap text-sm font-semibold text-amber-800">코치 미배정</span>}
+                hint={<span className="min-w-0 flex-1 truncate text-[11px] text-amber-700">재원·온보딩·휴원이지만 SRM에 진행 중인 코치 매칭이 없음</span>}
+              >
+                <StudentList students={roster.unassigned} onOpen={onSelectStudentById} />
+              </RosterRow>
+            </div>
           )}
-          {roster.coaches.map((c) => <CoachCard key={c.key} coach={c} onOpen={onSelectStudentById} />)}
+          <SubjectColumns coaches={roster.coaches} onOpen={onSelectStudentById} />
         </div>
         <div className="lg:w-[400px] lg:shrink-0">
           <MatchingCleanupPanel adminKey={adminKey} reloadKey={reloadKey} onSelectStudentById={onSelectStudentById} />

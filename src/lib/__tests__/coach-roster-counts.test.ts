@@ -3,7 +3,7 @@ import { studentCountsBySlug } from '../coach-roster-counts';
 import type { CoachRoster, RosterCoach } from '../coach-roster';
 
 const coach = (over: Partial<RosterCoach>): RosterCoach => ({
-  key: 'k', slug: 'kim', name: '김', linked: true, registered: true,
+  key: 'k', slug: 'kim', name: '김', subjects: [], linked: true, registered: true,
   activeCount: 0, onboardingCount: 0, pausedCount: 0, students: [], ...over,
 });
 const roster = (coaches: RosterCoach[]): CoachRoster => ({ coaches, unassigned: [] });

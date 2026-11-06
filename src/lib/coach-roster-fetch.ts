@@ -24,6 +24,7 @@ async function fetchCoaches(): Promise<RosterInput['coaches']> {
     slug: String(c.slug), name: String(c.name ?? c.slug), v2_user_id: (c.v2_user_id as string | null) ?? null,
     is_active: c.is_active !== false, sort_order: typeof c.sort_order === 'number' ? c.sort_order : null,
     created_at: String(c.created_at ?? ''),
+    subjects: Array.isArray(c.subjects) ? c.subjects.filter((s): s is string => typeof s === 'string') : [],
   }));
 }
 
