@@ -40,7 +40,7 @@ export function CoachOrderEditor({ initial, saving, error, onSave, onCancel }: P
 
   return (
     <div className="max-w-md space-y-3">
-      <p className="text-[12px] text-gray-500">목록은 담당 학생이 많은 순으로 보입니다. 여기서 정한 순서는 담당 학생 수가 같은 코치끼리 적용됩니다.</p>
+      <p className="text-[12px] text-gray-500">이 순서대로 목록에 보입니다. (코치 미배정은 항상 맨 위, CRM 미등록 코치는 맨 아래)</p>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={items.map((x) => x.slug)} strategy={verticalListSortingStrategy}>
           <ol className="space-y-1">
