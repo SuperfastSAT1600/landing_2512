@@ -73,7 +73,7 @@ export default async function CoachPage({ params }: Props) {
     const { slug } = await params;
     const coach = await getCoachBySlug(slug);
 
-    if (!coach || !coach.isActive) {
+    if (!coach || !coach.isListed) {
         notFound();
     }
 

@@ -10,6 +10,7 @@ export interface CoachData {
     introPostSlug: string;
     curriculumPostSlug: string;
     isActive: boolean;
+    isListed: boolean;
     isHeadCoach: boolean;
     reelUrls: string[];
     subjects: string[];
@@ -26,6 +27,7 @@ type CoachRow = {
     intro_post_slug: string;
     curriculum_post_slug: string;
     is_active: boolean;
+    is_listed: boolean | null;
     is_head_coach: boolean;
     reel_urls: string[] | null;
     subjects: string[] | null;
@@ -43,6 +45,7 @@ function rowToCoach(row: CoachRow): CoachData {
         introPostSlug: row.intro_post_slug ?? '',
         curriculumPostSlug: row.curriculum_post_slug,
         isActive: row.is_active,
+        isListed: row.is_listed ?? true,
         isHeadCoach: row.is_head_coach ?? false,
         reelUrls: row.reel_urls ?? [],
         subjects: row.subjects ?? [],
@@ -61,18 +64,19 @@ export async function getCoaches(): Promise<CoachData[]> {
     return data.map(rowToCoach);
 }
 
-export async function getActiveCoaches(): Promise<CoachData[]> {
+/** 랜딩에 프로필을 노출하는 코치(is_listed). 수업 투입 여부(is_active)와 별개다. */
+export async function getListedCoaches(): Promise<CoachData[]> {
     const [headResult, restResult] = await Promise.all([
         supabaseAdmin
             .from('coaches')
             .select('*')
-            .eq('is_active', true)
+            .eq('is_listed', true)
             .eq('is_head_coach', true)
             .order('created_at', { ascending: true }),
         supabaseAdmin
             .from('coaches')
             .select('*')
-            .eq('is_active', true)
+            .eq('is_listed', true)
             .eq('is_head_coach', false)
             .order('created_at', { ascending: false }),
     ]);
@@ -113,6 +117,7 @@ export async function addCoach(coach: CoachData): Promise<boolean> {
         intro_post_slug: coach.introPostSlug,
         curriculum_post_slug: coach.curriculumPostSlug,
         is_active: coach.isActive,
+        is_listed: coach.isListed ?? true,
         is_head_coach: coach.isHeadCoach ?? false,
         reel_urls: coach.reelUrls ?? [],
         subjects: coach.subjects ?? [],
@@ -130,6 +135,7 @@ export async function updateCoach(slug: string, updates: Partial<CoachData>): Pr
     if (updates.introPostSlug !== undefined) dbUpdates.intro_post_slug = updates.introPostSlug;
     if (updates.curriculumPostSlug !== undefined) dbUpdates.curriculum_post_slug = updates.curriculumPostSlug;
     if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
+    if (updates.isListed !== undefined) dbUpdates.is_listed = updates.isListed;
     if (updates.isHeadCoach !== undefined) dbUpdates.is_head_coach = updates.isHeadCoach;
     if (updates.reelUrls !== undefined) dbUpdates.reel_urls = updates.reelUrls;
     if (updates.subjects !== undefined) dbUpdates.subjects = updates.subjects;
@@ -170,7 +176,7 @@ export async function getCoachesBySubject(subject: string): Promise<CoachData[]>
     const { data, error } = await supabaseAdmin
         .from('coaches')
         .select('*')
-        .eq('is_active', true)
+        .eq('is_listed', true)
         .contains('subjects', [subject])
         .order('created_at', { ascending: false });
     if (error || !data) return [];

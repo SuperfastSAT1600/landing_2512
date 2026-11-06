@@ -240,18 +240,18 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
 
             {/* 2행: 상태 정보 */}
             <div className="flex items-center gap-2 flex-wrap">
-                {/* 활성화 토글 */}
+                {/* 랜딩 노출 토글 */}
                 <button
-                    onClick={() => onUpdate(coach.slug, { isActive: !coach.isActive })}
+                    onClick={() => onUpdate(coach.slug, { isListed: !coach.isListed })}
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all border ${
-                        coach.isActive
+                        coach.isListed
                             ? 'bg-green-500/10 border-green-500/30 text-green-600 hover:bg-green-500/20'
                             : 'bg-gray-500/10 border-gray-300 text-gray-500 hover:bg-gray-500/20'
                     }`}
-                    title={coach.isActive ? '클릭하면 비활성화' : '클릭하면 활성화'}
+                    title={coach.isListed ? '클릭하면 랜딩에서 숨김' : '클릭하면 랜딩에 노출'}
                 >
-                    <span className={`w-1.5 h-1.5 rounded-full ${coach.isActive ? 'bg-green-400' : 'bg-gray-500'}`} />
-                    {coach.isActive ? '활성' : '비활성'}
+                    <span className={`w-1.5 h-1.5 rounded-full ${coach.isListed ? 'bg-green-400' : 'bg-gray-500'}`} />
+                    {coach.isListed ? '노출' : '미노출'}
                 </button>
 
                 {/* V2 연결 상태 */}

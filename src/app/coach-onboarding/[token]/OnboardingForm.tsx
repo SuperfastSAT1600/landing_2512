@@ -4,22 +4,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { OnboardingStep1, OnboardingStep2, OnboardingStep3, PastAcademy } from '@/types/coach-onboarding';
 import { SubjectEditorModal } from './SubjectEditorModal';
+import { ONBOARDING_SUBJECTS } from '@/lib/coach-subject-options';
 
-const SUBJECTS = [
-  'SAT Reading & Writing',
-  'SAT Math',
-  'AP English Language',
-  'AP English Literature',
-  'AP Calculus AB',
-  'AP Calculus BC',
-  'AP Statistics',
-  'AP Biology',
-  'AP Chemistry',
-  'AP Physics',
-  'AP US History',
-  'AP World History',
-  'AP Psychology',
-];
+const SUBJECTS = ONBOARDING_SUBJECTS;
 
 const CURRENT_YEAR = new Date().getFullYear();
 

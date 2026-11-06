@@ -66,6 +66,7 @@ export default function AdminCoachesPage() {
                     bio: '',
                     curriculumPostSlug: '',
                     isActive: true,
+                    isListed: true,
                 }),
             });
             const data: { success: boolean; error?: string; onboarding_url?: string } = await res.json();
