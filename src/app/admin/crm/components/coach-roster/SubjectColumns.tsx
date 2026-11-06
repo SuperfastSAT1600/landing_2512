@@ -1,6 +1,7 @@
 'use client';
 
 import type { RosterCoach } from '@/lib/coach-roster';
+import { coachForSubject } from '@/lib/coach-roster-subject';
 import { CoachCard } from './CoachCard';
 
 const SUBJECTS = ['SAT', 'AP'] as const;
@@ -21,14 +22,14 @@ function Column({ testId, title, coaches, onOpen }: { testId: string; title: str
   );
 }
 
-/** Coach Management의 가능 과목 기준 — 왼쪽 SAT, 오른쪽 AP(둘 다 가능하면 양쪽), 과목 없는 코치는 아래 */
+/** Coach Management의 가능 과목 기준 — 왼쪽 SAT, 오른쪽 AP(둘 다 가능하면 양쪽, 칸마다 그 과목 학생만), 과목 없는 코치는 아래(전체 학생) */
 export function SubjectColumns({ coaches, onOpen }: { coaches: RosterCoach[]; onOpen: OnOpen }) {
   const none = coaches.filter((c) => !SUBJECTS.some((s) => c.subjects.includes(s)));
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
         {SUBJECTS.map((s) => (
-          <Column key={s} testId={`subject-col-${s}`} title={`${s} 가능 코치`} coaches={coaches.filter((c) => c.subjects.includes(s))} onOpen={onOpen} />
+          <Column key={s} testId={`subject-col-${s}`} title={`${s} 가능 코치`} coaches={coaches.filter((c) => c.subjects.includes(s)).map((c) => coachForSubject(c, s))} onOpen={onOpen} />
         ))}
       </div>
       {none.length > 0 && <Column testId="subject-col-none" title="과목 미지정" coaches={none} onOpen={onOpen} />}

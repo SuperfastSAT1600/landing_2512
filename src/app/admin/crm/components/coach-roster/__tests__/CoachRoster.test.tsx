@@ -46,6 +46,9 @@ describe('CoachRoster', () => {
     expect(within(ben).getByTestId('coach-active').textContent).toBe('1');
     expect(within(ben).queryByText('김주하')).toBeNull();
     expect(within(screen.getByTestId('subject-col-none')).getByText('CRM 미등록')).toBeTruthy();
+    // AP 칸의 Ben은 AP 학생이 없으니 0명, SAT 칸은 SAT 재원 1명
+    expect(within(within(screen.getByTestId('subject-col-AP')).getAllByTestId('coach-card')[0]).getByTestId('coach-active').textContent).toBe('0');
+    expect(within(within(screen.getByTestId('subject-col-SAT')).getAllByTestId('coach-card')[0]).getByTestId('coach-active').textContent).toBe('1');
     // 미배정 줄이 맨 위
     const unassigned = screen.getByTestId('unassigned-row');
     expect(unassigned.compareDocumentPosition(screen.getByTestId('subject-col-SAT')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

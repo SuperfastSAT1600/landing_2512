@@ -48,7 +48,7 @@ export interface CoachRoster { coaches: RosterCoach[]; unassigned: RosterStudent
 const ORDER: RosterStatus[] = ['active', 'onboarding', 'paused'];
 const isRosterStatus = (s: string | null): s is RosterStatus => !!s && (ORDER as string[]).includes(s);
 
-function byStatusThenName(a: RosterStudent, b: RosterStudent) {
+export function byStatusThenName(a: RosterStudent, b: RosterStudent) {
   return ORDER.indexOf(a.status) - ORDER.indexOf(b.status) || a.name.localeCompare(b.name, 'ko');
 }
 
