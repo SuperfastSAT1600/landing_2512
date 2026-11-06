@@ -14,10 +14,10 @@ const btn = (active: boolean) =>
     `w-8 h-8 flex items-center justify-center rounded transition-colors text-sm ${
         active
             ? 'bg-blue-600 text-white'
-            : 'text-gray-400 hover:bg-white/10 hover:text-white'
+            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
     }`;
 
-const separatorBtn = 'w-px h-6 bg-white/10 mx-0.5';
+const separatorBtn = 'w-px h-6 bg-gray-100 mx-0.5';
 
 export function CoachBioEditor({ value, onChange }: CoachBioEditorProps) {
     const editor = useEditor({
@@ -36,16 +36,16 @@ export function CoachBioEditor({ value, onChange }: CoachBioEditorProps) {
 
     if (!editor) {
         return (
-            <div className="w-full bg-[#151719] border border-white/10 rounded px-3 py-2 text-sm text-white opacity-50">
+            <div className="w-full bg-gray-50 border border-gray-200 rounded px-3 py-2 text-sm text-gray-900 opacity-50">
                 로딩 중...
             </div>
         );
     }
 
     return (
-        <div className="space-y-2 border border-white/10 rounded-lg p-3 bg-[#1e2023]">
+        <div className="space-y-2 border border-gray-200 rounded-lg p-3 bg-white">
             {/* Toolbar */}
-            <div className="flex items-center gap-1 px-2 py-1.5 bg-[#151719] rounded border border-white/5">
+            <div className="flex items-center gap-1 px-2 py-1.5 bg-gray-50 rounded border border-gray-200">
                 <button
                     onMouseDown={(e) => {
                         e.preventDefault();
@@ -120,7 +120,7 @@ export function CoachBioEditor({ value, onChange }: CoachBioEditorProps) {
             {/* Editor */}
             <EditorContent
                 editor={editor}
-                className="prose prose-invert prose-sm max-w-none"
+                className="prose prose-sm max-w-none"
                 style={{
                     minHeight: '200px',
                 }}
@@ -128,13 +128,13 @@ export function CoachBioEditor({ value, onChange }: CoachBioEditorProps) {
 
             <style>{`
                 .prose {
-                    color: white;
+                    color: rgb(17, 24, 39);
                     line-height: 1.6;
                 }
 
                 .ProseMirror {
-                    background: #151719;
-                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background: #ffffff;
+                    border: 1px solid rgb(229, 231, 235);
                     border-radius: 0.375rem;
                     padding: 0.75rem;
                     outline: none;
@@ -148,7 +148,7 @@ export function CoachBioEditor({ value, onChange }: CoachBioEditorProps) {
 
                 .ProseMirror p {
                     margin: 0.5em 0;
-                    color: rgb(209, 213, 219);
+                    color: rgb(31, 41, 55);
                 }
 
                 .ProseMirror ul {
@@ -158,7 +158,7 @@ export function CoachBioEditor({ value, onChange }: CoachBioEditorProps) {
                 }
 
                 .ProseMirror li {
-                    color: rgb(209, 213, 219);
+                    color: rgb(31, 41, 55);
                     margin: 0.25em 0;
                 }
 

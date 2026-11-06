@@ -27,7 +27,7 @@ export function ReelUrlsEditor({ urls, onChange }: ReelUrlsEditorProps) {
                                 value={url}
                                 onChange={e => update(i, e.target.value)}
                                 placeholder="https://www.instagram.com/reel/..."
-                                className={`flex-1 bg-[#151719] border rounded px-3 py-2 text-sm text-white outline-none transition-colors ${
+                                className={`flex-1 bg-gray-50 border rounded px-3 py-2 text-sm text-gray-900 outline-none transition-colors ${
                                     isInvalid
                                         ? 'border-red-500 focus:border-red-400'
                                         : 'border-transparent focus:border-blue-500'
@@ -36,7 +36,7 @@ export function ReelUrlsEditor({ urls, onChange }: ReelUrlsEditorProps) {
                             <button
                                 type="button"
                                 onClick={() => remove(i)}
-                                className="p-2 text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                                className="p-2 text-red-600 hover:bg-red-500/10 rounded transition-colors"
                             >
                                 <X size={14} />
                             </button>
@@ -46,7 +46,7 @@ export function ReelUrlsEditor({ urls, onChange }: ReelUrlsEditorProps) {
                 <button
                     type="button"
                     onClick={add}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded text-xs font-bold text-gray-300 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-100 rounded text-xs font-bold text-gray-700 transition-colors"
                 >
                     <Plus size={12} /> 영상 추가
                 </button>

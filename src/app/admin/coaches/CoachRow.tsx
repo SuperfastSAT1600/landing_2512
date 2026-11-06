@@ -198,10 +198,10 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
     const hasInvalidUrls = editState.reelUrls.some(u => u !== '' && !isValidInstagramUrl(u));
 
     return (
-        <div className="bg-[#1e2023] rounded-xl border border-white/5 p-5 space-y-2.5">
+        <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-2.5">
             {/* 1행: 이름·슬러그 + 액션 버튼 */}
             <div className="flex items-center gap-2.5">
-                <span className="font-bold text-white text-base">
+                <span className="font-bold text-gray-900 text-base">
                     {coach.isHeadCoach && <span className="mr-1">⭐</span>}
                     {coach.name}
                 </span>
@@ -210,28 +210,28 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                 <div className="ml-auto flex items-center gap-2">
                     <button
                         onClick={() => setEditing(v => !v)}
-                        className="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                        className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
                         title="Edit"
                     >
                         {editing ? <X size={14} /> : <Edit2 size={14} />}
                     </button>
                     <button
                         onClick={handleCopyCoachLink}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copiedLink ? 'bg-green-600 text-white' : 'bg-white/10 hover:bg-white/20 text-gray-200'}`}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copiedLink ? 'bg-green-600 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'}`}
                     >
                         {copiedLink ? <><Check size={12} /> 복사됨</> : <><Copy size={12} /> 코치 링크</>}
                     </button>
                     {inviteStatus === 'valid' && (
                         <button
                             onClick={handleCopyOnboardingLink}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copiedOnboarding ? 'bg-green-600 text-white' : 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-400'}`}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${copiedOnboarding ? 'bg-green-600 text-white' : 'bg-blue-500/10 hover:bg-blue-500/20 text-blue-600'}`}
                         >
                             {copiedOnboarding ? <><Check size={12} /> 복사됨</> : <><LinkIcon size={12} /> 온보딩 링크</>}
                         </button>
                     )}
                     <button
                         onClick={() => onDelete(coach.slug)}
-                        className="p-1.5 text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                        className="p-1.5 text-red-600 hover:bg-red-500/10 rounded transition-colors"
                     >
                         <Trash2 size={14} />
                     </button>
@@ -245,8 +245,8 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                     onClick={() => onUpdate(coach.slug, { isActive: !coach.isActive })}
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all border ${
                         coach.isActive
-                            ? 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20'
-                            : 'bg-gray-500/10 border-gray-600/30 text-gray-400 hover:bg-gray-500/20'
+                            ? 'bg-green-500/10 border-green-500/30 text-green-600 hover:bg-green-500/20'
+                            : 'bg-gray-500/10 border-gray-300 text-gray-500 hover:bg-gray-500/20'
                     }`}
                     title={coach.isActive ? '클릭하면 비활성화' : '클릭하면 활성화'}
                 >
@@ -256,11 +256,11 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
 
                 {/* V2 연결 상태 */}
                 {coach.v2UserId ? (
-                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-purple-500/10 border-purple-500/30 text-purple-400">
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-purple-500/10 border-purple-500/30 text-purple-600">
                         V2 연결됨
                     </span>
                 ) : (
-                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-yellow-500/10 border-yellow-500/30 text-yellow-500">
+                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-yellow-500/10 border-yellow-500/30 text-yellow-600">
                         V2 미연결
                     </span>
                 )}
@@ -271,7 +271,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                         value={coach.profileStatus ?? 'none'}
                         onChange={e => handleProfileStatusChange(e.target.value as ProfileStatus)}
                         disabled={savingStatus}
-                        className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-gray-500/10 border-gray-600/30 text-gray-400 cursor-pointer disabled:opacity-50 appearance-none outline-none"
+                        className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-gray-500/10 border-gray-300 text-gray-500 cursor-pointer disabled:opacity-50 appearance-none outline-none"
                     >
                         <option value="none">프로필 미작성</option>
                         <option value="in_progress">프로필 작성 중</option>
@@ -281,17 +281,17 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                 ) : (
                     <>
                         {inviteStatus === 'valid' && (
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-blue-500/10 border-blue-500/30 text-blue-400">
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-blue-500/10 border-blue-500/30 text-blue-600">
                                 프로필 작성 중
                             </span>
                         )}
                         {inviteStatus === 'submitted' && (
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-green-500/10 border-green-500/30 text-green-400">
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-green-500/10 border-green-500/30 text-green-600">
                                 프로필 제출 완료
                             </span>
                         )}
                         {inviteStatus === 'expired' && (
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-orange-500/10 border-orange-500/30 text-orange-400">
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold border bg-orange-500/10 border-orange-500/30 text-orange-600">
                                 프로필 링크 만료
                             </span>
                         )}
@@ -300,13 +300,13 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
             </div>
 
             {editing && (
-                <div className="space-y-3 border-t border-white/5 pt-3">
+                <div className="space-y-3 border-t border-gray-200 pt-3">
                     {/* 이름 */}
                     <input
                         value={editState.name}
                         onChange={e => setEditState(s => ({ ...s, name: e.target.value }))}
                         placeholder="이름"
-                        className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
+                        className="w-full bg-gray-50 border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-gray-900 outline-none"
                     />
 
                     {/* 담당 과목 */}
@@ -329,8 +329,8 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                                         }}
                                         className={`px-4 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
                                             checked
-                                                ? 'bg-blue-600/20 border-blue-500/50 text-blue-400'
-                                                : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                                                ? 'bg-blue-600/20 border-blue-500/50 text-blue-600'
+                                                : 'bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-100'
                                         }`}
                                     >
                                         {subject}
@@ -348,8 +348,8 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                             onClick={() => setEditState(s => ({ ...s, isHeadCoach: !s.isHeadCoach }))}
                             className={`px-4 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
                                 editState.isHeadCoach
-                                    ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400'
-                                    : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                                    ? 'bg-yellow-500/20 border-yellow-500/50 text-yellow-600'
+                                    : 'bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-100'
                             }`}
                         >
                             {editState.isHeadCoach ? '⭐ 대표코치' : '대표코치 아님'}
@@ -362,13 +362,13 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                         <div className="flex items-center gap-2">
                             {editState.photo && (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={editState.photo} alt="preview" className="w-10 h-10 rounded-full object-cover border border-white/10" />
+                                <img src={editState.photo} alt="preview" className="w-10 h-10 rounded-full object-cover border border-gray-200" />
                             )}
                             <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={uploading}
-                                className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-50 rounded-lg text-xs font-bold text-gray-300 transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-100 disabled:opacity-50 rounded-lg text-xs font-bold text-gray-700 transition-colors"
                             >
                                 <Upload size={12} />
                                 {uploading ? '업로드 중...' : '파일 선택'}
@@ -405,7 +405,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                             <select
                                 value={editState.introPostSlug}
                                 onChange={e => setEditState(s => ({ ...s, introPostSlug: e.target.value }))}
-                                className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
+                                className="w-full bg-gray-50 border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-gray-900 outline-none"
                             >
                                 <option value="">선택 안 함</option>
                                 {posts.map(p => (
@@ -430,7 +430,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                             <select
                                 value={editState.curriculumPostSlug}
                                 onChange={e => setEditState(s => ({ ...s, curriculumPostSlug: e.target.value }))}
-                                className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
+                                className="w-full bg-gray-50 border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-gray-900 outline-none"
                             >
                                 <option value="">선택 안 함</option>
                                 {posts.map(p => (
@@ -448,7 +448,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                         <select
                             value={editState.v2UserId ?? ''}
                             onChange={e => setEditState(s => ({ ...s, v2UserId: e.target.value || null }))}
-                            className="w-full bg-[#151719] border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-white outline-none"
+                            className="w-full bg-gray-50 border border-transparent focus:border-blue-500 rounded px-3 py-2 text-sm text-gray-900 outline-none"
                         >
                             <option value="">연결 안 함</option>
                             {v2Teachers.map(t => (
@@ -472,7 +472,7 @@ export function CoachRow({ coach, onUpdate, onDelete }: CoachRowProps) {
                         </button>
                         <button
                             onClick={handleCancelEdit}
-                            className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm font-bold text-gray-400 transition-colors"
+                            className="px-4 py-2 bg-gray-100 hover:bg-gray-100 rounded-lg text-sm font-bold text-gray-500 transition-colors"
                         >
                             취소
                         </button>
