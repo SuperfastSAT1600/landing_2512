@@ -14,7 +14,6 @@ import {
 import { StatsDetailModal } from './StatsDetailModal';
 import { LeadDetailTable } from './LeadDetailTable';
 import { useStrategyCategories } from './strategies/useStrategyCategories';
-import { TransitionPanel } from './strategy-stats/TransitionPanel';
 import { StrategyStatsListItem } from './strategy-stats/StrategyStatsListItem';
 import { apiErrorMessage } from '@/lib/api-error';
 import { won, manwon } from '../lib/format';
@@ -151,10 +150,6 @@ export function StrategyStats({ adminKey, segment, onSelectStudent }: Props) {
 
       {!loading && !error && rows.length === 0 && (
         <p className="py-16 text-center text-sm text-gray-400">해당 기간에 배정된 전략이 없습니다.</p>
-      )}
-
-      {!loading && !error && rows.length > 0 && (
-        <TransitionPanel transitions={data?.transitions ?? []} />
       )}
 
       {!loading && !error && rows.length > 0 && (
