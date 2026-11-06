@@ -7,6 +7,8 @@ import {
   countCriteriaMet,
   HEAD_COACH_ELIGIBLE_THRESHOLD,
 } from '@/lib/coach-onboarding-score';
+import { updateCoach } from '@/lib/coaches-data';
+import { deriveSubjectDetails } from '@/lib/coach-subject-details';
 import type { CoachOnboardingSubmission } from '@/types/coach-onboarding';
 
 export const maxDuration = 60;
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
 
   const { data: invite, error: inviteError } = await supabaseAdmin
     .from('coach_onboarding_invites')
-    .select('id, expires_at, used_at')
+    .select('id, expires_at, used_at, coach_slug')
     .eq('token', token)
     .single();
 
@@ -115,6 +117,17 @@ export async function POST(request: NextRequest) {
     .from('coach_onboarding_invites')
     .update({ used_at: new Date().toISOString() })
     .eq('id', invite.id);
+
+  // 프로필에서 받은 수업 가능 과목이 상세 과목의 기준이므로 재제출 시 기존 값을 덮어쓴다.
+  // 제출은 이미 저장됐으므로 반영 실패가 제출 실패로 보이지 않게 한다.
+  try {
+    const subjectDetails = deriveSubjectDetails({ onboardingSubjects: formData.subjects });
+    if (invite.coach_slug && subjectDetails.length > 0) {
+      await updateCoach(invite.coach_slug, { subjectDetails });
+    }
+  } catch (e) {
+    console.error('[submit] subject details sync failed', e);
+  }
 
   // AI 블로그 초안 생성 (실패해도 제출은 성공으로 처리)
   try {
