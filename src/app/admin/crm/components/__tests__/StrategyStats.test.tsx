@@ -44,9 +44,9 @@ describe('StrategyStats', () => {
     expect(screen.queryByText('바로 상담 전화 진행')).toBeNull();
   });
 
-  it("처음 열면 '이번 달' 기간으로 조회한다", async () => {
+  it("처음 열면 '지난 달' 기간으로 조회한다", async () => {
     render(<StrategyStats adminKey="k" />);
-    const { from, to } = getPresetRange('this_month');
+    const { from, to } = getPresetRange('last_month');
     await waitFor(() => {
       const urls = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.map((c) => String(c[0]));
       const statsUrl = urls.find((u) => u.startsWith('/api/crm/strategy-stats?'));
@@ -55,6 +55,6 @@ describe('StrategyStats', () => {
       expect(qs.get('from')).toBe(from);
       expect(qs.get('to')).toBe(to);
     });
-    expect(screen.getByRole('button', { name: '이번 달' }).className).toContain('bg-gray-900');
+    expect(screen.getByRole('button', { name: '지난 달' }).className).toContain('bg-gray-900');
   });
 });
