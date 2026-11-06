@@ -125,7 +125,7 @@ describe('buildCoachRoster', () => {
     expect(r.coaches[1]).toMatchObject({ activeCount: 1, onboardingCount: 1 });
   });
 
-  it('활동 중이 아닌 코치는 학생이 없으면 숨기고, CRM에 없는 SRM 교사는 맨 뒤 미등록 카드', () => {
+  it('비활성 코치는 숨기고, CRM에 없는 SRM 교사는 맨 뒤 미등록 카드', () => {
     const r = buildCoachRoster(input({
       coaches: [coach('ben', 'Ben', 't-ben'), coach('old', 'Old', null, { is_active: false })],
       matchingTeachers: [
@@ -139,6 +139,44 @@ describe('buildCoachRoster', () => {
       profileNames: { 'p-a': 'Alice', 'p-b': 'Bob', 't-x': '외부 교사' },
     }));
     expect(r.coaches.map((c) => [c.name, c.registered])).toEqual([['Ben', true], ['외부 교사', false]]);
+  });
+
+  it('비활성 코치는 학생이 있어도 숨기고, 그 코치에게만 매칭된 학생은 미배정으로 보낸다', () => {
+    const r = buildCoachRoster(input({
+      coaches: [coach('ben', 'Ben', 't-ben'), coach('lucy', 'Lucy', 't-lucy', { is_active: false })],
+      matchings: [
+        { id: 'm1', status: 'active', subject: 'SAT' },
+        { id: 'm2', status: 'active', subject: 'SAT' },
+        { id: 'm4', status: 'active', subject: 'AP' },
+      ],
+      matchingTeachers: [
+        { matching_id: 'm1', teacher_id: 't-ben', response: 'accepted' },
+        { matching_id: 'm2', teacher_id: 't-lucy', response: 'accepted' },
+        { matching_id: 'm4', teacher_id: 't-lucy', response: 'accepted' },
+      ],
+      matchingStudents: [
+        { matching_id: 'm1', student_id: 'p-a' },
+        { matching_id: 'm2', student_id: 'p-b' },
+        { matching_id: 'm4', student_id: 'p-a' },
+      ],
+      payments: [
+        { student_id: 'p-a', subject: 'SAT', management_status: 'active' },
+        { student_id: 'p-a', subject: 'AP', management_status: 'active' },
+        { student_id: 'p-b', subject: 'SAT', management_status: 'paused' },
+      ],
+    }));
+    expect(r.coaches.map((c) => c.name)).toEqual(['Ben']);
+    // p-a는 활성 코치 Ben이 있으니 미배정 아님, p-b는 비활성 코치뿐이라 미배정
+    expect(r.unassigned.map((s) => s.profileId)).toEqual(['p-b']);
+  });
+
+  it('같은 SRM 계정에 활성·비활성 코치 행이 함께 있으면 활성 코치의 학생은 그대로 둔다', () => {
+    const r = buildCoachRoster(input({
+      coaches: [coach('ben', 'Ben', 't-ben'), coach('ben-old', 'Ben (옛)', 't-ben', { is_active: false }), coach('julie', 'Julie', 't-julie')],
+    }));
+    expect(r.coaches.map((c) => [c.name, c.activeCount])).toEqual([['Ben', 1], ['Julie', 0]]);
+    // Alice는 Ben 아래에 남고, 미배정은 원래부터 비활성 매칭뿐인 Carol만
+    expect(r.unassigned.map((s) => s.profileId)).toEqual(['p-c']);
   });
 
   it('CRM에 있지만 SRM 미연결인 활동 코치는 linked=false로 남긴다', () => {
