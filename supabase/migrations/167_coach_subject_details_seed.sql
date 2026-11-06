@@ -29,7 +29,7 @@ from (values
   ('kimyj', array['AP Government', 'AP Economics', 'AP History']),
   ('kimys', array['SAT RW']),
   ('leejm', array['SAT RW']),
-  ('lina', array['SAT RW', 'Academic Writing']),
+  ('lina', array['SAT RW']),
   ('ohmj', array['SAT RW', 'SAT Math', 'AP English Language', 'AP English Literature', 'AP Calculus AB', 'AP Calculus BC', 'AP Statistics', 'AP Physics', 'AP Psychology', 'AP US History', 'AP World History']),
   ('parksh', array['SAT RW', 'SAT Math', 'AP English Language', 'AP English Literature', 'AP US History', 'AP World History', 'AP Psychology']),
   ('sean', array['AP Calculus AB', 'AP Calculus BC', 'AP Precalculus', 'AP Physics 1']),
