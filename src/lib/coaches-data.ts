@@ -13,6 +13,7 @@ export interface CoachData {
     isHeadCoach: boolean;
     reelUrls: string[];
     subjects: string[];
+    subjectDetails: string[];
     v2UserId: string | null;
     profileStatus: ProfileStatus;
 }
@@ -28,6 +29,7 @@ type CoachRow = {
     is_head_coach: boolean;
     reel_urls: string[] | null;
     subjects: string[] | null;
+    subject_details: string[] | null;
     v2_user_id: string | null;
     profile_status: ProfileStatus | null;
 };
@@ -44,6 +46,7 @@ function rowToCoach(row: CoachRow): CoachData {
         isHeadCoach: row.is_head_coach ?? false,
         reelUrls: row.reel_urls ?? [],
         subjects: row.subjects ?? [],
+        subjectDetails: row.subject_details ?? [],
         v2UserId: row.v2_user_id ?? null,
         profileStatus: row.profile_status ?? 'none',
     };
@@ -113,6 +116,7 @@ export async function addCoach(coach: CoachData): Promise<boolean> {
         is_head_coach: coach.isHeadCoach ?? false,
         reel_urls: coach.reelUrls ?? [],
         subjects: coach.subjects ?? [],
+        subject_details: coach.subjectDetails ?? [],
         v2_user_id: coach.v2UserId ?? null,
     });
     return !error;
@@ -129,6 +133,7 @@ export async function updateCoach(slug: string, updates: Partial<CoachData>): Pr
     if (updates.isHeadCoach !== undefined) dbUpdates.is_head_coach = updates.isHeadCoach;
     if (updates.reelUrls !== undefined) dbUpdates.reel_urls = updates.reelUrls;
     if (updates.subjects !== undefined) dbUpdates.subjects = updates.subjects;
+    if (updates.subjectDetails !== undefined) dbUpdates.subject_details = updates.subjectDetails;
     if (updates.v2UserId !== undefined) dbUpdates.v2_user_id = updates.v2UserId;
     if (updates.profileStatus !== undefined) dbUpdates.profile_status = updates.profileStatus;
 

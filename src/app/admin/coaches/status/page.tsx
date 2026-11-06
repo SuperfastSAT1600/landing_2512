@@ -5,6 +5,7 @@ import { ArrowLeft, ToggleLeft, ToggleRight, ChevronUp, ChevronDown, ChevronsUpD
 import Link from 'next/link';
 import { CoachData } from '@/lib/coaches-data';
 import type { CoachStat } from '@/app/api/admin/coaches/stats/route';
+import { groupSubjectDetails } from '@/lib/coach-subject-details';
 
 function getAdminKey(): string {
     return localStorage.getItem('admin_key') || '';
@@ -37,6 +38,38 @@ function Th({
                 <SortIcon col={col} sortKey={sortKey} sortDir={sortDir} />
             </span>
         </th>
+    );
+}
+
+function SubjectRow({ label, items }: { label: string; items: string[] }) {
+    if (items.length === 0) return null;
+    return (
+        <div className="flex items-baseline gap-1.5">
+            <span className="text-[10px] font-bold text-gray-500 w-6 shrink-0">{label}</span>
+            <span className="text-[11px] text-gray-300 leading-snug">{items.join(' · ')}</span>
+        </div>
+    );
+}
+
+function SubjectCell({ coach }: { coach: CoachData }) {
+    const { sat, ap, other } = groupSubjectDetails(coach.subjectDetails);
+    if (sat.length + ap.length + other.length === 0) {
+        return (
+            <div className="flex flex-wrap gap-1">
+                {(coach.subjects ?? []).map(s => (
+                    <span key={s} className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/5 text-gray-400 border border-white/5">
+                        {s}
+                    </span>
+                ))}
+            </div>
+        );
+    }
+    return (
+        <div className="space-y-0.5 min-w-[180px]">
+            <SubjectRow label="SAT" items={sat} />
+            <SubjectRow label="AP" items={ap} />
+            <SubjectRow label="기타" items={other} />
+        </div>
     );
 }
 
@@ -108,6 +141,7 @@ export default function CoachStatusPage() {
         } finally {
             setTogglingSlug(null);
         }
+        if (!currentActive) fetchCoaches(); // 활성화 시 서버가 채운 상세 과목 반영
     };
 
     const handleSort = (col: SortKey) => {
@@ -352,13 +386,7 @@ export default function CoachStatusPage() {
 
                                         {/* 과목 */}
                                         <td className="px-4 py-3">
-                                            <div className="flex flex-wrap gap-1">
-                                                {(coach.subjects ?? []).map(s => (
-                                                    <span key={s} className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/5 text-gray-400 border border-white/5">
-                                                        {s}
-                                                    </span>
-                                                ))}
-                                            </div>
+                                            <SubjectCell coach={coach} />
                                         </td>
 
                                         {/* 상태 토글 */}
@@ -366,7 +394,7 @@ export default function CoachStatusPage() {
                                             <button
                                                 onClick={() => handleToggle(coach.slug, coach.isActive)}
                                                 disabled={togglingSlug === coach.slug}
-                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap border transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                                                     coach.isActive
                                                         ? 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400'
                                                         : 'bg-gray-500/10 border-gray-600/30 text-gray-400 hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-400'

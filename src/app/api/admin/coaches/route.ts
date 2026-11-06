@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { getCoaches, addCoach, updateCoach, deleteCoach, CoachData, ProfileStatus } from '@/lib/coaches-data';
 import { isAuthenticated } from '@/lib/server-auth';
+import { subjectDetailsForActivation } from '@/lib/coach-subject-autofill';
 import { isValidInstagramUrl } from '@/lib/instagram-url';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import crypto from 'crypto';
@@ -40,6 +41,9 @@ export async function POST(request: NextRequest) {
                 ? body.reelUrls.filter((u: string) => isValidInstagramUrl(u))
                 : [],
             subjects: Array.isArray(body.subjects) ? body.subjects : [],
+            subjectDetails: Array.isArray(body.subjectDetails)
+                ? body.subjectDetails.filter((s: unknown): s is string => typeof s === 'string' && s.trim() !== '')
+                : [],
             isHeadCoach: body.isHeadCoach ?? false,
             v2UserId: body.v2UserId ?? null,
             profileStatus: body.profileStatus ?? 'none',
@@ -114,6 +118,17 @@ export async function PATCH(request: NextRequest) {
             }
             safeUpdates.subjects = updates.subjects;
         }
+        if (updates.subjectDetails !== undefined) {
+            const valid = Array.isArray(updates.subjectDetails)
+                && updates.subjectDetails.every((s: unknown) => typeof s === 'string' && s.trim() !== '');
+            if (!valid) {
+                return NextResponse.json(
+                    { success: false, error: 'subjectDetails must be an array of non-empty strings' },
+                    { status: 400 }
+                );
+            }
+            safeUpdates.subjectDetails = updates.subjectDetails;
+        }
         if (updates.isHeadCoach !== undefined) safeUpdates.isHeadCoach = updates.isHeadCoach;
         if ('v2UserId' in updates) safeUpdates.v2UserId = updates.v2UserId ?? null;
         if (updates.profileStatus !== undefined) {
@@ -122,6 +137,10 @@ export async function PATCH(request: NextRequest) {
                 return NextResponse.json({ success: false, error: 'Invalid profileStatus' }, { status: 400 });
             }
             safeUpdates.profileStatus = updates.profileStatus;
+        }
+        if (safeUpdates.isActive === true && safeUpdates.subjectDetails === undefined) {
+            const filled = await subjectDetailsForActivation(slug);
+            if (filled) safeUpdates.subjectDetails = filled;
         }
         const ok = await updateCoach(slug, safeUpdates);
         if (!ok) {
