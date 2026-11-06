@@ -99,6 +99,10 @@ export function buildCoachRoster(input: RosterInput): CoachRoster {
   const crmByProfile = new Map(input.crmStudents.filter((s) => s.sfv2_profile_id).map((s) => [s.sfv2_profile_id!, s]));
   const nameOf = (pid: string) => crmByProfile.get(pid)?.name ?? input.profileNames[pid] ?? '(이름 없음)';
 
+  // Coach Management에서 비활성인 코치는 목록에서 빼고, 그 코치에게만 매칭된 학생은 미배정으로 보낸다
+  const activeTeachers = new Set(input.coaches.filter((c) => c.is_active && c.v2_user_id).map((c) => c.v2_user_id!));
+  const hiddenTeachers = new Set(input.coaches.filter((c) => !c.is_active && c.v2_user_id && !activeTeachers.has(c.v2_user_id)).map((c) => c.v2_user_id!));
+
   // 교사 → 학생 → 과목별 상태
   const perTeacher = new Map<string, Map<string, Map<string, RosterStatus>>>();
   const coached = new Set<string>();
@@ -108,6 +112,7 @@ export function buildCoachRoster(input: RosterInput): CoachRoster {
     const st = status.of(ms.student_id, subjectOf.get(ms.matching_id) ?? null);
     if (!isRosterStatus(st)) continue;
     for (const tid of teachersOf.get(ms.matching_id) ?? []) {
+      if (hiddenTeachers.has(tid)) continue;
       coached.add(ms.student_id);
       const students = perTeacher.get(tid) ?? new Map<string, Map<string, RosterStatus>>();
       perTeacher.set(tid, students);
@@ -133,8 +138,8 @@ export function buildCoachRoster(input: RosterInput): CoachRoster {
   const sorted = [...input.coaches].sort(compareCoachOrder);
   const registeredTeachers = new Set(input.coaches.map((c) => c.v2_user_id).filter(Boolean));
   const coaches = sorted
-    .map((c) => card(c.slug, c.slug, c.name, c.v2_user_id, true))
-    .filter((c, i) => sorted[i].is_active || c.students.length > 0);
+    .filter((c) => c.is_active)
+    .map((c) => card(c.slug, c.slug, c.name, c.v2_user_id, true));
   const outsiders = [...perTeacher.keys()].filter((tid) => !registeredTeachers.has(tid))
     .map((tid) => card(`v2:${tid}`, null, input.profileNames[tid] ?? '(이름 없음)', tid, false))
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
