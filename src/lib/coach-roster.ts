@@ -6,7 +6,7 @@ import { rollUpSrmStatus } from '@/lib/srm-status';
 export type RosterStatus = 'active' | 'onboarding' | 'paused';
 
 export interface RosterInput {
-  coaches: { slug: string; name: string; v2_user_id: string | null; is_active: boolean; sort_order: number | null; created_at: string }[];
+  coaches: { slug: string; name: string; v2_user_id: string | null; is_active: boolean; sort_order: number | null; created_at: string; subjects?: string[] | null }[];
   matchings: { id: string; status: string | null; subject: string | null }[];
   matchingTeachers: { matching_id: string; teacher_id: string; response: string | null }[];
   matchingStudents: { matching_id: string; student_id: string }[];
@@ -31,6 +31,8 @@ export interface RosterCoach {
   key: string;
   slug: string | null;
   name: string;
+  /** Coach Management의 가능 과목(SAT·AP), CRM 미등록 교사는 [] */
+  subjects: string[];
   /** SRM 교사 계정과 연결됨 */
   linked: boolean;
   /** CRM coaches에 등록됨 */
@@ -129,17 +131,17 @@ export function buildCoachRoster(input: RosterInput): CoachRoster {
       status: rollUpSrmStatus(list.map((s) => s.status)) as RosterStatus, subjects: list,
     };
   };
-  const card = (key: string, slug: string | null, name: string, tid: string | null, registered: boolean): RosterCoach => {
+  const card = (key: string, slug: string | null, name: string, tid: string | null, registered: boolean, subjects: string[] = []): RosterCoach => {
     const students = [...(tid ? perTeacher.get(tid) ?? [] : [])].map(([pid, subj]) => toStudent(pid, subj)).sort(byStatusThenName);
     const count = (s: RosterStatus) => students.filter((x) => x.status === s).length;
-    return { key, slug, name, linked: !!tid, registered, activeCount: count('active'), onboardingCount: count('onboarding'), pausedCount: count('paused'), students };
+    return { key, slug, name, subjects, linked: !!tid, registered, activeCount: count('active'), onboardingCount: count('onboarding'), pausedCount: count('paused'), students };
   };
 
   const sorted = [...input.coaches].sort(compareCoachOrder);
   const registeredTeachers = new Set(input.coaches.map((c) => c.v2_user_id).filter(Boolean));
   const coaches = sorted
     .filter((c) => c.is_active)
-    .map((c) => card(c.slug, c.slug, c.name, c.v2_user_id, true));
+    .map((c) => card(c.slug, c.slug, c.name, c.v2_user_id, true, c.subjects ?? []));
   const outsiders = [...perTeacher.keys()].filter((tid) => !registeredTeachers.has(tid))
     .map((tid) => card(`v2:${tid}`, null, input.profileNames[tid] ?? '(이름 없음)', tid, false))
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
