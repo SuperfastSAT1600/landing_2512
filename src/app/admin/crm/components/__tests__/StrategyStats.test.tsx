@@ -2,6 +2,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { StrategyStats } from '../StrategyStats';
+import { getPresetRange } from '../stats-primitives';
 import type { PerStrategyRow, StrategyTypeStats } from '@/lib/strategy-stats';
 
 const strategyRow: PerStrategyRow = {
@@ -41,5 +42,19 @@ describe('StrategyStats', () => {
     await waitFor(() => expect(screen.getAllByText('개인화 메시지').length).toBeGreaterThan(0));
     expect(screen.queryByText(/계획 → 실제 전환/)).toBeNull();
     expect(screen.queryByText('바로 상담 전화 진행')).toBeNull();
+  });
+
+  it("처음 열면 '이번 달' 기간으로 조회한다", async () => {
+    render(<StrategyStats adminKey="k" />);
+    const { from, to } = getPresetRange('this_month');
+    await waitFor(() => {
+      const urls = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.map((c) => String(c[0]));
+      const statsUrl = urls.find((u) => u.startsWith('/api/crm/strategy-stats?'));
+      expect(statsUrl).toBeDefined();
+      const qs = new URLSearchParams(statsUrl!.split('?')[1]);
+      expect(qs.get('from')).toBe(from);
+      expect(qs.get('to')).toBe(to);
+    });
+    expect(screen.getByRole('button', { name: '이번 달' }).className).toContain('bg-gray-900');
   });
 });
