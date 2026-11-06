@@ -3744,7 +3744,7 @@
         "marketingConsent": true,
         "rewardType": "Legacy",
         "contact": "",
-        "status": "pending",
+        "status": "published",
         "coachSlug": "alicelee"
     },
     {
@@ -3761,7 +3761,7 @@
         "marketingConsent": true,
         "rewardType": "Legacy",
         "contact": "",
-        "status": "pending",
+        "status": "published",
         "coachSlug": "alicelee"
     },
     {
@@ -3778,7 +3778,7 @@
         "marketingConsent": true,
         "rewardType": "Legacy",
         "contact": "",
-        "status": "pending",
+        "status": "published",
         "coachSlug": "alicelee"
     },
     {
@@ -3795,7 +3795,7 @@
         "marketingConsent": true,
         "rewardType": "Legacy",
         "contact": "",
-        "status": "pending",
+        "status": "published",
         "coachSlug": "alicelee"
     },
     {
@@ -3812,7 +3812,7 @@
         "marketingConsent": true,
         "rewardType": "Legacy",
         "contact": "",
-        "status": "pending",
+        "status": "published",
         "coachSlug": "alicelee"
     },
     {
@@ -3829,7 +3829,7 @@
         "marketingConsent": true,
         "rewardType": "Legacy",
         "contact": "",
-        "status": "pending",
+        "status": "published",
         "coachSlug": "jasmine"
     },
     {
@@ -3846,7 +3846,7 @@
         "marketingConsent": true,
         "rewardType": "Legacy",
         "contact": "",
-        "status": "pending",
+        "status": "published",
         "coachSlug": "jasmine"
     },
     {
@@ -3863,7 +3863,7 @@
         "marketingConsent": true,
         "rewardType": "Legacy",
         "contact": "",
-        "status": "pending",
+        "status": "published",
         "coachSlug": "jasmine"
     },
     {
@@ -3880,7 +3880,7 @@
         "marketingConsent": true,
         "rewardType": "Legacy",
         "contact": "",
-        "status": "pending",
+        "status": "published",
         "coachSlug": "jasmine"
     },
     {
@@ -3897,7 +3897,7 @@
         "marketingConsent": true,
         "rewardType": "Legacy",
         "contact": "",
-        "status": "pending",
+        "status": "published",
         "coachSlug": "jasmine"
     }
 ]
