@@ -32,6 +32,12 @@ Slack 메시지만으로는 "진행 중인 체크리스트"를 찾을 수 없어
 - **Acceptance Criteria**: 조회가 실패하면 DB 기준으로 알린다. 남은 항목은 Slack 체크 상태로 계산한다.
 - **Verification**: (TEST) `src/app/api/cron/assignment-checklist-reminder/__tests__/route.test.ts`
 
+### REQ-005: 요청 글에 초록 체크 이모지가 달리면 완료
+- **Priority**: Must
+- **Description**: 보내기 직전, 체크리스트의 부모(요청 글)에 `white_check_mark` 리액션이 하나라도 있으면 항목 체크와 상관없이 완료로 보고 닫는다. DM 은 보내지 않는다.
+- **Acceptance Criteria**: 요청 글 조회에는 기존 `conversations.replies` 만 쓴다(새 권한 없음). 요청 글 조회가 실패하면 체크리스트 기준으로만 판단한다. 다른 이모지는 완료로 보지 않는다.
+- **Verification**: (TEST) `src/app/api/cron/assignment-checklist-reminder/__tests__/route.test.ts`
+
 ## Technical Design
 
 ### Architecture
@@ -52,6 +58,7 @@ Slack 메시지만으로는 "진행 중인 체크리스트"를 찾을 수 없어
 | REQ-002 | 대상 선별·문구           | (TEST)       | `src/lib/__tests__/assignment-checklist-reminder.test.ts`                   | Passing |
 | REQ-003 | cron·DM 전송             | (TEST)       | `src/app/api/cron/assignment-checklist-reminder/__tests__/route.test.ts`    | Passing |
 | REQ-004 | 보내기 전 Slack 상태 확인 | (TEST)       | `src/app/api/cron/assignment-checklist-reminder/__tests__/route.test.ts`    | Passing |
+| REQ-005 | 초록 체크 이모지 완료    | (TEST)       | `src/app/api/cron/assignment-checklist-reminder/__tests__/route.test.ts`    | Passing |
 
 ## Implementation Order
 

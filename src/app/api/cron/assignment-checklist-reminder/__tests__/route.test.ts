@@ -85,6 +85,36 @@ describe('GET /api/cron/assignment-checklist-reminder (REQ-003)', () => {
       expect(saveChecked).not.toHaveBeenCalled();
     });
 
+    describe('요청 글의 초록 체크 이모지 (REQ-005)', () => {
+      const withReactions = (names: string[] | null) => (ts: string | null) => ts === '200.2'
+        ? { ok: true, messages: [{ ts, thread_ts: '100.1', blocks: buildChecklistBlocks({}) }] }
+        : { ok: true, messages: [{ ts, reactions: names?.map((name) => ({ name, count: 1 })) }] };
+
+      it('요청 글에 white_check_mark 가 있으면 알리지 않고 완료로 닫는다', async () => {
+        mockSlack(withReactions(['eyes', 'white_check_mark']));
+        await GET(req('Bearer s'));
+        expect(dmCalls()).toEqual([]);
+        expect(saveChecked).toHaveBeenCalledWith('C0C9B0DEGDN', '200.2', [], true);
+        expect(markReminded).not.toHaveBeenCalled();
+      });
+
+      it('다른 이모지만 있거나 리액션이 없으면 계속 알린다', async () => {
+        for (const names of [['eyes', 'heavy_check_mark'], null]) {
+          vi.clearAllMocks();
+          mockSlack(withReactions(names));
+          await GET(req('Bearer s'));
+          expect(dmCalls()).toHaveLength(2);
+          expect(saveChecked).not.toHaveBeenCalled();
+        }
+      });
+
+      it('요청 글 조회가 실패하면 체크리스트 기준으로 알린다', async () => {
+        mockSlack((ts: string | null) => (ts === '200.2' ? withReactions(null)(ts) : { ok: false, error: 'ratelimited' }));
+        await GET(req('Bearer s'));
+        expect(dmCalls()).toHaveLength(2);
+      });
+    });
+
     it('조회가 실패하면 DB 기준으로 알린다', async () => {
       mockSlack({ ok: false, error: 'ratelimited' });
       await GET(req('Bearer s'));
