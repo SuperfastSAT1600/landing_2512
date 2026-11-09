@@ -105,10 +105,15 @@ export function updateChecklist(channel: string, ts: string, checked: CheckedMap
 export interface LiveChecklist {
   checkedIds: string[];
   total: number;
+  /** 요청 글에 완료 이모지(초록 체크)가 달려 있는지. 요청 글을 읽지 못하면 false */
+  requestDone: boolean;
 }
 
-/** Slack 에 남아 있는 체크리스트의 현재 상태. 글이나 체크리스트가 지워졌으면 null, 그 밖의 조회 실패는 던진다 */
-export async function fetchLiveChecklist(channel: string, ts: string): Promise<LiveChecklist | null> {
+export const DONE_REACTION = 'white_check_mark';
+
+type SlackMessage = { ts?: string; thread_ts?: string; blocks?: ChecklistBlock[]; reactions?: { name?: string }[] };
+
+async function fetchMessage(channel: string, ts: string): Promise<SlackMessage | null> {
   const token = process.env.SLACK_BOT_TOKEN;
   if (!token) throw new Error('SLACK_BOT_TOKEN not set');
   const params = new URLSearchParams({ channel, ts, limit: '1', inclusive: 'true' });
@@ -116,13 +121,34 @@ export async function fetchLiveChecklist(channel: string, ts: string): Promise<L
     headers: { Authorization: `Bearer ${token}` },
     signal: AbortSignal.timeout(5000),
   });
-  const data = (await res.json()) as { ok?: boolean; error?: string; messages?: { ts?: string; blocks?: ChecklistBlock[] }[] };
+  const data = (await res.json()) as { ok?: boolean; error?: string; messages?: SlackMessage[] };
   if (data.error === 'thread_not_found' || data.error === 'message_not_found') return null;
   if (!data.ok) throw new Error(`Slack API error: ${data.error}`);
-  const blocks = data.messages?.find((m) => m.ts === ts)?.blocks;
-  const element = blocks?.find((b) => b.type === 'actions')?.elements?.find((e) => e.action_id === CHECKLIST_ACTION_ID);
-  if (!element) return null;
-  return { checkedIds: Object.keys(readCheckedMap(blocks)), total: element.options?.length ?? 0 };
+  return data.messages?.find((m) => m.ts === ts) ?? null;
+}
+
+/** 요청 글(체크리스트의 스레드 부모)에 완료 이모지가 있는지. 읽지 못하면 완료로 보지 않는다 */
+async function isRequestDone(channel: string, requestTs: string | undefined, ts: string): Promise<boolean> {
+  if (!requestTs || requestTs === ts) return false;
+  try {
+    const request = await fetchMessage(channel, requestTs);
+    return request?.reactions?.some((r) => r.name === DONE_REACTION) ?? false;
+  } catch (err) {
+    console.error(`[slack/assignment-checklist] 요청 글 ${requestTs} 조회 실패:`, err);
+    return false;
+  }
+}
+
+/** Slack 에 남아 있는 체크리스트의 현재 상태. 글이나 체크리스트가 지워졌으면 null, 그 밖의 조회 실패는 던진다 */
+export async function fetchLiveChecklist(channel: string, ts: string): Promise<LiveChecklist | null> {
+  const message = await fetchMessage(channel, ts);
+  const element = message?.blocks?.find((b) => b.type === 'actions')?.elements?.find((e) => e.action_id === CHECKLIST_ACTION_ID);
+  if (!message || !element) return null;
+  return {
+    checkedIds: Object.keys(readCheckedMap(message.blocks)),
+    total: element.options?.length ?? 0,
+    requestDone: await isRequestDone(channel, message.thread_ts, ts),
+  };
 }
 
 /** 메시지의 기존 체크박스(initial_options)에서 이전 체크 상태를 읽는다 */

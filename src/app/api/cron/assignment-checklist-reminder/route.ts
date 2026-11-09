@@ -3,7 +3,7 @@ import { fetchOpenChecklists, markReminded, saveChecked } from '@/lib/assignment
 import { buildReminderText, groupByRecipient, pickDueChecklists, recipientsOf, sendDirectMessage, type OpenChecklist } from '@/lib/assignment-checklist-reminder';
 import { fetchLiveChecklist } from '@/lib/slack-assignment-checklist';
 
-/** Slack 의 현재 상태를 반영한 행. 다 체크됐거나 글이 지워졌으면 닫고 null. 조회 실패 시에는 DB 기준으로 알린다 */
+/** Slack 의 현재 상태를 반영한 행. 다 체크됐거나 요청 글에 완료 이모지가 달렸거나 글이 지워졌으면 닫고 null. 조회 실패 시에는 DB 기준으로 알린다 */
 async function refresh(row: OpenChecklist): Promise<OpenChecklist | null> {
   let live;
   try {
@@ -12,7 +12,7 @@ async function refresh(row: OpenChecklist): Promise<OpenChecklist | null> {
     console.error(`[assignment-checklist-reminder] ${row.message_ts} 조회 실패:`, err);
     return row;
   }
-  if (live && live.checkedIds.length < live.total) return { ...row, checked_ids: live.checkedIds };
+  if (live && !live.requestDone && live.checkedIds.length < live.total) return { ...row, checked_ids: live.checkedIds };
   await saveChecked(row.channel, row.message_ts, live?.checkedIds ?? row.checked_ids, true)
     .catch((err) => console.error(`[assignment-checklist-reminder] ${row.message_ts} 닫기 실패:`, err));
   return null;
