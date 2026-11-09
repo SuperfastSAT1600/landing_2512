@@ -53,7 +53,7 @@ describe('interactions: 배정 체크리스트 (REQ-004)', () => {
     const body = JSON.parse(init.body);
     expect(body).toMatchObject({ channel: 'C0C9B0DEGDN', ts: '200.2' });
     expect(JSON.stringify(body.blocks)).toContain('홍길동');
-    expect(JSON.stringify(body.blocks)).toContain('1/9');
+    expect(JSON.stringify(body.blocks)).toContain('1/10');
     expect(saveChecked).toHaveBeenCalledWith('C0C9B0DEGDN', '200.2', ['t1'], false);
   });
 
@@ -61,14 +61,14 @@ describe('interactions: 배정 체크리스트 (REQ-004)', () => {
     const { POST } = await import('../route');
     await POST(signedRequest(togglePayload({ t1: '✔ 김 10/26 09:00' }, [])));
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
-    expect(JSON.stringify(body.blocks)).toContain('0/9');
+    expect(JSON.stringify(body.blocks)).toContain('0/10');
     expect(JSON.stringify(body.blocks)).not.toContain('김 10/26');
   });
 
   it('마지막 항목까지 체크하면 완료 표시가 붙는다', async () => {
     const { POST } = await import('../route');
     const prev = Object.fromEntries(['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8'].map((id) => [id, '✔ a']));
-    await POST(signedRequest(togglePayload(prev, ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9'])));
+    await POST(signedRequest(togglePayload(prev, ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10'])));
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(JSON.stringify(body.blocks)).toContain('배정 업무 완료');
     expect(saveChecked).toHaveBeenCalledWith('C0C9B0DEGDN', '200.2', expect.arrayContaining(['t9']), true);
