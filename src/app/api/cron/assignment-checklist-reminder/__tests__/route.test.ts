@@ -15,7 +15,7 @@ import { GET } from '../route';
 import { ASSIGNMENT_TASKS, buildChecklistBlocks } from '@/lib/slack-assignment-checklist';
 
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3600_000).toISOString();
-const open = { channel: 'C0C9B0DEGDN', message_ts: '200.2', request_text: '배정', checked_ids: [], created_at: hoursAgo(5), last_reminded_at: null };
+const open = { channel: 'C0C9B0DEGDN', message_ts: '200.2', request_text: '<@U09KUDME9NW> 배정', checked_ids: [], created_at: hoursAgo(5), last_reminded_at: null };
 const liveReply = (ids: string[]) => (ts: string | null) => ({ ok: true, messages: [{ ts, blocks: buildChecklistBlocks(Object.fromEntries(ids.map((id) => [id, '✔ a']))) }] });
 /** conversations.replies 는 replies 로, chat.postMessage 는 dm(본문) 으로 응답 */
 const mockSlack = (replies: unknown, dm: (body: { channel: string }) => unknown = () => ({ ok: true })) =>
@@ -42,11 +42,17 @@ describe('GET /api/cron/assignment-checklist-reminder (REQ-003)', () => {
     expect((await GET(req('Bearer x'))).status).toBe(401);
   });
 
-  it('두 담당자에게 DM 을 보내고 알림 시각을 갱신한다', async () => {
+  it('태그된 사람에게 DM 을 보내고 알림 시각을 갱신한다', async () => {
     await GET(req('Bearer s'));
-    const channels = dmCalls().map((m) => m.channel).sort();
-    expect(channels).toEqual(['U07FK6LSK7C', 'U07FMTVHYBX']);
+    expect(dmCalls().map((m) => m.channel)).toEqual(['U09KUDME9NW']);
     expect(markReminded).toHaveBeenCalledWith([{ channel: 'C0C9B0DEGDN', message_ts: '200.2' }], expect.any(Date));
+  });
+
+  it('태그가 없는 건은 Slack 조회도 DM 도 없이 건너뛴다', async () => {
+    fetchOpen.mockResolvedValue([{ ...open, request_text: '정민채 배정' }]);
+    await GET(req('Bearer s'));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(markReminded).not.toHaveBeenCalled();
   });
 
   it('대상이 없으면 보내지 않는다', async () => {
@@ -103,7 +109,7 @@ describe('GET /api/cron/assignment-checklist-reminder (REQ-003)', () => {
           vi.clearAllMocks();
           mockSlack(withReactions(names));
           await GET(req('Bearer s'));
-          expect(dmCalls()).toHaveLength(2);
+          expect(dmCalls()).toHaveLength(1);
           expect(saveChecked).not.toHaveBeenCalled();
         }
       });
@@ -111,14 +117,14 @@ describe('GET /api/cron/assignment-checklist-reminder (REQ-003)', () => {
       it('요청 글 조회가 실패하면 체크리스트 기준으로 알린다', async () => {
         mockSlack((ts: string | null) => (ts === '200.2' ? withReactions(null)(ts) : { ok: false, error: 'ratelimited' }));
         await GET(req('Bearer s'));
-        expect(dmCalls()).toHaveLength(2);
+        expect(dmCalls()).toHaveLength(1);
       });
     });
 
     it('조회가 실패하면 DB 기준으로 알린다', async () => {
       mockSlack({ ok: false, error: 'ratelimited' });
       await GET(req('Bearer s'));
-      expect(dmCalls()).toHaveLength(2);
+      expect(dmCalls()).toHaveLength(1);
       expect(saveChecked).not.toHaveBeenCalled();
     });
   });
@@ -127,23 +133,24 @@ describe('GET /api/cron/assignment-checklist-reminder (REQ-003)', () => {
     const tagged = { ...open, message_ts: '300.3', request_text: '<@U09KUDME9NW>\n박서진 배정' };
     const sent = dmCalls;
 
-    it('태그된 건은 태그된 사람에게만, 태그 없는 건은 담당자 2명에게 간다', async () => {
-      fetchOpen.mockResolvedValue([tagged, open]);
+    it('건마다 태그된 사람에게만 간다', async () => {
+      const other = { ...open, message_ts: '400.4', request_text: '<@U07FMTVHYBX>\n강민재 배정' };
+      fetchOpen.mockResolvedValue([tagged, other]);
       await GET(req('Bearer s'));
       const toTagged = sent().find((m) => m.channel === 'U09KUDME9NW');
       expect(toTagged.text).toContain('박서진 배정');
       expect(toTagged.text).toContain('1건');
-      const toFixed = sent().filter((m) => m.channel.startsWith('U07F'));
-      expect(toFixed.map((m) => m.channel).sort()).toEqual(['U07FK6LSK7C', 'U07FMTVHYBX']);
-      toFixed.forEach((m) => expect(m.text).not.toContain('박서진 배정'));
+      expect(toTagged.text).not.toContain('강민재 배정');
+      expect(sent().map((m) => m.channel).sort()).toEqual(['U07FMTVHYBX', 'U09KUDME9NW']);
     });
 
     it('태그된 사용자 DM 이 실패해도 다른 DM 은 나가고, 실패한 건만 알림 시각을 갱신하지 않는다', async () => {
-      fetchOpen.mockResolvedValue([tagged, open]);
+      const other = { ...open, message_ts: '400.4', request_text: '<@U07FMTVHYBX>\n강민재 배정' };
+      fetchOpen.mockResolvedValue([tagged, other]);
       mockSlack(liveReply([]), (body) => (body.channel === 'U09KUDME9NW' ? { ok: false, error: 'cannot_dm_bot' } : { ok: true }));
       const res = await GET(req('Bearer s'));
-      expect(sent().filter((m) => m.channel.startsWith('U07F'))).toHaveLength(2);
-      expect(markReminded).toHaveBeenCalledWith([{ channel: 'C0C9B0DEGDN', message_ts: '200.2' }], expect.any(Date));
+      expect(sent().filter((m) => m.channel === 'U07FMTVHYBX')).toHaveLength(1);
+      expect(markReminded).toHaveBeenCalledWith([{ channel: 'C0C9B0DEGDN', message_ts: '400.4' }], expect.any(Date));
       expect((await res.json()).reminded).toBe(1);
     });
   });

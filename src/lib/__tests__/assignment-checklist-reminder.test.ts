@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  pickDueChecklists, buildReminderText, extractMentionedUserIds, groupByRecipient, REMINDER_RECIPIENTS, type OpenChecklist,
+  pickDueChecklists, buildReminderText, extractMentionedUserIds, groupByRecipient, type OpenChecklist,
 } from '../assignment-checklist-reminder';
 
 const now = new Date('2026-10-27T12:00:00Z');
@@ -8,7 +8,7 @@ const hoursAgo = (h: number) => new Date(now.getTime() - h * 3600_000).toISOStri
 
 function row(over: Partial<OpenChecklist> = {}): OpenChecklist {
   return {
-    channel: 'C0C9B0DEGDN', message_ts: '200.2', request_text: '하예린 코치 배정 필요합니다\n둘째 줄',
+    channel: 'C0C9B0DEGDN', message_ts: '200.2', request_text: '<@U09KUDME9NW> 하예린 코치 배정 필요합니다\n둘째 줄',
     checked_ids: ['t1', 't2'], created_at: hoursAgo(5), last_reminded_at: null, ...over,
   };
 }
@@ -25,6 +25,12 @@ describe('pickDueChecklists (REQ-002)', () => {
   it('마지막 알림이 3시간 미만 전이면 제외, 이상이면 대상', () => {
     expect(pickDueChecklists([row({ last_reminded_at: hoursAgo(1) })], now)).toHaveLength(0);
     expect(pickDueChecklists([row({ last_reminded_at: hoursAgo(3) })], now)).toHaveLength(1);
+  });
+});
+
+describe('태그가 없는 건 (REQ-002)', () => {
+  it('받을 사람이 없으므로 대상에서 제외', () => {
+    expect(pickDueChecklists([row({ request_text: '정민채 배정' })], now)).toHaveLength(0);
   });
 });
 
@@ -65,22 +71,16 @@ describe('extractMentionedUserIds (REQ-001)', () => {
 });
 
 describe('groupByRecipient (REQ-002)', () => {
-  const [fixedA, fixedB] = REMINDER_RECIPIENTS;
-  const tagged = row({ message_ts: '300.3', request_text: '<@U09KUDME9NW>\n박서진 배정' });
-  const plain = row({ message_ts: '400.4', request_text: '정민채 배정' });
-
-  it('태그가 있는 건은 태그된 사람에게만, 태그가 없는 건은 고정 담당자에게 간다', () => {
-    const g = groupByRecipient([tagged, plain]);
-    expect(g.get('U09KUDME9NW')).toEqual([tagged]);
-    expect(g.get(fixedA)).toEqual([plain]);
-    expect(g.get(fixedB)).toEqual([plain]);
+  it('각 건은 태그된 사람에게만 간다', () => {
+    const a = row({ message_ts: '300.3', request_text: '<@U09KUDME9NW>\n박서진 배정' });
+    const b = row({ message_ts: '400.4', request_text: '<@U07FMTVHYBX>\n강민재 배정' });
+    const g = groupByRecipient([a, b]);
+    expect(g.get('U09KUDME9NW')).toEqual([a]);
+    expect(g.get('U07FMTVHYBX')).toEqual([b]);
   });
 
-  it('고정 담당자라도 다른 사람만 태그된 건은 받지 않는다', () => {
-    const forB = row({ request_text: `<@${fixedB}>\n강민재 배정` });
-    const g = groupByRecipient([forB]);
-    expect(g.get(fixedB)).toEqual([forB]);
-    expect(g.has(fixedA)).toBe(false);
+  it('태그가 없는 건은 아무에게도 가지 않는다', () => {
+    expect(groupByRecipient([row({ request_text: '정민채 배정' })]).size).toBe(0);
   });
 
   it('여러 명을 태그하면 각자 1통씩 받는다', () => {
