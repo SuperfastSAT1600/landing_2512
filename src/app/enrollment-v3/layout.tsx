@@ -13,13 +13,13 @@ export const metadata: Metadata = {
     url: 'https://tutoring.superfastsat.com/enrollment-v3',
     siteName: 'SuperfastSAT',
     type: 'website',
-    images: [{ url: 'https://tutoring.superfastsat.com/og-enrollment2026.png', alt: '수업권 | SuperfastSAT' }],
+    images: [{ url: 'https://tutoring.superfastsat.com/og-enrollment-v3.png', alt: '수업권 | SuperfastSAT' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SAT목표 점수에 가장 빠르게',
     description: '맞춤형 수업으로 목표 점수에 도달하세요.',
-    images: ['https://tutoring.superfastsat.com/og-enrollment2026.png'],
+    images: ['https://tutoring.superfastsat.com/og-enrollment-v3.png'],
   },
   robots: { index: false },
 };
