@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { kstDate } from '@/lib/kst-date';
-import type { ContactTask, ContactTaskKind } from '@/lib/contact-tasks';
 import type { WorkItem } from '@/lib/work-log';
 import { staffApi } from '../briefing/api';
 import type { ContactLog, ContactsByStudent } from '../briefing/types';
@@ -10,7 +9,7 @@ import { workLogApi } from './api';
 
 type Loaded = Awaited<ReturnType<typeof workLogApi.contactTasks>>;
 
-/** 연락 업무, 대상별 연락 이력, 학생이 지정된 운영 할 일. refreshKey 가 바뀔 때마다 다시 읽는다 */
+/** 수업 관리 업무, 대상별 연락 이력, 학생이 지정된 운영 할 일. refreshKey 가 바뀔 때마다 다시 읽는다 */
 export function useContactTasks(refreshKey: number) {
   const [data, setData] = useState<Loaded | null>(null);
   const [contacts, setContacts] = useState<ContactsByStudent>({});
@@ -21,8 +20,8 @@ export function useContactTasks(refreshKey: number) {
   useEffect(() => {
     workLogApi.contactTasks()
       .then(async d => {
-        const ids = [...new Set(d.groups.flatMap(g => g.tasks.map(t => t.targetId)))];
-        const studentIds = ids.filter(id => !id.startsWith('coach:'));
+        const studentIds = d.students.map(s => s.studentId);
+        const ids = [...studentIds, ...d.coaches.map(c => c.targetId)];
         const [byTarget, byStudent] = await Promise.all([
           ids.length ? staffApi.contacts(ids) : {},
           studentIds.length ? workLogApi.studentWorkItems(studentIds) : {},
@@ -36,9 +35,10 @@ export function useContactTasks(refreshKey: number) {
       .finally(() => setLoadedKey(refreshKey));
   }, [refreshKey]);
 
-  const addContact = useCallback(async (task: ContactTask, kind: ContactTaskKind, note?: string) => {
-    const log = await staffApi.addContact({ studentId: task.targetId, studentName: task.name, briefingDate: kstDate(new Date()), listKey: kind, note });
-    setContacts(prev => ({ ...prev, [task.targetId]: [log, ...(prev[task.targetId] ?? [])] }));
+  /** targetId 는 학생 profile id 또는 coach:<key>, listKey 는 용건 */
+  const addContact = useCallback(async (targetId: string, name: string, listKey: string, note: string) => {
+    const log = await staffApi.addContact({ studentId: targetId, studentName: name, briefingDate: kstDate(new Date()), listKey, note });
+    setContacts(prev => ({ ...prev, [targetId]: [log, ...(prev[targetId] ?? [])] }));
   }, []);
 
   const removeContact = useCallback(async (log: ContactLog) => {

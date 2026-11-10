@@ -16,7 +16,7 @@ beforeEach(() => {
   mocks.compute.mockResolvedValue({ briefing: { endingSoon: [], noSchedule: [], neverScheduled: [] }, coachRatios: [] });
 });
 
-describe('GET /api/staff/contact-tasks (REQ-005)', () => {
+describe('GET /api/staff/contact-tasks (REQ-008)', () => {
   it('세션이 없으면 401', async () => {
     mocks.staff.mockReturnValue(null);
     expect((await GET(req())).status).toBe(401);
@@ -29,7 +29,7 @@ describe('GET /api/staff/contact-tasks (REQ-005)', () => {
     const now = mocks.compute.mock.calls[0][0] as Date;
     expect(now.getTime()).toBeGreaterThanOrEqual(before);
     expect(data.generatedAt).toBe(now.toISOString());
-    expect(data.groups.map((g: { kind: string }) => g.kind)).toEqual(['coachRoom', 'coach', 'endingSoon', 'noSchedule', 'neverScheduled']);
+    expect(data).toMatchObject({ students: [], coaches: [] });
   });
 
   it('계산이 실패하면 502', async () => {

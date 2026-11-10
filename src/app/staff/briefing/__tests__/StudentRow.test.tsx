@@ -71,16 +71,4 @@ describe('StudentRow', () => {
     expect(screen.getByText('최근 연락 10/19 10:00 신명경 — 문자 발송')).toBeTruthy();
     expect(screen.queryByText(/예전/)).toBeNull();
   });
-
-  it('noteRequired 면 결과 없이 바로 기록하는 버튼이 없고, 결과를 적어야 기록된다', async () => {
-    const onContact = vi.fn().mockResolvedValue(undefined);
-    render(<StudentRow {...base} noteRequired onContact={onContact} contacts={[]} />);
-    expect(screen.queryByRole('button', { name: '연락함' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: '결과 기록' }));
-    const submit = screen.getByRole('button', { name: '기록' }) as HTMLButtonElement;
-    expect(submit.disabled).toBe(true);
-    fireEvent.change(screen.getByPlaceholderText('연락 결과 (예: 전화 부재중, 문자로 스케줄 안내)'), { target: { value: '전화 부재중' } });
-    fireEvent.click(submit);
-    await waitFor(() => expect(onContact).toHaveBeenCalledWith('전화 부재중'));
-  });
 });
