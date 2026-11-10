@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { LoginForm } from '../briefing/components/LoginForm';
+import { ContactTasks } from './components/ContactTasks';
 import { WorkItemRow } from './components/WorkItemRow';
 import { useWorkLog } from './useWorkLog';
 
@@ -13,9 +14,21 @@ const FILTERS = [
 
 type FilterKey = (typeof FILTERS)[number]['key'];
 
+const TABS = [
+  { key: 'slack', label: '운영 할 일' },
+  { key: 'contact', label: '알바 연락 업무' },
+] as const;
+
+type TabKey = (typeof TABS)[number]['key'];
+
+const pill = (active: boolean) => active
+  ? 'rounded bg-gray-900 px-3 py-1.5 text-xs font-medium text-white'
+  : 'rounded bg-white px-3 py-1.5 text-xs text-gray-600 ring-1 ring-gray-200';
+
 export default function WorkLogPage() {
   const { session, items, error, loading, load, login, logout, setStudent } = useWorkLog();
   const [filter, setFilter] = useState<FilterKey>('open');
+  const [tab, setTab] = useState<TabKey>('slack');
 
   if (session === 'loading') return <p className="p-8 text-sm text-gray-400">불러오는 중…</p>;
   if (session === 'signed-out') return <LoginForm onLogin={login} />;
@@ -32,10 +45,19 @@ export default function WorkLogPage() {
         <button type="button" onClick={() => void logout()} className="text-xs text-gray-500 underline">로그아웃</button>
       </header>
 
+      <nav className="flex gap-4 border-b border-gray-200" aria-label="업무 종류">
+        {TABS.map(t => (
+          <button key={t.key} type="button" onClick={() => setTab(t.key)} aria-pressed={tab === t.key}
+            className={tab === t.key ? '-mb-px border-b-2 border-gray-900 pb-2 text-sm font-bold' : 'pb-2 text-sm text-gray-500'}>
+            {t.label}
+          </button>
+        ))}
+      </nav>
+
+      {tab === 'contact' ? <ContactTasks /> : <>
       <nav className="flex gap-2" aria-label="업무 상태">
         {FILTERS.map(f => (
-          <button key={f.key} type="button" onClick={() => setFilter(f.key)} aria-pressed={filter === f.key}
-            className={filter === f.key ? 'rounded bg-gray-900 px-3 py-1.5 text-xs font-medium text-white' : 'rounded bg-white px-3 py-1.5 text-xs text-gray-600 ring-1 ring-gray-200'}>
+          <button key={f.key} type="button" onClick={() => setFilter(f.key)} aria-pressed={filter === f.key} className={pill(filter === f.key)}>
             {f.label} {counts[f.key]}
           </button>
         ))}
@@ -48,6 +70,7 @@ export default function WorkLogPage() {
       <ul className="space-y-2">
         {shown.map(i => <WorkItemRow key={i.messageTs} item={i} onSetStudent={setStudent} />)}
       </ul>
+      </>}
     </main>
   );
 }
