@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { notifyScheduleInputStatus } from '@/lib/slack-sfv2';
-import { buildCoachRoster } from '@/lib/coach-roster';
-import { fetchCoachRosterInput } from '@/lib/coach-roster-fetch';
-import { classifySchedules, type Briefing, type StudentSchedule } from './classify';
+import type { Briefing } from './classify';
 import { buildBriefingPayload } from './briefing-payload';
 import { saveBriefing } from './briefing-store';
-import { applyDelta, buildCoachRatios, type CoachRatio } from './coach-ratio';
+import { applyDelta, type CoachRatio } from './coach-ratio';
 import { kstDate, yesterdayKstDate } from '@/lib/kst-date';
 import { loadSnapshot, saveSnapshot } from './coach-snapshots';
-import { fetchAllActiveStudentsMap, fetchFutureCoachRoomMinutes, fetchHadLessonUserIds, fetchRemainingHoursMap, fetchScheduleSummary } from './fetchers';
-
-// 테스트 계정 — 알림 대상에서 제외
-const EXCLUDED_STUDENTS = new Set(['박윤재']);
+import { computeScheduleBriefing } from './compute';
 
 /**
  * GET /api/cron/schedule-input-status
@@ -30,34 +25,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const now = new Date();
-    const [activeMap, summary, hadLesson, rosterInput, coachRoomMinutes] = await Promise.all([
-      fetchAllActiveStudentsMap(),
-      fetchScheduleSummary(now),
-      fetchHadLessonUserIds(now),
-      fetchCoachRosterInput(),
-      fetchFutureCoachRoomMinutes(now),
-    ]);
-    const roster = buildCoachRoster(rosterInput);
-
-    const activeIds = [...activeMap].filter(([, name]) => !EXCLUDED_STUDENTS.has(name)).map(([id]) => id);
-    const rosterIds = roster.coaches.flatMap(c => c.students.map(s => s.profileId));
-    const remainingMap = await fetchRemainingHoursMap([...new Set([...activeIds, ...rosterIds])]);
-
-    const students: StudentSchedule[] = activeIds.map(userId => ({
-      userId,
-      name: activeMap.get(userId)!,
-      remainingHours: remainingMap.get(userId) ?? 0,
-      everScheduled: summary.everScheduled.has(userId),
-      isNew: !hadLesson.has(userId),
-      studyHallMinutes: summary.studyHallMinutes.get(userId) ?? 0,
-      vocabMinutes: summary.vocabMinutes.get(userId) ?? 0,
-      lastDate: summary.lastDateByUser.get(userId) ?? null,
-    }));
-
-    const briefing = classifySchedules(students, now);
+    const { briefing, coachRatios: todayRatios } = await computeScheduleBriefing(now);
     console.log(`[cron/schedule-input-status] ending-soon=${briefing.endingSoon.length} | no-schedule=${briefing.noSchedule.length} | never=${briefing.neverScheduled.length}`);
 
-    const coachRatios = await withPreviousDay(buildCoachRatios(roster, coachRoomMinutes, remainingMap), now);
+    const coachRatios = await withPreviousDay(todayRatios, now);
 
     await storeBriefing(briefing, coachRatios, now);
     await notifyScheduleInputStatus(briefing, coachRatios, now);
