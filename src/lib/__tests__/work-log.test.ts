@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatSlackText, isWorkMessage, toWorkItem } from '@/lib/work-log';
+import { formatDuration, formatSlackText, isWorkMessage, toWorkItem } from '@/lib/work-log';
 
 const names = { U1AAA: '병윤', U2BBB: '민재', U3CCC: '우' };
 
@@ -27,7 +27,7 @@ describe('toWorkItem', () => {
 
   it('태그된 사람이 담당자이고 ✅ 가 없으면 진행 중이다', () => {
     const item = toWorkItem(message, names);
-    expect(item).toMatchObject({ authorName: '병윤', assignees: ['민재', '우'], done: false, doneBy: null, replyCount: 2, fileCount: 1 });
+    expect(item).toMatchObject({ authorName: '병윤', assignees: ['민재', '우'], done: false, doneBy: null, doneAt: null, replyCount: 2, fileCount: 1 });
     expect(item.permalink).toBe('https://slack.com/archives/C0C9B0DEGDN/p1793840353287059');
   });
 
@@ -35,5 +35,25 @@ describe('toWorkItem', () => {
     expect(toWorkItem({ ...message, reactions: [{ name: 'eyes', users: ['U3CCC'] }] }, names).done).toBe(false);
     const done = toWorkItem({ ...message, reactions: [{ name: 'white_check_mark', users: ['U3CCC', 'U1AAA'] }] }, names);
     expect(done).toMatchObject({ done: true, doneBy: '우' });
+  });
+});
+
+describe('formatDuration (REQ-004)', () => {
+  const MIN = 60_000;
+  const HOUR = 60 * MIN;
+
+  it('1분 미만은 "1분 미만"', () => {
+    expect(formatDuration(30_000)).toBe('1분 미만');
+  });
+
+  it('1시간 미만은 분만, 하루 미만은 시간과 분', () => {
+    expect(formatDuration(45 * MIN)).toBe('45분');
+    expect(formatDuration(2 * HOUR + 15 * MIN)).toBe('2시간 15분');
+    expect(formatDuration(2 * HOUR)).toBe('2시간');
+  });
+
+  it('하루 이상은 일과 시간', () => {
+    expect(formatDuration(3 * 24 * HOUR + 4 * HOUR + 30 * MIN)).toBe('3일 4시간');
+    expect(formatDuration(24 * HOUR + 10 * MIN)).toBe('1일');
   });
 });

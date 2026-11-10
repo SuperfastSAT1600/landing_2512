@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { WorkItem } from '@/lib/work-log';
+import { formatDuration, type WorkItem } from '@/lib/work-log';
 import { StudentPicker } from './StudentPicker';
 
 const stamp = new Intl.DateTimeFormat('ko-KR', {
@@ -26,6 +26,11 @@ export function WorkItemRow({ item, onSetStudent }: { item: WorkItem; onSetStude
         <span>작성 {item.authorName}</span>
         {item.assignees.length > 0 && <span>담당 {item.assignees.join(', ')}</span>}
         {item.doneBy && <span>완료 {item.doneBy}</span>}
+        {item.done && (item.doneAt ? (
+          <span className="text-emerald-700">
+            {stamp.format(new Date(item.doneAt))} 완료 · 소요 {formatDuration(Date.parse(item.doneAt) - Date.parse(item.postedAt))}
+          </span>
+        ) : <span className="text-gray-400">완료 시각 기록 없음</span>)}
         <a href={item.permalink} target="_blank" rel="noreferrer" className="ml-auto underline">Slack에서 보기</a>
       </div>
       <p className="mt-2 whitespace-pre-wrap break-words text-sm">{item.text || '(첨부만 있는 글)'}</p>

@@ -3,14 +3,19 @@ import { z } from 'zod';
 import { apiError, unauthorized } from '@/lib/api-response';
 import { getStaffUser } from '@/lib/staff-request';
 import { clearWorkItemStudent, findStudent, listWorkItemStudents, setWorkItemStudent } from '@/lib/work-item-students';
+import { listCompletions } from '@/lib/work-item-completions';
 import { fetchWorkItems } from '@/lib/work-log';
 
-// GET /api/staff/work-items — 운영 업무 채널의 할 일(최신순)과 연결된 학생
+// GET /api/staff/work-items — 운영 업무 채널의 할 일(최신순)과 연결된 학생, 완료 시각
 export async function GET(request: NextRequest) {
   if (!getStaffUser(request)) return unauthorized();
   try {
-    const [items, students] = await Promise.all([fetchWorkItems(), listWorkItemStudents()]);
-    return NextResponse.json({ data: { items: items.map(i => ({ ...i, student: students[i.messageTs] ?? null })) } });
+    const [items, students, completions] = await Promise.all([fetchWorkItems(), listWorkItemStudents(), listCompletions()]);
+    return NextResponse.json({ data: { items: items.map(i => ({
+      ...i,
+      student: students[i.messageTs] ?? null,
+      doneAt: i.done ? completions[i.messageTs] ?? null : null,
+    })) } });
   } catch (error) {
     console.error('[api/staff/work-items GET] error:', error);
     return apiError('UPSTREAM_ERROR', '업무 목록 조회에 실패했습니다.', 502);

@@ -7,6 +7,7 @@ import { handleBlogWrite, handlePublish, handleTopicSuggest, type Platform } fro
 import { buildLeadFormBlocks } from '@/app/api/slack/interactions/lead-blocks';
 import { isAssignmentRequest, postChecklist } from '@/lib/slack-assignment-checklist';
 import { createChecklist } from '@/lib/assignment-checklist-store';
+import { handleDoneReaction, isDoneReactionEvent, type ReactionEvent } from '@/lib/work-item-completions';
 import type { Topic } from './blog-writer';
 
 const LEAD_CHANNEL = 'C07FK85V9PD';
@@ -42,7 +43,7 @@ type SlackEvent = {
   thread_ts?: string;
   bot_id?: string;
   files?: SlackFile[];
-};
+} & ReactionEvent;
 
 type SlackPayload = {
   type: string;
@@ -63,6 +64,12 @@ export async function POST(request: NextRequest) {
   }
 
   const event = payload.event;
+
+  // 업무 채널 글의 ✅ 반응 추가·제거로 완료 시각을 기록한다. 기록은 멱등이라 재전송도 그대로 처리한다.
+  if (event && isDoneReactionEvent(event)) {
+    after(() => handleDoneReaction(event).catch(err => console.error('[slack/events] 완료 시각 기록 실패:', err)));
+    return NextResponse.json({ ok: true });
+  }
 
   // 배정 요청 글(워크플로가 올린 bot 글 포함)에는 업무 체크리스트를 답글로 단다. Slack 재전송은 건너뛴다.
   if (event && isAssignmentRequest(event)) {

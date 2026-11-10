@@ -3,7 +3,7 @@ import { extractMentionedUserIds } from '@/lib/assignment-checklist-reminder';
 import { ASSIGNMENT_CHANNEL } from '@/lib/slack-assignment-checklist';
 
 export const WORK_CHANNEL = ASSIGNMENT_CHANNEL;
-const DONE_REACTION = 'white_check_mark';
+export const DONE_REACTION = 'white_check_mark';
 const MAX_PAGES = 5;
 
 export interface SlackWorkMessage {
@@ -24,6 +24,8 @@ export interface WorkItem {
   assignees: string[];
   done: boolean;
   doneBy: string | null;
+  /** 처음 ✅ 가 달린 시각. 반응 이벤트 기록이 있을 때만 */
+  doneAt: string | null;
   permalink: string;
   replyCount: number;
   fileCount: number;
@@ -64,11 +66,26 @@ export function toWorkItem(m: SlackWorkMessage, names: Names): WorkItem {
     assignees: extractMentionedUserIds(text).map((id) => names[id] ?? id),
     done: Boolean(doneId),
     doneBy: doneId ? names[doneId] ?? doneId : null,
+    doneAt: null,
     permalink: `https://slack.com/archives/${WORK_CHANNEL}/p${m.ts.replace('.', '')}`,
     replyCount: m.reply_count ?? 0,
     fileCount: m.files?.length ?? 0,
     student: null,
   };
+}
+
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+/** 소요 시간: 하루 이상은 일·시간, 그 아래는 시간·분 */
+export function formatDuration(ms: number): string {
+  if (ms < MINUTE) return '1분 미만';
+  const [big, bigUnit, small, smallUnit] = ms >= DAY
+    ? [Math.floor(ms / DAY), '일', Math.floor((ms % DAY) / HOUR), '시간']
+    : [Math.floor(ms / HOUR), '시간', Math.floor((ms % HOUR) / MINUTE), '분'];
+  if (big === 0) return `${small}${smallUnit}`;
+  return small === 0 ? `${big}${bigUnit}` : `${big}${bigUnit} ${small}${smallUnit}`;
 }
 
 function userIdsOf(messages: SlackWorkMessage[]): string[] {
