@@ -1,66 +1,76 @@
-/** 알바생 연락 업무: 일일 스케줄 브리핑에서 연락할 학생·코치를 뽑는다 */
+/** 수업 관리 업무: 스케줄 데이터에서 연락할 학생(용건별)과 코치를 뽑는다 */
 import type { BriefingPayload, PayloadEntry } from '@/app/api/cron/schedule-input-status/briefing-payload';
 
-export type ContactTaskKind = 'coachRoom' | 'coach' | 'endingSoon' | 'noSchedule' | 'neverScheduled';
+export const REASON_KINDS = ['coachRoom', 'endingSoon', 'noSchedule', 'neverScheduled'] as const;
+export type ReasonKind = (typeof REASON_KINDS)[number];
 
-export interface ContactTask {
-  /** 학생은 SFv2 profile id, 코치는 `coach:<코치 key>` (연락 기록이 학생과 섞이지 않게) */
-  targetId: string;
-  name: string;
-  remainingHours?: number;
+const LABELS: Record<string, string> = {
+  coachRoom: '코칭룸 미예약',
+  endingSoon: '스터디홀/보캡 곧 끝남',
+  noSchedule: '스터디홀/보캡 없음',
+  neverScheduled: '스터디홀/보캡 한 번도 안 잡음',
+  coach: '코치 연락',
+  other: '기타',
+};
+
+/** 용건(연락 기록의 list_key) 이름. 모르는 값은 그대로 */
+export const reasonLabel = (key: string): string => LABELS[key] ?? key;
+
+export interface Reason {
+  kind: ReasonKind;
   coachNames?: string[];
-  studentNames?: string[];
   lastDate?: string;
   isNew?: boolean;
 }
 
-export interface ContactTaskGroup {
-  kind: ContactTaskKind;
-  title: string;
-  target: '학생' | '코치';
-  tasks: ContactTask[];
+export interface StudentTask {
+  studentId: string;
+  name: string;
+  remainingHours: number;
+  reasons: Reason[];
+}
+
+export interface CoachTask {
+  /** `coach:<코치 key>` — 연락 기록이 학생과 섞이지 않게 */
+  targetId: string;
+  name: string;
+  studentNames: string[];
+}
+
+export interface ContactTasks {
+  students: StudentTask[];
+  coaches: CoachTask[];
 }
 
 type Coach = BriefingPayload['coaches'][number];
 
 const unbookedStudents = (c: Coach) => c.students.filter(s => s.scheduledHours === 0 && s.remainingHours > 0);
 
-/** 코치가 여럿인 학생은 한 줄로 모은다 */
-function coachRoomTasks(coaches: Coach[]): ContactTask[] {
-  const byStudent = new Map<string, ContactTask & { coachNames: string[] }>();
-  for (const c of coaches) {
-    for (const s of unbookedStudents(c)) {
-      const task = byStudent.get(s.userId);
-      if (task) task.coachNames.push(c.name);
-      else byStudent.set(s.userId, { targetId: s.userId, name: s.name, remainingHours: s.remainingHours, coachNames: [c.name] });
-    }
-  }
-  return [...byStudent.values()];
+function scheduleReason(kind: ReasonKind, e: PayloadEntry): Reason {
+  return { kind, ...(e.lastDate ? { lastDate: e.lastDate } : {}), ...(e.isNew ? { isNew: true } : {}) };
 }
 
-function scheduleTask(e: PayloadEntry): ContactTask {
-  return {
-    targetId: e.userId,
-    name: e.name,
-    remainingHours: e.remainingHours,
-    ...(e.lastDate ? { lastDate: e.lastDate } : {}),
-    ...(e.isNew ? { isNew: true } : {}),
+/** 학생마다 한 줄. 코칭룸 미예약 → 곧 끝남 → 없음 → 한 번도 안 잡음 순으로 처음 나온 자리에 둔다 */
+export function buildContactTasks(payload: BriefingPayload): ContactTasks {
+  const byStudent = new Map<string, StudentTask>();
+  const add = (studentId: string, name: string, remainingHours: number, reason: Reason) => {
+    const task = byStudent.get(studentId) ?? { studentId, name, remainingHours, reasons: [] };
+    byStudent.set(studentId, task);
+    const same = task.reasons.find(r => r.kind === reason.kind);
+    if (same?.coachNames && reason.coachNames) same.coachNames.push(...reason.coachNames);
+    else if (!same) task.reasons.push(reason);
   };
-}
 
-export function buildContactTasks(payload: BriefingPayload): ContactTaskGroup[] {
   const coachesWithUnbooked = payload.coaches.filter(c => unbookedStudents(c).length > 0);
-  return [
-    {
-      kind: 'coachRoom', title: '코칭룸 미예약', target: '학생',
-      tasks: coachRoomTasks(coachesWithUnbooked),
-    },
-    {
-      kind: 'coach', title: '코칭룸 미예약 학생이 있는 코치', target: '코치',
-      tasks: coachesWithUnbooked.map(c => ({ targetId: `coach:${c.key}`, name: c.name, studentNames: unbookedStudents(c).map(s => s.name) })),
-    },
-    { kind: 'endingSoon', title: '스터디홀/보캡 스케줄 곧 끝남', target: '학생', tasks: payload.endingSoon.map(scheduleTask) },
-    { kind: 'noSchedule', title: '스터디홀/보캡 스케줄 없음', target: '학생', tasks: payload.noSchedule.map(scheduleTask) },
-    { kind: 'neverScheduled', title: '스터디홀/보캡 한 번도 안 잡음', target: '학생', tasks: payload.neverScheduled.map(scheduleTask) },
-  ];
+  for (const c of coachesWithUnbooked) {
+    for (const s of unbookedStudents(c)) add(s.userId, s.name, s.remainingHours, { kind: 'coachRoom', coachNames: [c.name] });
+  }
+  for (const kind of ['endingSoon', 'noSchedule', 'neverScheduled'] as const) {
+    for (const e of payload[kind]) add(e.userId, e.name, e.remainingHours, scheduleReason(kind, e));
+  }
+
+  return {
+    students: [...byStudent.values()],
+    coaches: coachesWithUnbooked.map(c => ({ targetId: `coach:${c.key}`, name: c.name, studentNames: unbookedStudents(c).map(s => s.name) })),
+  };
 }
