@@ -135,3 +135,17 @@ export async function fetchWorkItems(): Promise<WorkItem[]> {
   const names = await fetchNames(userIdsOf(messages));
   return messages.map((m) => toWorkItem(m, names));
 }
+
+/** 지정한 글들만 하나씩 읽는다. 지워진 글은 빠진다. 최신 글부터 */
+export async function fetchWorkItemsByTs(tsList: string[]): Promise<WorkItem[]> {
+  if (!tsList.length) return [];
+  const found = await Promise.all(tsList.map(async (ts) => {
+    const data = await slackGet<{ messages?: SlackWorkMessage[] }>(
+      'conversations.history', { channel: WORK_CHANNEL, latest: ts, oldest: ts, inclusive: 'true', limit: '1' },
+    );
+    return data.messages?.find((m) => m.ts === ts && isWorkMessage(m));
+  }));
+  const messages = found.filter((m): m is SlackWorkMessage => Boolean(m)).sort((a, b) => Number(b.ts) - Number(a.ts));
+  const names = await fetchNames(userIdsOf(messages));
+  return messages.map((m) => toWorkItem(m, names));
+}

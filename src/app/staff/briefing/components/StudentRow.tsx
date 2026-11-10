@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { formatKstDateTime, lastContactLabel } from '../format';
 import type { ContactLog } from '../types';
 
@@ -19,13 +19,15 @@ interface Props {
   onRemove: (log: ContactLog) => Promise<void>;
   /** 결과(메모)를 적어야만 기록한다. 한 번에 기록하는 '연락함' 버튼을 숨긴다 */
   noteRequired?: boolean;
+  /** 최근 연락 아래에 붙는 관련 기록 (예: 운영 할 일) */
+  children?: ReactNode;
 }
 
 function latestSummary(log: ContactLog): string {
   return `최근 연락 ${formatKstDateTime(log.contactedAt)} ${log.staffName}${log.note ? ` — ${log.note}` : ''}`;
 }
 
-export function StudentRow({ studentId, name, detail, isNew, contacts, briefingDate, now, staffId, onContact, onRemove, noteRequired }: Props) {
+export function StudentRow({ studentId, name, detail, isNew, contacts, briefingDate, now, staffId, onContact, onRemove, noteRequired, children }: Props) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -66,6 +68,7 @@ export function StudentRow({ studentId, name, detail, isNew, contacts, briefingD
         </span>
       </div>
       {contacts[0] && <p className="mt-1 text-xs text-gray-600">{latestSummary(contacts[0])}</p>}
+      {children}
       {error && <p role="alert" className="mt-1 text-xs text-red-600">{error}</p>}
       {open && (
         <div className="mt-2 space-y-2 rounded bg-gray-50 p-2">

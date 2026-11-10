@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
-const api = vi.hoisted(() => ({ tasks: vi.fn(), contacts: vi.fn(), add: vi.fn() }));
-vi.mock('../api', () => ({ workLogApi: { contactTasks: api.tasks } }));
+const api = vi.hoisted(() => ({ tasks: vi.fn(), contacts: vi.fn(), add: vi.fn(), workItems: vi.fn() }));
+vi.mock('../api', () => ({ workLogApi: { contactTasks: api.tasks, studentWorkItems: api.workItems } }));
 vi.mock('../../briefing/api', () => ({ staffApi: { contacts: api.contacts, addContact: api.add, removeContact: vi.fn() } }));
 
 import { ContactTasks } from '../components/ContactTasks';
@@ -21,6 +21,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   api.tasks.mockResolvedValue({ generatedAt, groups });
   api.contacts.mockResolvedValue({ s1: [yesterday] });
+  api.workItems.mockResolvedValue({});
 });
 
 // REQ-006
@@ -43,5 +44,17 @@ describe('ContactTasks', () => {
       studentId: 's1', studentName: '나은', briefingDate: '2026-11-11', listKey: 'noSchedule', note: '스케줄 입력 약속',
     }));
     expect(await screen.findByText('최근 연락 11/11 10:05 나 — 스케줄 입력 약속')).toBeTruthy();
+  });
+
+  it('학생이 지정된 운영 할 일을 같은 줄에 보여준다 (REQ-007)', async () => {
+    api.workItems.mockResolvedValue({ s1: [{
+      messageTs: '1794200000.000100', postedAt: '2026-11-11T04:20:00.000Z', text: '가나다 학생 통화함. 목요일 코칭룸 예약 예정',
+      authorName: '직원A', done: true, doneBy: '직원A', permalink: 'https://slack.com/archives/C0C9B0DEGDN/p1794200000000100', replyCount: 2,
+    }] });
+    render(<ContactTasks refreshKey={0} staffId="staff-1" />);
+    expect(await screen.findByText('가나다 학생 통화함. 목요일 코칭룸 예약 예정')).toBeTruthy();
+    expect(screen.getByText('운영 할 일 11/11 13:20 직원A · 완료 · 답글 2')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Slack' }).getAttribute('href')).toBe('https://slack.com/archives/C0C9B0DEGDN/p1794200000000100');
+    expect(api.workItems).toHaveBeenCalledWith(['s1']);
   });
 });
