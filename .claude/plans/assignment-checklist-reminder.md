@@ -2,8 +2,8 @@
 
 ## Overview
 
-[[assignment-checklist]] 로 스레드에 달린 학생 배정 체크리스트가 끝나지 않았으면, 3시간마다 담당자 2명
-(Slack `U07FK6LSK7C` 2017newshcoach, `U07FMTVHYBX` minjae.lee90)에게 DM 으로 남은 항목을 알려 준다.
+[[assignment-checklist]] 로 스레드에 달린 학생 배정 체크리스트가 끝나지 않았으면, 3시간마다 요청 글에서 태그된 사람에게
+DM 으로 남은 항목을 알려 준다. 고정 수신자는 없고, 태그가 없는 글은 알리지 않는다.
 Slack 메시지만으로는 "진행 중인 체크리스트"를 찾을 수 없어, 체크리스트마다 DB 에 한 행을 두고 체크 때마다 갱신한다.
 
 ## Requirements
@@ -22,13 +22,13 @@ Slack 메시지만으로는 "진행 중인 체크리스트"를 찾을 수 없어
 
 ### REQ-003: 3시간 cron 과 DM 전송
 - **Priority**: Must
-- **Description**: `GET /api/cron/assignment-checklist-reminder` (`0 */3 * * *`) 가 대상 건을 묶어 담당자 2명 각각에게 DM 1통씩 보낸다. 전송에 성공하면 해당 건의 `last_reminded_at` 을 갱신한다. 한 명이라도 실패하면 갱신하지 않아 다음 실행에서 재시도한다.
+- **Description**: `GET /api/cron/assignment-checklist-reminder` (`0 */3 * * *`) 가 대상 건을 묶어 태그된 사람 각각에게 DM 1통씩 보낸다. 전송에 성공하면 해당 건의 `last_reminded_at` 을 갱신한다. 한 명이라도 실패하면 갱신하지 않아 다음 실행에서 재시도한다.
 - **Acceptance Criteria**: CRON_SECRET 불일치 401. 대상이 없으면 전송하지 않음. SLACK_BOT_TOKEN 없으면 아무것도 하지 않음. `vercel.json` 크론과 cron 설정 테스트 일치. 마이그레이션 162.
 - **Verification**: (TEST) `src/app/api/cron/assignment-checklist-reminder/__tests__/route.test.ts`, `src/__tests__/vercel-cron-config.test.ts`, (MANUAL) 마이그레이션 적용 후 실제 DM 수신
 
 ### REQ-004: 보내기 전 Slack 상태 확인
 - **Priority**: Must
-- **Description**: 수신자는 요청 글에서 태그된 사람이고, 태그가 없으면 담당자 2명이다. 보내기 직전에 `conversations.replies` 로 체크리스트를 다시 읽어 다 체크됐거나 글이 지워진 건은 닫고 알리지 않는다.
+- **Description**: 수신자는 요청 글에서 태그된 사람뿐이다(고정 수신자 없음). 태그가 없는 글은 대상에서 제외한다. 보내기 직전에 `conversations.replies` 로 체크리스트를 다시 읽어 다 체크됐거나 글이 지워진 건은 닫고 알리지 않는다.
 - **Acceptance Criteria**: 조회가 실패하면 DB 기준으로 알린다. 남은 항목은 Slack 체크 상태로 계산한다.
 - **Verification**: (TEST) `src/app/api/cron/assignment-checklist-reminder/__tests__/route.test.ts`
 
@@ -68,4 +68,4 @@ Slack 메시지만으로는 "진행 중인 체크리스트"를 찾을 수 없어
 
 ## Out of Scope
 
-- 야간 조용한 시간 설정(요청대로 3시간 간격 고정), 담당자별 수신 설정, 이미 올라간 과거 체크리스트 소급 추적
+- 야간 조용한 시간 설정(요청대로 3시간 간격 고정), 담당자별 수신 설정, 태그 없는 글의 대체 수신자, 이미 올라간 과거 체크리스트 소급 추적
