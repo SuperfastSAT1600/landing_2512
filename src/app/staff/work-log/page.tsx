@@ -55,7 +55,7 @@ export default function WorkLogPage() {
         ))}
       </nav>
 
-      {tab === 'contact' ? <ContactTasks refreshKey={contactKey} /> : <>
+      {tab === 'contact' ? <ContactTasks refreshKey={contactKey} staffId={session.id} /> : <>
       <nav className="flex gap-2" aria-label="업무 상태">
         {FILTERS.map(f => (
           <button key={f.key} type="button" onClick={() => setFilter(f.key)} aria-pressed={filter === f.key} className={pill(filter === f.key)}>

@@ -38,10 +38,10 @@ describe('buildContactTasks (REQ-005)', () => {
     ]);
   });
 
-  it('코치는 미예약 학생이 있는 코치만, 해당 학생 이름과 함께 담는다', () => {
+  it('코치는 미예약 학생이 있는 코치만, 해당 학생 이름과 함께 담는다. 연락 기록이 학생과 섞이지 않게 coach: 를 붙인다', () => {
     expect(byKind.coach.tasks).toEqual([
-      { targetId: 'ben', name: 'Ben', studentNames: ['마루'] },
-      { targetId: 'kim', name: 'Kim', studentNames: ['자두', '차미', '마루'] },
+      { targetId: 'coach:ben', name: 'Ben', studentNames: ['마루'] },
+      { targetId: 'coach:kim', name: 'Kim', studentNames: ['자두', '차미', '마루'] },
     ]);
   });
 

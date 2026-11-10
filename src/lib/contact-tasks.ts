@@ -4,7 +4,7 @@ import type { BriefingPayload, PayloadEntry } from '@/app/api/cron/schedule-inpu
 export type ContactTaskKind = 'coachRoom' | 'coach' | 'endingSoon' | 'noSchedule' | 'neverScheduled';
 
 export interface ContactTask {
-  /** 학생은 SFv2 profile id, 코치는 코치 key */
+  /** 학생은 SFv2 profile id, 코치는 `coach:<코치 key>` (연락 기록이 학생과 섞이지 않게) */
   targetId: string;
   name: string;
   remainingHours?: number;
@@ -57,7 +57,7 @@ export function buildContactTasks(payload: BriefingPayload): ContactTaskGroup[] 
     },
     {
       kind: 'coach', title: '코칭룸 미예약 학생이 있는 코치', target: '코치',
-      tasks: coachesWithUnbooked.map(c => ({ targetId: c.key, name: c.name, studentNames: unbookedStudents(c).map(s => s.name) })),
+      tasks: coachesWithUnbooked.map(c => ({ targetId: `coach:${c.key}`, name: c.name, studentNames: unbookedStudents(c).map(s => s.name) })),
     },
     { kind: 'endingSoon', title: '스터디홀/보캡 스케줄 곧 끝남', target: '학생', tasks: payload.endingSoon.map(scheduleTask) },
     { kind: 'noSchedule', title: '스터디홀/보캡 스케줄 없음', target: '학생', tasks: payload.noSchedule.map(scheduleTask) },
