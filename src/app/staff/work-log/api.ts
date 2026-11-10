@@ -15,5 +15,7 @@ export const workLogApi = {
   setStudent: (messageTs: string, studentId: string | null) =>
     call<{ student: WorkItem['student'] }>('/api/staff/work-items', { method: 'PUT', body: JSON.stringify({ messageTs, studentId }) }).then(d => d.student),
   contactTasks: () => call<{ generatedAt: string; groups: ContactTaskGroup[] }>('/api/staff/contact-tasks'),
+  studentWorkItems: (studentIds: string[]) =>
+    call<{ byStudent: Record<string, WorkItem[]> }>(`/api/staff/student-work-items?studentIds=${encodeURIComponent(studentIds.join(','))}`).then(d => d.byStudent),
   searchStudents: (q: string) => call<{ students: StudentOption[] }>(`/api/staff/students?q=${encodeURIComponent(q)}`).then(d => d.students),
 };
