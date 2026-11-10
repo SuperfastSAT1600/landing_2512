@@ -29,6 +29,7 @@ export default function WorkLogPage() {
   const { session, items, error, loading, load, login, logout, setStudent } = useWorkLog();
   const [filter, setFilter] = useState<FilterKey>('open');
   const [tab, setTab] = useState<TabKey>('slack');
+  const [contactKey, setContactKey] = useState(0);
 
   if (session === 'loading') return <p className="p-8 text-sm text-gray-400">불러오는 중…</p>;
   if (session === 'signed-out') return <LoginForm onLogin={login} />;
@@ -40,7 +41,7 @@ export default function WorkLogPage() {
     <main className="mx-auto max-w-4xl space-y-4 p-4 sm:p-8">
       <header className="flex flex-wrap items-center gap-3">
         <h1 className="text-lg font-bold tracking-tight">업무 로그</h1>
-        <button type="button" onClick={() => void load()} className="text-xs text-gray-500 underline">새로고침</button>
+        <button type="button" onClick={() => tab === 'contact' ? setContactKey(k => k + 1) : void load()} className="text-xs text-gray-500 underline">새로고침</button>
         <span className="ml-auto text-xs text-gray-500">{session.name}</span>
         <button type="button" onClick={() => void logout()} className="text-xs text-gray-500 underline">로그아웃</button>
       </header>
@@ -54,7 +55,7 @@ export default function WorkLogPage() {
         ))}
       </nav>
 
-      {tab === 'contact' ? <ContactTasks /> : <>
+      {tab === 'contact' ? <ContactTasks refreshKey={contactKey} /> : <>
       <nav className="flex gap-2" aria-label="업무 상태">
         {FILTERS.map(f => (
           <button key={f.key} type="button" onClick={() => setFilter(f.key)} aria-pressed={filter === f.key} className={pill(filter === f.key)}>

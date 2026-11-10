@@ -37,22 +37,30 @@ function Group({ group }: { group: ContactTaskGroup }) {
   );
 }
 
-/** 알바생이 해야 할 연락 업무. 매일 08:00 KST 스케줄 브리핑 기준 */
-export function ContactTasks() {
+/** 알바생이 해야 할 연락 업무. refreshKey 가 바뀔 때마다 tutoring 데이터로 다시 계산한다 */
+export function ContactTasks({ refreshKey }: { refreshKey: number }) {
   const [data, setData] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadedKey, setLoadedKey] = useState<number | null>(null);
+  const loading = loadedKey !== refreshKey;
 
   useEffect(() => {
-    workLogApi.contactTasks().then(setData).catch((e: unknown) => setError(e instanceof Error ? e.message : '불러오지 못했습니다.'));
-  }, []);
+    workLogApi.contactTasks()
+      .then(d => { setData(d); setError(null); })
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : '불러오지 못했습니다.'))
+      .finally(() => setLoadedKey(refreshKey));
+  }, [refreshKey]);
 
-  if (error) return <p role="alert" className="text-sm text-red-600">{error}</p>;
-  if (!data) return <p className="text-xs text-gray-400">불러오는 중…</p>;
+  if (error && !loading) return <p role="alert" className="text-sm text-red-600">{error}</p>;
+  if (!data) return <p className="text-xs text-gray-400">최신 스케줄을 계산하는 중…</p>;
 
   const total = data.groups.reduce((n, g) => n + g.tasks.length, 0);
   return (
     <div className="space-y-3">
-      <p className="text-xs text-gray-500">{data.date} 브리핑 기준({formatKstDateTime(data.generatedAt)} 생성) · 연락 대상 {total}건</p>
+      <p className="text-xs text-gray-500">
+        {formatKstDateTime(data.generatedAt)} 기준 · 연락 대상 {total}건
+        {loading && <span className="ml-2 text-gray-400">최신 정보로 다시 계산하는 중…</span>}
+      </p>
       {data.groups.map(g => <Group key={g.kind} group={g} />)}
     </div>
   );
