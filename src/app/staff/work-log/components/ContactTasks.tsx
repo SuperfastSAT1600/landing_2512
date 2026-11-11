@@ -59,9 +59,13 @@ export function ContactTasks({ refreshKey, staffId }: { refreshKey: number; staf
           </button>
         ))}
       </nav>
+      <p className="text-xs text-gray-500">
+        신규인데 코칭룸·스터디홀·보캡을 모두 안 잡은 학생이 맨 위, 그 다음은 용건이 많은 학생 순입니다.
+      </p>
       <Section title="학생" count={shown.length}>
         {shown.map(s => (
           <ContactRow key={s.studentId} id={s.studentId} name={s.name} detail={`잔여 수업 ${formatHours(s.remainingHours)}`}
+            badge={s.topPriority ? '최우선 · 신규 미예약' : undefined}
             chips={s.reasons.map(r => ({ key: r.kind, label: chipLabel(r) }))} purposes={[...s.reasons.map(r => r.kind), 'other']}
             contacts={contacts[s.studentId] ?? []} staffId={staffId} now={now}
             onContact={(listKey, note) => addContact(s.studentId, s.name, listKey, note)} onRemove={removeContact}

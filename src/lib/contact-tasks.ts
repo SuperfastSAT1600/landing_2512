@@ -27,6 +27,8 @@ export interface StudentTask {
   studentId: string;
   name: string;
   remainingHours: number;
+  /** 신규인데 코칭룸·스터디홀·보캡을 모두 안 잡은 학생. 맨 위에 둔다 */
+  topPriority: boolean;
   reasons: Reason[];
 }
 
@@ -50,11 +52,17 @@ function scheduleReason(kind: ReasonKind, e: PayloadEntry): Reason {
   return { kind, ...(e.lastDate ? { lastDate: e.lastDate } : {}), ...(e.isNew ? { isNew: true } : {}) };
 }
 
-/** 학생마다 한 줄. 코칭룸 미예약 → 곧 끝남 → 없음 → 한 번도 안 잡음 순으로 처음 나온 자리에 둔다 */
+const isTopPriority = (reasons: Reason[]) =>
+  reasons.some(r => r.kind === 'coachRoom') && reasons.some(r => r.kind === 'neverScheduled' && r.isNew);
+
+/**
+ * 학생마다 한 줄. 최우선(신규 + 코칭룸 미예약 + 스터디홀·보캡 한 번도 안 잡음) → 용건이 많은 학생 순.
+ * 같으면 코칭룸 미예약 → 곧 끝남 → 없음 → 한 번도 안 잡음 순으로 처음 나온 자리를 지킨다
+ */
 export function buildContactTasks(payload: BriefingPayload): ContactTasks {
   const byStudent = new Map<string, StudentTask>();
   const add = (studentId: string, name: string, remainingHours: number, reason: Reason) => {
-    const task = byStudent.get(studentId) ?? { studentId, name, remainingHours, reasons: [] };
+    const task = byStudent.get(studentId) ?? { studentId, name, remainingHours, topPriority: false, reasons: [] };
     byStudent.set(studentId, task);
     const same = task.reasons.find(r => r.kind === reason.kind);
     if (same?.coachNames && reason.coachNames) same.coachNames.push(...reason.coachNames);
@@ -69,8 +77,11 @@ export function buildContactTasks(payload: BriefingPayload): ContactTasks {
     for (const e of payload[kind]) add(e.userId, e.name, e.remainingHours, scheduleReason(kind, e));
   }
 
+  const students = [...byStudent.values()].map(t => ({ ...t, topPriority: isTopPriority(t.reasons) }));
+  // Array.prototype.sort 는 안정 정렬이라 같은 순위는 처음 나온 순서를 지킨다
+  students.sort((a, b) => Number(b.topPriority) - Number(a.topPriority) || b.reasons.length - a.reasons.length);
   return {
-    students: [...byStudent.values()],
+    students,
     coaches: coachesWithUnbooked.map(c => ({ targetId: `coach:${c.key}`, name: c.name, studentNames: unbookedStudents(c).map(s => s.name) })),
   };
 }

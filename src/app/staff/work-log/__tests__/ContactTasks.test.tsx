@@ -13,6 +13,7 @@ const tasks = {
   students: [
     { studentId: 's1', name: '나은', remainingHours: 6, reasons: [{ kind: 'coachRoom', coachNames: ['Ben'] }, { kind: 'noSchedule' }] },
     { studentId: 's2', name: '다인', remainingHours: 3, reasons: [{ kind: 'neverScheduled', isNew: true }] },
+    { studentId: 's3', name: '라온', remainingHours: 8, topPriority: true, reasons: [{ kind: 'coachRoom', coachNames: ['Ben'] }, { kind: 'neverScheduled', isNew: true }] },
   ],
   coaches: [{ targetId: 'coach:ben', name: 'Ben', studentNames: ['나은'] }],
 };
@@ -41,15 +42,21 @@ describe('ContactTasks (수업 관리 업무)', () => {
     expect(s1.getByText('코칭룸 미예약 · 코치 Ben')).toBeTruthy();
     expect(s1.getByText('스터디홀/보캡 없음')).toBeTruthy();
     expect(s1.getByText('최근 연락 11/10 14:00 알바A · 스터디홀/보캡 없음 — 전화 부재중, 문자로 안내')).toBeTruthy();
-    expect(api.contacts).toHaveBeenCalledWith(['s1', 's2', 'coach:ben']);
-    expect(api.workItems).toHaveBeenCalledWith(['s1', 's2']);
+    expect(api.contacts).toHaveBeenCalledWith(['s1', 's2', 's3', 'coach:ben']);
+    expect(api.workItems).toHaveBeenCalledWith(['s1', 's2', 's3']);
+  });
+
+  it('최우선 학생에 표시를 한다 (REQ-010)', async () => {
+    render(<ContactTasks refreshKey={0} staffId="staff-1" />);
+    expect(within(await row('s3')).getByText('최우선 · 신규 미예약')).toBeTruthy();
+    expect(within(await row('s1')).queryByText('최우선 · 신규 미예약')).toBeNull();
   });
 
   it('용건으로 학생을 거를 수 있다', async () => {
     render(<ContactTasks refreshKey={0} staffId="staff-1" />);
     await row('s1');
-    expect(screen.getByRole('button', { name: '전체 2' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: '한 번도 안 잡음 1' }));
+    expect(screen.getByRole('button', { name: '전체 3' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '한 번도 안 잡음 2' }));
     expect(screen.queryByTestId('student-s1')).toBeNull();
     expect(screen.getByTestId('student-s2')).toBeTruthy();
   });
@@ -112,7 +119,7 @@ describe('ContactTasks 삭제', () => {
     expect(window.confirm).toHaveBeenCalled();
     await waitFor(() => expect(api.dismiss).toHaveBeenCalledWith('contact', 's1', '나은'));
     await waitFor(() => expect(screen.queryByTestId('student-s1')).toBeNull());
-    expect(screen.getByRole('button', { name: '전체 1' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '전체 2' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: '삭제한 대상 1' }));
     expect(screen.getByText('나은 · 11/11 10:09 알바B 삭제')).toBeTruthy();

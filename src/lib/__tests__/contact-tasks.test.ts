@@ -27,7 +27,7 @@ describe('buildContactTasks (REQ-008)', () => {
 
   it('학생마다 한 줄로 묶고 해당하는 용건을 모두 담는다', () => {
     expect(students.find(s => s.studentId === 'c1')).toEqual({
-      studentId: 'c1', name: '마루', remainingHours: 7,
+      studentId: 'c1', name: '마루', remainingHours: 7, topPriority: false,
       reasons: [{ kind: 'coachRoom', coachNames: ['Ben', 'Kim'] }, { kind: 'noSchedule' }],
     });
   });
@@ -50,6 +50,26 @@ describe('buildContactTasks (REQ-008)', () => {
       { targetId: 'coach:ben', name: 'Ben', studentNames: ['마루'] },
       { targetId: 'coach:kim', name: 'Kim', studentNames: ['자두', '차미', '마루'] },
     ]);
+  });
+});
+
+describe('buildContactTasks 우선순위 (REQ-010)', () => {
+  const prio: BriefingPayload = {
+    ...payload,
+    endingSoon: [],
+    noSchedule: [entry('n1', '하나'), entry('n2', '두리')],
+    neverScheduled: [entry('v1', '세라'), entry('v2', '네오', { isNew: true }), entry('v3', '오름', { isNew: true })],
+    coaches: [coach('ben', 'Ben', [student('n1', '하나', 0, 5), student('v1', '세라', 0, 5), student('v2', '네오', 0, 5)])],
+  };
+  const { students } = buildContactTasks(prio);
+
+  it('신규인데 코칭룸·스터디홀·보캡을 모두 안 잡은 학생을 최우선으로 맨 위에 둔다', () => {
+    expect(students[0]).toMatchObject({ name: '네오', topPriority: true });
+    expect(students.filter(s => s.topPriority).map(s => s.name)).toEqual(['네오']);
+  });
+
+  it('그 아래는 용건이 많은 학생부터, 같으면 기존 순서를 지킨다', () => {
+    expect(students.map(s => s.name)).toEqual(['네오', '하나', '세라', '두리', '오름']);
   });
 });
 
