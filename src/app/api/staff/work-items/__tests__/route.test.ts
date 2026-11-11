@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
-  staff: vi.fn(), items: vi.fn(), list: vi.fn(), set: vi.fn(), clear: vi.fn(), find: vi.fn(), completions: vi.fn(),
+  staff: vi.fn(), items: vi.fn(), list: vi.fn(), set: vi.fn(), clear: vi.fn(), find: vi.fn(), completions: vi.fn(), dismissals: vi.fn(),
 }));
 vi.mock('@/lib/staff-request', () => ({ getStaffUser: mocks.staff }));
 vi.mock('@/lib/work-log', () => ({ fetchWorkItems: mocks.items }));
@@ -12,6 +12,7 @@ vi.mock('@/lib/work-item-students', () => ({
 }));
 
 vi.mock('@/lib/work-item-completions', () => ({ listCompletions: mocks.completions }));
+vi.mock('@/lib/work-log-dismissals', () => ({ listDismissals: mocks.dismissals }));
 
 import { GET, PUT } from '../route';
 
@@ -24,6 +25,7 @@ beforeEach(() => {
   mocks.items.mockResolvedValue([{ messageTs: '1.1', student: null }, { messageTs: '2.2', student: null }]);
   mocks.list.mockResolvedValue({ '2.2': { id: 'p1', name: '남윤지' } });
   mocks.completions.mockResolvedValue({});
+  mocks.dismissals.mockResolvedValue({});
 });
 
 describe('GET /api/staff/work-items', () => {
@@ -35,8 +37,8 @@ describe('GET /api/staff/work-items', () => {
   it('저장된 학생을 할 일에 붙인다', async () => {
     const { data } = await (await GET(new NextRequest(url))).json();
     expect(data.items).toEqual([
-      { messageTs: '1.1', student: null, doneAt: null },
-      { messageTs: '2.2', student: { id: 'p1', name: '남윤지' }, doneAt: null },
+      { messageTs: '1.1', student: null, doneAt: null, dismissed: null },
+      { messageTs: '2.2', student: { id: 'p1', name: '남윤지' }, doneAt: null, dismissed: null },
     ]);
   });
 
@@ -49,6 +51,14 @@ describe('GET /api/staff/work-items', () => {
     mocks.completions.mockResolvedValue({ '1.1': '2026-11-11T05:00:00.000Z', '2.2': '2026-11-10T01:00:00.000Z' });
     const { data } = await (await GET(new NextRequest(url))).json();
     expect(data.items.map((i: { doneAt: string | null }) => i.doneAt)).toEqual(['2026-11-11T05:00:00.000Z', null, null]);
+  });
+
+  it('삭제한 할 일에 삭제 기록을 붙인다 (REQ-009)', async () => {
+    const d = { name: '할 일', by: '직원A', at: '2026-11-11T01:00:00.000Z' };
+    mocks.dismissals.mockResolvedValue({ '1.1': d });
+    const { data } = await (await GET(new NextRequest(url))).json();
+    expect(mocks.dismissals).toHaveBeenCalledWith('slack');
+    expect(data.items.map((i: { dismissed: unknown }) => i.dismissed)).toEqual([d, null]);
   });
 
   it('조회가 실패하면 502', async () => {

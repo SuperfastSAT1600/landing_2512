@@ -22,13 +22,15 @@ interface Props {
   now: Date;
   onContact: (listKey: string, note: string) => Promise<void>;
   onRemove: (log: ContactLog) => Promise<void>;
+  /** 이 대상을 수업 관리 업무에서 삭제(숨김) */
+  onDismiss: () => Promise<void>;
   children?: ReactNode;
 }
 
 const purposeOf = (log: ContactLog) => (log.listKey ? ` · ${reasonLabel(log.listKey)}` : '');
 
 /** 수업 관리 업무의 한 대상(학생·코치): 용건, 최근 연락, 결과 기록, 이력 */
-export function ContactRow({ id, name, detail, chips, purposes, contacts, staffId, now, onContact, onRemove, children }: Props) {
+export function ContactRow({ id, name, detail, chips, purposes, contacts, staffId, now, onContact, onRemove, onDismiss, children }: Props) {
   const [open, setOpen] = useState(false);
   const [purpose, setPurpose] = useState(purposes[0]);
   const [note, setNote] = useState('');
@@ -68,6 +70,8 @@ export function ContactRow({ id, name, detail, chips, purposes, contacts, staffI
           <button type="button" onClick={() => setOpen(true)} className="rounded bg-gray-900 px-2 py-1 text-xs font-medium text-white">결과 기록</button>
           <button type="button" aria-expanded={open} onClick={() => setOpen(v => !v)}
             className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600">{open ? '닫기' : `이력 ${contacts.length}`}</button>
+          <button type="button" disabled={busy} onClick={() => { if (window.confirm(`${name}을(를) 수업 관리 업무에서 삭제할까요? 삭제한 대상에서 복구할 수 있습니다.`)) void run(onDismiss); }}
+            className="text-xs text-red-500 hover:underline disabled:opacity-40">삭제</button>
         </span>
       </div>
       {latest && <p className="mt-1 text-xs text-gray-600">{`최근 연락 ${formatKstDateTime(latest.contactedAt)} ${latest.staffName}${purposeOf(latest)}${latest.note ? ` — ${latest.note}` : ''}`}</p>}

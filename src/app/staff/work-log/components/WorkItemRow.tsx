@@ -8,7 +8,16 @@ const stamp = new Intl.DateTimeFormat('ko-KR', {
   timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 });
 
-export function WorkItemRow({ item, onSetStudent }: { item: WorkItem; onSetStudent: (messageTs: string, studentId: string | null) => Promise<void> }) {
+interface Props {
+  item: WorkItem;
+  onSetStudent: (messageTs: string, studentId: string | null) => Promise<void>;
+  onDismiss: (item: WorkItem) => Promise<void>;
+  onRestore: (messageTs: string) => Promise<void>;
+}
+
+const DISMISS_CONFIRM = '이 업무를 업무 로그에서 삭제할까요? Slack 글은 지워지지 않고, 삭제됨에서 복구할 수 있습니다.';
+
+export function WorkItemRow({ item, onSetStudent, onDismiss, onRestore }: Props) {
   const [picking, setPicking] = useState(false);
 
   async function pick(id: string) {
@@ -31,6 +40,7 @@ export function WorkItemRow({ item, onSetStudent }: { item: WorkItem; onSetStude
             {stamp.format(new Date(item.doneAt))} 완료 · 소요 {formatDuration(Date.parse(item.doneAt) - Date.parse(item.postedAt))}
           </span>
         ) : <span className="text-gray-400">완료 시각 기록 없음</span>)}
+        {item.dismissed && <span className="rounded bg-gray-100 px-1.5 py-0.5 text-gray-600">{stamp.format(new Date(item.dismissed.at))} 삭제 {item.dismissed.by}</span>}
         <a href={item.permalink} target="_blank" rel="noreferrer" className="ml-auto underline">Slack에서 보기</a>
       </div>
       <p className="mt-2 whitespace-pre-wrap break-words text-sm">{item.text || '(첨부만 있는 글)'}</p>
@@ -47,6 +57,12 @@ export function WorkItemRow({ item, onSetStudent }: { item: WorkItem; onSetStude
           </>
         ) : (
           <button type="button" onClick={() => setPicking(true)} className="underline">학생 선택</button>
+        )}
+        {item.dismissed ? (
+          <button type="button" onClick={() => void onRestore(item.messageTs)} className="ml-auto underline">복구</button>
+        ) : (
+          <button type="button" onClick={() => { if (window.confirm(DISMISS_CONFIRM)) void onDismiss(item); }}
+            className="ml-auto text-red-500 hover:underline">삭제</button>
         )}
       </div>
     </li>

@@ -10,12 +10,13 @@ const FILTERS = [
   { key: 'open', label: '진행 중' },
   { key: 'done', label: '완료' },
   { key: 'all', label: '전체' },
+  { key: 'dismissed', label: '삭제됨' },
 ] as const;
 
 type FilterKey = (typeof FILTERS)[number]['key'];
 
 const TABS = [
-  { key: 'slack', label: '운영 할 일' },
+  { key: 'slack', label: '운영 업무' },
   { key: 'contact', label: '수업 관리 업무' },
 ] as const;
 
@@ -26,7 +27,7 @@ const pill = (active: boolean) => active
   : 'rounded bg-white px-3 py-1.5 text-xs text-gray-600 ring-1 ring-gray-200';
 
 export default function WorkLogPage() {
-  const { session, items, error, loading, load, login, logout, setStudent } = useWorkLog();
+  const { session, items, error, loading, load, login, logout, setStudent, dismiss, restore } = useWorkLog();
   const [filter, setFilter] = useState<FilterKey>('open');
   const [tab, setTab] = useState<TabKey>('slack');
   const [contactKey, setContactKey] = useState(0);
@@ -34,8 +35,12 @@ export default function WorkLogPage() {
   if (session === 'loading') return <p className="p-8 text-sm text-gray-400">불러오는 중…</p>;
   if (session === 'signed-out') return <LoginForm onLogin={login} />;
 
-  const counts = { open: items.filter(i => !i.done).length, done: items.filter(i => i.done).length, all: items.length };
-  const shown = items.filter(i => filter === 'all' || i.done === (filter === 'done'));
+  // 삭제한 할 일은 삭제됨에서만 보인다
+  const live = items.filter(i => !i.dismissed);
+  const byFilter: Record<FilterKey, typeof items> = {
+    open: live.filter(i => !i.done), done: live.filter(i => i.done), all: live, dismissed: items.filter(i => i.dismissed),
+  };
+  const shown = byFilter[filter];
 
   return (
     <main className="mx-auto max-w-4xl space-y-4 p-4 sm:p-8">
@@ -59,7 +64,7 @@ export default function WorkLogPage() {
       <nav className="flex gap-2" aria-label="업무 상태">
         {FILTERS.map(f => (
           <button key={f.key} type="button" onClick={() => setFilter(f.key)} aria-pressed={filter === f.key} className={pill(filter === f.key)}>
-            {f.label} {counts[f.key]}
+            {f.label} {byFilter[f.key].length}
           </button>
         ))}
       </nav>
@@ -69,7 +74,7 @@ export default function WorkLogPage() {
       {!loading && !error && shown.length === 0 && <p className="text-sm text-gray-500">표시할 업무가 없습니다.</p>}
 
       <ul className="space-y-2">
-        {shown.map(i => <WorkItemRow key={i.messageTs} item={i} onSetStudent={setStudent} />)}
+        {shown.map(i => <WorkItemRow key={i.messageTs} item={i} onSetStudent={setStudent} onDismiss={dismiss} onRestore={restore} />)}
       </ul>
       </>}
     </main>
