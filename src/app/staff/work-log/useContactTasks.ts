@@ -10,7 +10,7 @@ import { workLogApi } from './api';
 
 type Loaded = Awaited<ReturnType<typeof workLogApi.contactTasks>>;
 
-/** 수업 관리 업무, 대상별 연락 이력, 학생이 지정된 운영 할 일, 삭제한 대상. refreshKey 가 바뀔 때마다 다시 읽는다 */
+/** 수업 관리 업무, 대상별 연락 이력, 학생이 지정된 운영 업무, 삭제한 대상. refreshKey 가 바뀔 때마다 다시 읽는다 */
 export function useContactTasks(refreshKey: number) {
   const [data, setData] = useState<Loaded | null>(null);
   const [contacts, setContacts] = useState<ContactsByStudent>({});

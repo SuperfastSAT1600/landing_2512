@@ -5,7 +5,7 @@ import { getStaffUser } from '@/lib/staff-request';
 import { DISMISS_KINDS, dismiss, restore } from '@/lib/work-log-dismissals';
 
 const base = z.object({ kind: z.enum(DISMISS_KINDS), targetKey: z.string().trim().min(1).max(200) });
-// 운영 할 일의 키는 Slack message_ts
+// 운영 업무의 키는 Slack message_ts
 const keyMatchesKind = (t: z.infer<typeof base>) => t.kind !== 'slack' || /^\d+\.\d+$/.test(t.targetKey);
 const target = base.refine(keyMatchesKind);
 const postSchema = base.extend({ targetName: z.string().trim().min(1).max(200) }).refine(keyMatchesKind);

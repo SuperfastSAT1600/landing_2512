@@ -5,7 +5,7 @@ import { listStudentWorkItems } from '@/lib/student-work-items';
 
 const MAX_STUDENT_IDS = 300;
 
-// GET /api/staff/student-work-items?studentIds=a,b — 학생별로 지정된 운영 할 일(최신순)
+// GET /api/staff/student-work-items?studentIds=a,b — 학생별로 지정된 운영 업무(최신순)
 export async function GET(request: NextRequest) {
   if (!getStaffUser(request)) return unauthorized();
 
@@ -17,6 +17,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: { byStudent: await listStudentWorkItems(ids) } });
   } catch (error) {
     console.error('[api/staff/student-work-items] error:', error);
-    return apiError('UPSTREAM_ERROR', '운영 할 일 조회에 실패했습니다.', 502);
+    return apiError('UPSTREAM_ERROR', '운영 업무 조회에 실패했습니다.', 502);
   }
 }

@@ -1,10 +1,10 @@
-// 학생이 지정된 운영 할 일(Slack 글)을 학생별로 모은다. 알바 연락 업무에서 같은 학생의 운영 기록을 보여 주는 데 쓴다. 서버 전용.
+// 학생이 지정된 운영 업무(Slack 글)을 학생별로 모은다. 알바 연락 업무에서 같은 학생의 운영 기록을 보여 주는 데 쓴다. 서버 전용.
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { fetchWorkItemsByTs, WORK_CHANNEL, type WorkItem } from '@/lib/work-log';
 
 const IN_CHUNK = 100;
 
-/** studentId → 운영 할 일(최신순). 할 일이 없는 학생은 키가 없다 */
+/** studentId → 운영 업무(최신순). 할 일이 없는 학생은 키가 없다 */
 export async function listStudentWorkItems(studentIds: string[]): Promise<Record<string, WorkItem[]>> {
   if (!studentIds.length) return {};
   const rows: { message_ts: string; student_id: string }[] = [];

@@ -16,7 +16,7 @@ const FILTERS = [
 type FilterKey = (typeof FILTERS)[number]['key'];
 
 const TABS = [
-  { key: 'slack', label: '운영 할 일' },
+  { key: 'slack', label: '운영 업무' },
   { key: 'contact', label: '수업 관리 업무' },
 ] as const;
 

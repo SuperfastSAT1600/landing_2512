@@ -26,7 +26,7 @@ beforeEach(() => {
 });
 
 describe('listStudentWorkItems (REQ-007)', () => {
-  it('학생이 지정된 운영 할 일을 학생별로 최신순으로 묶고, Slack 에서 지워진 글은 뺀다', async () => {
+  it('학생이 지정된 운영 업무을 학생별로 최신순으로 묶고, Slack 에서 지워진 글은 뺀다', async () => {
     expect(await listStudentWorkItems(['s1', 's2', 's3'])).toEqual({ s1: [item('300.3'), item('100.1')] });
     expect(db.from).toHaveBeenCalledWith('work_item_students');
   });

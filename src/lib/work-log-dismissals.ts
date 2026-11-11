@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 const TABLE = 'work_log_dismissals';
 
-/** slack: 운영 할 일(message_ts), contact: 수업 관리 업무(학생 profile id 또는 coach:<key>) */
+/** slack: 운영 업무(message_ts), contact: 수업 관리 업무(학생 profile id 또는 coach:<key>) */
 export const DISMISS_KINDS = ['slack', 'contact'] as const;
 export type DismissKind = (typeof DISMISS_KINDS)[number];
 

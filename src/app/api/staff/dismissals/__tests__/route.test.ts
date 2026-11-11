@@ -24,7 +24,7 @@ describe('POST /api/staff/dismissals', () => {
     expect((await POST(req('POST', { kind: 'slack', targetKey: '1.1', targetName: 'x' }))).status).toBe(401);
   });
 
-  it('종류가 틀리거나 운영 할 일 키 형식이 틀리면 400', async () => {
+  it('종류가 틀리거나 운영 업무 키 형식이 틀리면 400', async () => {
     expect((await POST(req('POST', { kind: 'other', targetKey: '1.1', targetName: 'x' }))).status).toBe(400);
     expect((await POST(req('POST', { kind: 'slack', targetKey: 'abc', targetName: 'x' }))).status).toBe(400);
     expect(mocks.dismiss).not.toHaveBeenCalled();

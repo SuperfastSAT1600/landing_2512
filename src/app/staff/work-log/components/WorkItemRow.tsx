@@ -15,7 +15,7 @@ interface Props {
   onRestore: (messageTs: string) => Promise<void>;
 }
 
-const DISMISS_CONFIRM = '이 할 일을 업무 로그에서 삭제할까요? Slack 글은 지워지지 않고, 삭제됨에서 복구할 수 있습니다.';
+const DISMISS_CONFIRM = '이 업무를 업무 로그에서 삭제할까요? Slack 글은 지워지지 않고, 삭제됨에서 복구할 수 있습니다.';
 
 export function WorkItemRow({ item, onSetStudent, onDismiss, onRestore }: Props) {
   const [picking, setPicking] = useState(false);

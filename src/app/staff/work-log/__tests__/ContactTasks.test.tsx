@@ -80,7 +80,7 @@ describe('ContactTasks (수업 관리 업무)', () => {
     await waitFor(() => expect(api.add).toHaveBeenCalledWith(expect.objectContaining({ studentId: 's2', listKey: 'other' })));
   });
 
-  it('학생이 지정된 운영 할 일을 같은 줄에 보여준다', async () => {
+  it('학생이 지정된 운영 업무을 같은 줄에 보여준다', async () => {
     api.workItems.mockResolvedValue({ s1: [{
       messageTs: '1794200000.000100', postedAt: '2026-11-11T04:20:00.000Z', text: '학생 통화함. 목요일 코칭룸 예약 예정',
       authorName: '직원A', done: true, doneBy: '직원A', permalink: 'https://slack.com/archives/C0C9B0DEGDN/p1794200000000100', replyCount: 2,
@@ -88,7 +88,7 @@ describe('ContactTasks (수업 관리 업무)', () => {
     render(<ContactTasks refreshKey={0} staffId="staff-1" />);
     const s1 = within(await row('s1'));
     expect(await s1.findByText('학생 통화함. 목요일 코칭룸 예약 예정')).toBeTruthy();
-    expect(s1.getByText('운영 할 일 11/11 13:20 직원A · 완료 · 답글 2')).toBeTruthy();
+    expect(s1.getByText('운영 업무 11/11 13:20 직원A · 완료 · 답글 2')).toBeTruthy();
   });
 
   it('코치는 따로 모아 코치 연락으로 기록한다', async () => {

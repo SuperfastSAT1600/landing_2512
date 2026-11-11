@@ -26,7 +26,7 @@ describe('GET /api/staff/student-work-items (REQ-007)', () => {
     expect((await GET(req(''))).status).toBe(400);
   });
 
-  it('학생별 운영 할 일을 돌려준다(중복 ID 는 한 번만)', async () => {
+  it('학생별 운영 업무을 돌려준다(중복 ID 는 한 번만)', async () => {
     const { data } = await (await GET(req('?studentIds=s1,s2,s1'))).json();
     expect(mocks.list).toHaveBeenCalledWith(['s1', 's2']);
     expect(data.byStudent).toEqual({ s1: [{ messageTs: '100.1' }] });
