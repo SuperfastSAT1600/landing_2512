@@ -52,5 +52,25 @@ export function useWorkLog() {
     }
   }, []);
 
-  return { session, items, error, loading, load, login, logout, setStudent };
+  const dismiss = useCallback(async (item: WorkItem) => {
+    setError(null);
+    try {
+      const dismissed = await workLogApi.dismiss('slack', item.messageTs, item.text.slice(0, 80) || '(첨부만 있는 글)');
+      setItems(prev => prev.map(i => (i.messageTs === item.messageTs ? { ...i, dismissed } : i)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '삭제하지 못했습니다.');
+    }
+  }, []);
+
+  const restore = useCallback(async (messageTs: string) => {
+    setError(null);
+    try {
+      await workLogApi.restore('slack', messageTs);
+      setItems(prev => prev.map(i => (i.messageTs === messageTs ? { ...i, dismissed: null } : i)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '복구하지 못했습니다.');
+    }
+  }, []);
+
+  return { session, items, error, loading, load, login, logout, setStudent, dismiss, restore };
 }

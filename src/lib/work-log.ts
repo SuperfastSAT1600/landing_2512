@@ -1,6 +1,7 @@
 /** 운영 업무 채널의 글을 할 일로 읽는다. 상태는 Slack(태그·✅ 반응·삭제)이 원본이고 서버 전용이다 */
 import { extractMentionedUserIds } from '@/lib/assignment-checklist-reminder';
 import { ASSIGNMENT_CHANNEL } from '@/lib/slack-assignment-checklist';
+import type { Dismissal } from '@/lib/work-log-dismissals';
 
 export const WORK_CHANNEL = ASSIGNMENT_CHANNEL;
 export const DONE_REACTION = 'white_check_mark';
@@ -30,6 +31,8 @@ export interface WorkItem {
   replyCount: number;
   fileCount: number;
   student: { id: string; name: string } | null;
+  /** 업무 로그에서 삭제(숨김)한 기록 */
+  dismissed: Dismissal | null;
 }
 
 type Names = Record<string, string>;
@@ -71,6 +74,7 @@ export function toWorkItem(m: SlackWorkMessage, names: Names): WorkItem {
     replyCount: m.reply_count ?? 0,
     fileCount: m.files?.length ?? 0,
     student: null,
+    dismissed: null,
   };
 }
 

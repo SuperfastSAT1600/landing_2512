@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
-const api = vi.hoisted(() => ({ tasks: vi.fn(), contacts: vi.fn(), add: vi.fn(), workItems: vi.fn() }));
-vi.mock('../api', () => ({ workLogApi: { contactTasks: api.tasks, studentWorkItems: api.workItems } }));
+const api = vi.hoisted(() => ({ tasks: vi.fn(), contacts: vi.fn(), add: vi.fn(), workItems: vi.fn(), dismiss: vi.fn(), restore: vi.fn() }));
+vi.mock('../api', () => ({ workLogApi: { contactTasks: api.tasks, studentWorkItems: api.workItems, dismiss: api.dismiss, restore: api.restore } }));
 vi.mock('../../briefing/api', () => ({ staffApi: { contacts: api.contacts, addContact: api.add, removeContact: vi.fn() } }));
 
 import { ContactTasks } from '../components/ContactTasks';
@@ -29,6 +29,7 @@ beforeEach(() => {
   api.tasks.mockResolvedValue(tasks);
   api.contacts.mockResolvedValue({ s1: [yesterday] });
   api.workItems.mockResolvedValue({});
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
 });
 afterEach(() => vi.useRealTimers());
 
@@ -99,5 +100,40 @@ describe('ContactTasks (수업 관리 업무)', () => {
     fireEvent.change(ben.getByPlaceholderText('연락 결과 (예: 전화 부재중, 문자로 스케줄 안내)'), { target: { value: '학생에게 예약 안내 부탁' } });
     fireEvent.click(ben.getByRole('button', { name: '기록' }));
     await waitFor(() => expect(api.add).toHaveBeenCalledWith(expect.objectContaining({ studentId: 'coach:ben', studentName: 'Ben', listKey: 'coach' })));
+  });
+});
+
+// REQ-009
+describe('ContactTasks 삭제', () => {
+  it('확인을 거쳐 학생을 삭제하면 목록에서 빠지고 삭제한 대상에서 복구할 수 있다', async () => {
+    api.dismiss.mockResolvedValue({ name: '나은', by: '알바B', at: '2026-11-11T01:09:00.000Z' });
+    render(<ContactTasks refreshKey={0} staffId="staff-1" />);
+    fireEvent.click(within(await row('s1')).getByRole('button', { name: '삭제' }));
+    expect(window.confirm).toHaveBeenCalled();
+    await waitFor(() => expect(api.dismiss).toHaveBeenCalledWith('contact', 's1', '나은'));
+    await waitFor(() => expect(screen.queryByTestId('student-s1')).toBeNull());
+    expect(screen.getByRole('button', { name: '전체 1' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: '삭제한 대상 1' }));
+    expect(screen.getByText('나은 · 11/11 10:09 알바B 삭제')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '복구' }));
+    await waitFor(() => expect(api.restore).toHaveBeenCalledWith('contact', 's1'));
+    expect(await row('s1')).toBeTruthy();
+  });
+
+  it('확인을 취소하면 삭제하지 않는다', async () => {
+    vi.mocked(window.confirm).mockReturnValue(false);
+    render(<ContactTasks refreshKey={0} staffId="staff-1" />);
+    fireEvent.click(within(await row('coach:ben')).getByRole('button', { name: '삭제' }));
+    expect(api.dismiss).not.toHaveBeenCalled();
+    expect(screen.getByTestId('student-coach:ben')).toBeTruthy();
+  });
+
+  it('이미 삭제한 대상은 처음부터 목록에서 뺀다', async () => {
+    api.tasks.mockResolvedValue({ ...tasks, dismissed: { 'coach:ben': { name: 'Ben', by: '직원A', at: '2026-11-10T01:00:00.000Z' } } });
+    render(<ContactTasks refreshKey={0} staffId="staff-1" />);
+    await row('s1');
+    expect(screen.queryByTestId('student-coach:ben')).toBeNull();
+    expect(screen.getByRole('button', { name: '삭제한 대상 1' })).toBeTruthy();
   });
 });
