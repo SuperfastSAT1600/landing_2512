@@ -13,6 +13,8 @@ interface Props {
   id: string;
   name: string;
   detail?: string;
+  /** 우선순위 표시(예: 최우선) */
+  badge?: string;
   /** 해당 용건. 오늘 그 용건으로 기록하면 ✓ 표시 */
   chips: Chip[];
   /** 기록할 때 고르는 용건(list_key). 하나면 고르지 않는다 */
@@ -30,7 +32,7 @@ interface Props {
 const purposeOf = (log: ContactLog) => (log.listKey ? ` · ${reasonLabel(log.listKey)}` : '');
 
 /** 수업 관리 업무의 한 대상(학생·코치): 용건, 최근 연락, 결과 기록, 이력 */
-export function ContactRow({ id, name, detail, chips, purposes, contacts, staffId, now, onContact, onRemove, onDismiss, children }: Props) {
+export function ContactRow({ id, name, detail, badge, chips, purposes, contacts, staffId, now, onContact, onRemove, onDismiss, children }: Props) {
   const [open, setOpen] = useState(false);
   const [purpose, setPurpose] = useState(purposes[0]);
   const [note, setNote] = useState('');
@@ -56,6 +58,7 @@ export function ContactRow({ id, name, detail, chips, purposes, contacts, staffI
   return (
     <li data-testid={`student-${id}`} className="border-b border-gray-100 px-3 py-2 last:border-b-0">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+        {badge && <span className="rounded bg-red-600 px-1.5 py-0.5 text-[11px] font-bold text-white">{badge}</span>}
         <span className="font-medium">{name}</span>
         {detail && <span className="text-xs text-gray-500">{detail}</span>}
         {chips.map(c => (
