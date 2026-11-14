@@ -31,7 +31,7 @@ function Section({ title, count, children }: { title: string; count: number; chi
 
 /** 수업 관리 업무: 학생마다 한 줄에 용건을 모으고, 용건을 골라 연락 결과를 기록한다. refreshKey 가 바뀔 때마다 다시 계산한다 */
 export function ContactTasks({ refreshKey, staffId }: { refreshKey: number; staffId: string }) {
-  const { data, contacts, workItems, dismissed, error, loading, addContact, removeContact, dismiss, restore } = useContactTasks(refreshKey);
+  const { data, contacts, workItems, dismissed, error, loading, addContact, removeContact, dismiss, restore, draft, draftSent } = useContactTasks(refreshKey);
   const [filter, setFilter] = useState<ReasonKind | 'all'>('all');
   const [showDismissed, setShowDismissed] = useState(false);
 
@@ -69,7 +69,8 @@ export function ContactTasks({ refreshKey, staffId }: { refreshKey: number; staf
             chips={s.reasons.map(r => ({ key: r.kind, label: chipLabel(r) }))} purposes={[...s.reasons.map(r => r.kind), 'other']}
             contacts={contacts[s.studentId] ?? []} staffId={staffId} now={now}
             onContact={(listKey, note) => addContact(s.studentId, s.name, listKey, note)} onRemove={removeContact}
-            onDismiss={() => dismiss(s.studentId, s.name)}>
+            onDismiss={() => dismiss(s.studentId, s.name)} onDraftSent={draftSent}
+            onDraft={() => draft({ targetId: s.studentId, name: s.name, kind: 'student', remainingHours: s.remainingHours, reasons: s.reasons })}>
             <WorkItemNotes items={workItems[s.studentId] ?? []} />
           </ContactRow>
         ))}
@@ -79,7 +80,8 @@ export function ContactTasks({ refreshKey, staffId }: { refreshKey: number; staf
           <ContactRow key={c.targetId} id={c.targetId} name={c.name} detail={`미예약 학생 ${c.studentNames.length}명: ${c.studentNames.join(', ')}`}
             chips={[]} purposes={['coach']} contacts={contacts[c.targetId] ?? []} staffId={staffId} now={now}
             onContact={(listKey, note) => addContact(c.targetId, c.name, listKey, note)} onRemove={removeContact}
-            onDismiss={() => dismiss(c.targetId, c.name)} />
+            onDismiss={() => dismiss(c.targetId, c.name)} onDraftSent={draftSent}
+            onDraft={() => draft({ targetId: c.targetId, name: c.name, kind: 'coach', studentNames: c.studentNames })} />
         ))}
       </Section>
       {dismissedList.length > 0 && (
