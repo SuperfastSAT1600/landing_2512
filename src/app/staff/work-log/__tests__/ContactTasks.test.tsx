@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
-const api = vi.hoisted(() => ({ tasks: vi.fn(), contacts: vi.fn(), add: vi.fn(), workItems: vi.fn(), dismiss: vi.fn(), restore: vi.fn() }));
-vi.mock('../api', () => ({ workLogApi: { contactTasks: api.tasks, studentWorkItems: api.workItems, dismiss: api.dismiss, restore: api.restore } }));
+const api = vi.hoisted(() => ({ tasks: vi.fn(), contacts: vi.fn(), add: vi.fn(), workItems: vi.fn(), dismiss: vi.fn(), restore: vi.fn(), draft: vi.fn(), sent: vi.fn() }));
+vi.mock('../api', () => ({ workLogApi: { contactTasks: api.tasks, studentWorkItems: api.workItems, dismiss: api.dismiss, restore: api.restore, messageDraft: api.draft, markDraftSent: api.sent } }));
 vi.mock('../../briefing/api', () => ({ staffApi: { contacts: api.contacts, addContact: api.add, removeContact: vi.fn() } }));
 
 import { ContactTasks } from '../components/ContactTasks';
@@ -142,5 +142,42 @@ describe('ContactTasks 삭제', () => {
     await row('s1');
     expect(screen.queryByTestId('student-coach:ben')).toBeNull();
     expect(screen.getByRole('button', { name: '삭제한 대상 1' })).toBeTruthy();
+  });
+});
+
+// REQ-011
+describe('ContactTasks 메시지 초안', () => {
+  it('학생 정보로 초안을 만들고, 고친 내용을 보낸 내용으로 기록한다', async () => {
+    api.draft.mockResolvedValue({ id: 'd1', message: '나은 학생, 안녕하세요. 코칭룸 예약 부탁드려요.', basis: ['코칭룸 미예약 (코치 Ben)'], handoff: null });
+    api.add.mockResolvedValue({ ...yesterday, id: 'c9', staffId: 'staff-1', briefingDate: '2026-11-11', listKey: 'coachRoom' });
+    render(<ContactTasks refreshKey={0} staffId="staff-1" />);
+    const s1 = within(await row('s1'));
+    fireEvent.click(s1.getByRole('button', { name: '메시지 초안' }));
+    expect(api.draft).toHaveBeenCalledWith({ targetId: 's1', name: '나은', kind: 'student', remainingHours: 6, reasons: tasks.students[0].reasons });
+    const box = await s1.findByLabelText('보낼 메시지') as HTMLTextAreaElement;
+    expect(box.value).toBe('나은 학생, 안녕하세요. 코칭룸 예약 부탁드려요.');
+    expect(s1.getByText('코칭룸 미예약 (코치 Ben)')).toBeTruthy();
+
+    fireEvent.change(box, { target: { value: '나은 학생, 이번 주 코칭룸 예약 부탁드려요.' } });
+    fireEvent.click(s1.getByRole('button', { name: '보낸 내용으로 기록' }));
+    await waitFor(() => expect(api.add).toHaveBeenCalledWith(expect.objectContaining({
+      studentId: 's1', listKey: 'coachRoom', note: '문자 발송 — 나은 학생, 이번 주 코칭룸 예약 부탁드려요.',
+    })));
+    await waitFor(() => expect(api.sent).toHaveBeenCalledWith('d1', '나은 학생, 이번 주 코칭룸 예약 부탁드려요.'));
+  });
+
+  it('사람이 대응해야 하면 이유를 보여준다', async () => {
+    api.draft.mockResolvedValue({ id: 'd2', message: '안녕하세요', basis: [], handoff: '환불 문의가 있어 직원이 직접 대응' });
+    render(<ContactTasks refreshKey={0} staffId="staff-1" />);
+    const s2 = within(await row('s2'));
+    fireEvent.click(s2.getByRole('button', { name: '메시지 초안' }));
+    expect(await s2.findByText('직원 확인 필요: 환불 문의가 있어 직원이 직접 대응')).toBeTruthy();
+  });
+
+  it('코치는 미예약 학생 목록으로 초안을 만든다', async () => {
+    api.draft.mockResolvedValue({ id: 'd3', message: 'Ben 코치님', basis: [], handoff: null });
+    render(<ContactTasks refreshKey={0} staffId="staff-1" />);
+    fireEvent.click(within(await row('coach:ben')).getByRole('button', { name: '메시지 초안' }));
+    expect(api.draft).toHaveBeenCalledWith({ targetId: 'coach:ben', name: 'Ben', kind: 'coach', studentNames: ['나은'] });
   });
 });

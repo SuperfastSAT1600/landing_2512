@@ -5,6 +5,8 @@ import { reasonLabel } from '@/lib/contact-tasks';
 import { kstDate } from '@/lib/kst-date';
 import { formatKstDateTime, lastContactLabel } from '../../briefing/format';
 import type { ContactLog } from '../../briefing/types';
+import type { DraftResult } from '../api';
+import { MessageDraftPanel } from './MessageDraftPanel';
 
 export interface Chip { key: string; label: string }
 
@@ -26,14 +28,18 @@ interface Props {
   onRemove: (log: ContactLog) => Promise<void>;
   /** 이 대상을 수업 관리 업무에서 삭제(숨김) */
   onDismiss: () => Promise<void>;
+  /** 에이전트에게 보낼 메시지 초안을 받는다 */
+  onDraft: () => Promise<DraftResult>;
+  onDraftSent: (draftId: string, text: string) => Promise<void>;
   children?: ReactNode;
 }
 
 const purposeOf = (log: ContactLog) => (log.listKey ? ` · ${reasonLabel(log.listKey)}` : '');
 
 /** 수업 관리 업무의 한 대상(학생·코치): 용건, 최근 연락, 결과 기록, 이력 */
-export function ContactRow({ id, name, detail, badge, chips, purposes, contacts, staffId, now, onContact, onRemove, onDismiss, children }: Props) {
+export function ContactRow({ id, name, detail, badge, chips, purposes, contacts, staffId, now, onContact, onRemove, onDismiss, onDraft, onDraftSent, children }: Props) {
   const [open, setOpen] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [purpose, setPurpose] = useState(purposes[0]);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -70,6 +76,8 @@ export function ContactRow({ id, name, detail, badge, chips, purposes, contacts,
         ))}
         <span className="ml-auto flex items-center gap-2">
           <span className="text-xs text-gray-400">{lastContactLabel(latest?.contactedAt, now)}</span>
+          <button type="button" aria-expanded={drafting} onClick={() => setDrafting(v => !v)}
+            className="rounded border border-blue-300 bg-white px-2 py-1 text-xs text-blue-700">{drafting ? '초안 닫기' : '메시지 초안'}</button>
           <button type="button" onClick={() => setOpen(true)} className="rounded bg-gray-900 px-2 py-1 text-xs font-medium text-white">결과 기록</button>
           <button type="button" aria-expanded={open} onClick={() => setOpen(v => !v)}
             className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600">{open ? '닫기' : `이력 ${contacts.length}`}</button>
@@ -79,6 +87,13 @@ export function ContactRow({ id, name, detail, badge, chips, purposes, contacts,
       </div>
       {latest && <p className="mt-1 text-xs text-gray-600">{`최근 연락 ${formatKstDateTime(latest.contactedAt)} ${latest.staffName}${purposeOf(latest)}${latest.note ? ` — ${latest.note}` : ''}`}</p>}
       {children}
+      {drafting && (
+        <MessageDraftPanel purposes={purposes} onGenerate={onDraft}
+          onSend={async (listKey, text, draftId) => {
+            await onContact(listKey, `문자 발송 — ${text}`.slice(0, 1000));
+            await onDraftSent(draftId, text);
+          }} />
+      )}
       {error && <p role="alert" className="mt-1 text-xs text-red-600">{error}</p>}
       {open && (
         <div className="mt-2 space-y-2 rounded bg-gray-50 p-2">

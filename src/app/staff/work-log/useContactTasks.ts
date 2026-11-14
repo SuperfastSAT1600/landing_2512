@@ -6,7 +6,7 @@ import type { WorkItem } from '@/lib/work-log';
 import type { Dismissal } from '@/lib/work-log-dismissals';
 import { staffApi } from '../briefing/api';
 import type { ContactLog, ContactsByStudent } from '../briefing/types';
-import { workLogApi } from './api';
+import { workLogApi, type DraftRequest } from './api';
 
 type Loaded = Awaited<ReturnType<typeof workLogApi.contactTasks>>;
 
@@ -59,5 +59,8 @@ export function useContactTasks(refreshKey: number) {
     setDismissed(prev => Object.fromEntries(Object.entries(prev).filter(([k]) => k !== targetId)));
   }, []);
 
-  return { data, contacts, workItems, dismissed, error, loading: loadedKey !== refreshKey, addContact, removeContact, dismiss, restore };
+  const draft = useCallback((req: DraftRequest) => workLogApi.messageDraft(req), []);
+  const draftSent = useCallback((id: string, text: string) => workLogApi.markDraftSent(id, text), []);
+
+  return { data, contacts, workItems, dismissed, error, loading: loadedKey !== refreshKey, addContact, removeContact, dismiss, restore, draft, draftSent };
 }
